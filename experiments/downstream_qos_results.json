@@ -1,0 +1,25 @@
+{
+  "heuristic": {
+    "accuracy": 0.9311111111111111,
+    "total_packets": 450,
+    "interactive_packets": 300,
+    "interactive_misclassified": 6,
+    "interactive_wrong_tin": 0,
+    "bulk_overprioritized": 25,
+    "severe_deprioritized": 0,
+    "avg_latency_penalty_ms": 12.5,
+    "avg_interactive_penalty_ms": 0.0
+  },
+  "xgboost": {
+    "accuracy": 0.9911111111111112,
+    "total_packets": 450,
+    "interactive_packets": 300,
+    "interactive_misclassified": 3,
+    "interactive_wrong_tin": 3,
+    "bulk_overprioritized": 1,
+    "severe_deprioritized": 3,
+    "avg_latency_penalty_ms": 2.3,
+    "avg_interactive_penalty_ms": 3.0
+  },
+  "timestamp": 1790970574.583555
+}

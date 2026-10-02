@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 850" width="1200" height="850">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0e17"/>
+      <stop offset="100%" stop-color="#141c2b"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#182338"/>
+      <stop offset="100%" stop-color="#1f2d47"/>
+    </linearGradient>
+    <linearGradient id="accentCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00f2fe"/>
+      <stop offset="100%" stop-color="#4facfe"/>
+    </linearGradient>
+    <linearGradient id="accentGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38ef7d"/>
+      <stop offset="100%" stop-color="#11998e"/>
+    </linearGradient>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="850" fill="url(#bgGrad)" rx="16"/>
+
+  <!-- Title -->
+  <text x="600" y="50" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#00f2fe" text-anchor="middle" letter-spacing="1">
+    Adaptive QoS Engine Architecture (PS3 End-to-End)
+  </text>
+  <text x="600" y="78" font-family="Arial, sans-serif" font-size="14" fill="#8da2c0" text-anchor="middle">
+    Multi-Layer Reference Model: Device, Edge, Network, Analytics, Control &amp; User Interface
+  </text>
+
+  <!-- Layer 1: User Interface Layer -->
+  <g transform="translate(60, 110)" filter="url(#shadow)">
+    <rect width="1080" height="110" rx="12" fill="url(#cardGrad)" stroke="#2f4266" stroke-width="1.5"/>
+    <rect x="0" y="0" width="8" height="110" rx="4" fill="#00f2fe"/>
+    <text x="30" y="35" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#00f2fe">1. USER INTERFACE &amp; INTENT LAYER</text>
+    
+    <!-- Box 1A: Natural Intent API -->
+    <rect x="40" y="50" width="480" height="46" rx="8" fill="#131c2e" stroke="#3b527d"/>
+    <text x="60" y="78" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#e1e7ef">Natural Language Intent API (FastAPI + Laya / Fallback)</text>
+    
+    <!-- Box 1B: Live Telemetry Dashboard -->
+    <rect x="560" y="50" width="480" height="46" rx="8" fill="#131c2e" stroke="#3b527d"/>
+    <text x="580" y="78" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#e1e7ef">Live 6-Metric Telemetry Dashboard (Chart.js)</text>
+  </g>
+
+  <!-- Layer 2: Control & Policy Orchestration Layer -->
+  <g transform="translate(60, 245)" filter="url(#shadow)">
+    <rect width="1080" height="145" rx="12" fill="url(#cardGrad)" stroke="#2f4266" stroke-width="1.5"/>
+    <rect x="0" y="0" width="8" height="145" rx="4" fill="#38ef7d"/>
+    <text x="30" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#38ef7d">2. AUTONOMOUS CONTROL &amp; POLICY ORCHESTRATION LAYER</text>
+
+    <!-- Unified Controller Daemon -->
+    <rect x="40" y="48" width="1000" height="80" rx="8" fill="#111a2b" stroke="#253a5e"/>
+    
+    <!-- Sub-boxes -->
+    <rect x="60" y="65" width="280" height="48" rx="6" fill="#18263e" stroke="#38ef7d" stroke-dasharray="4"/>
+    <text x="75" y="94" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#38ef7d">Intent Session Scheduler</text>
+    <text x="75" y="106" font-family="Arial, sans-serif" font-size="10" fill="#8da2c0">(Auto-reversion after duration_sec)</text>
+
+    <rect x="370" y="65" width="310" height="48" rx="6" fill="#18263e" stroke="#00f2fe" stroke-dasharray="4"/>
+    <text x="385" y="94" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#00f2fe">Policy Rules &amp; Anti-Starvation</text>
+    <text x="385" y="106" font-family="Arial, sans-serif" font-size="10" fill="#8da2c0">(5M safety floor, 20% bulk progress)</text>
+
+    <rect x="710" y="65" width="310" height="48" rx="6" fill="#18263e" stroke="#f7b731" stroke-dasharray="4"/>
+    <text x="725" y="94" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#f7b731">Bounded Rollback Manager</text>
+    <text x="725" y="106" font-family="Arial, sans-serif" font-size="10" fill="#8da2c0">(Tentative checkpoints &amp; QoE check)</text>
+  </g>
+
+  <!-- Layer 3: Analytics, Estimation & AI Layer -->
+  <g transform="translate(60, 415)" filter="url(#shadow)">
+    <rect width="1080" height="135" rx="12" fill="url(#cardGrad)" stroke="#2f4266" stroke-width="1.5"/>
+    <rect x="0" y="0" width="8" height="135" rx="4" fill="#a55eea"/>
+    <text x="30" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#a55eea">3. ANALYTICS, ESTIMATION &amp; AI CLASSIFICATION LAYER</text>
+
+    <rect x="40" y="50" width="310" height="68" rx="8" fill="#131c2e" stroke="#3b527d"/>
+    <text x="55" y="78" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#e1e7ef">Passive Link Estimator</text>
+    <text x="55" y="98" font-family="Arial, sans-serif" font-size="11" fill="#8da2c0">Non-intrusive /proc/net/dev sampling</text>
+
+    <rect x="380" y="50" width="310" height="68" rx="8" fill="#131c2e" stroke="#a55eea"/>
+    <text x="395" y="78" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#a55eea">Online XGBoost Inference</text>
+    <text x="395" y="98" font-family="Arial, sans-serif" font-size="11" fill="#8da2c0">99.1% accuracy, confidence scores</text>
+
+    <rect x="720" y="50" width="320" height="68" rx="8" fill="#131c2e" stroke="#3b527d"/>
+    <text x="735" y="78" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#e1e7ef">Real-Time Flow Table &amp; Override</text>
+    <text x="735" y="98" font-family="Arial, sans-serif" font-size="11" fill="#8da2c0">Dynamic correction &amp; flow eviction</text>
+  </g>
+
+  <!-- Layer 4: Edge Gateway & Kernel Enforcement Layer -->
+  <g transform="translate(60, 575)" filter="url(#shadow)">
+    <rect width="1080" height="135" rx="12" fill="url(#cardGrad)" stroke="#2f4266" stroke-width="1.5"/>
+    <rect x="0" y="0" width="8" height="135" rx="4" fill="#ff5252"/>
+    <text x="30" y="32" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ff5252">4. EDGE GATEWAY &amp; LINUX TC ENFORCEMENT LAYER</text>
+
+    <rect x="40" y="50" width="480" height="68" rx="8" fill="#131c2e" stroke="#ff5252"/>
+    <text x="55" y="78" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#e1e7ef">iptables / ip6tables DSCP Mangle Engine</text>
+    <text x="55" y="98" font-family="Arial, sans-serif" font-size="11" fill="#8da2c0">Video: AF41 (0x22) | Voice: EF (0x2E) | Bulk: CS1 (0x08)</text>
+
+    <rect x="560" y="50" width="480" height="68" rx="8" fill="#131c2e" stroke="#38ef7d"/>
+    <text x="575" y="78" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#e1e7ef">Linux CAKE qdisc (DiffServ4 Tins + FQ-CoDel)</text>
+    <text x="575" y="98" font-family="Arial, sans-serif" font-size="11" fill="#8da2c0">Hardware-level isolation: Voice, Video, BestEffort, Bulk</text>
+  </g>
+
+  <!-- Layer 5: Device & Testbed Network Layer -->
+  <g transform="translate(60, 735)" filter="url(#shadow)">
+    <rect width="1080" height="90" rx="12" fill="url(#cardGrad)" stroke="#2f4266" stroke-width="1.5"/>
+    <rect x="0" y="0" width="8" height="90" rx="4" fill="#4facfe"/>
+    <text x="30" y="28" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#4facfe">5. PHYSICAL/EMULATED NETWORK ENVIRONMENT</text>
+
+    <rect x="40" y="42" width="220" height="36" rx="6" fill="#131c2e" stroke="#3b527d"/>
+    <text x="60" y="65" font-family="Arial, sans-serif" font-size="12" fill="#e1e7ef">LAN 1 (Interactive / Video)</text>
+
+    <rect x="290" y="42" width="220" height="36" rx="6" fill="#131c2e" stroke="#3b527d"/>
+    <text x="325" y="65" font-family="Arial, sans-serif" font-size="12" fill="#e1e7ef">LAN 2 (Bulk Download)</text>
+
+    <rect x="540" y="42" width="240" height="36" rx="6" fill="#131c2e" stroke="#3b527d"/>
+    <text x="565" y="65" font-family="Arial, sans-serif" font-size="12" fill="#e1e7ef">LAN 3 &amp; 4 (TVs / Gaming)</text>
+
+    <rect x="810" y="42" width="230" height="36" rx="6" fill="#131c2e" stroke="#f7b731"/>
+    <text x="835" y="65" font-family="Arial, sans-serif" font-size="12" fill="#f7b731">WAN Host (NetEm Simulator)</text>
+  </g>
+</svg>
