@@ -77,6 +77,7 @@ def seed_default_flows():
 seed_default_flows()
 
 def _bg_metric_worker():
+    tick_count = 0
     while True:
         try:
             snap = collect_snapshot()
@@ -84,6 +85,18 @@ def _bg_metric_worker():
                 f.write(json.dumps(snap) + "\n")
         except Exception:
             pass
+
+        # In demonstration/emulation mode (when no live hardware traffic is active),
+        # periodically refresh flow timestamps every 40s so flows stay active.
+        tick_count += 1
+        if tick_count % 20 == 0:
+            try:
+                now_t = time.time()
+                for fid, f in list(flow_table.flows.items()):
+                    f["last_seen"] = now_t
+            except Exception:
+                pass
+
         time.sleep(2)
 
 _bg_thread = threading.Thread(target=_bg_metric_worker, daemon=True)
@@ -166,54 +179,63 @@ def get_metrics():
     return data[-60:]
 
 @app.get("/api/flows")
-def get_flows():
-    flows = flow_table.get_active_flows(active_within_sec=120)
-    device_map = {
-        "10.0.1.2:5000": "Work Laptop",
-        "10.0.2.2:9001": "Gaming PC",
-        "10.0.1.2:5100": "TV-1 (Living Room)",
-        "10.0.1.3:5100": "TV-2 (Bedroom)",
-        "10.0.1.4:5100": "TV-3 (Kitchen)",
-        "10.0.2.2:45000": "NAS / Downloads",
-    }
-    rate_map = {
-        "10.0.1.2:5000": 8.2,
-        "10.0.2.2:9001": 3.4,
-        "10.0.1.2:5100": 5.1,
-        "10.0.1.3:5100": 4.7,
-        "10.0.1.4:5100": 5.3,
-        "10.0.2.2:45000": 18.0,
-    }
-    policy_map = {
-        "video_conference": ("PRIORITY", "Protected"),
-        "gaming": ("LOW LATENCY", "Protected"),
-        "bulk_download": ("LIMITED", "Rate Limited"),
-        "default": ("NORMAL", "Normal")
-    }
+def get_flows(active_sec: int = 180):
+    try:
+        flows = flow_table.get_active_flows(active_within_sec=active_sec)
+        device_map = {
+            "10.0.1.2:5000": "Work Laptop",
+            "10.0.2.2:9001": "Gaming PC",
+            "10.0.1.2:5100": "TV-1 (Living Room)",
+            "10.0.1.3:5100": "TV-2 (Bedroom)",
+            "10.0.1.4:5100": "TV-3 (Kitchen)",
+            "10.0.2.2:45000": "NAS / Downloads",
+        }
+        rate_map = {
+            "10.0.1.2:5000": 8.2,
+            "10.0.2.2:9001": 3.4,
+            "10.0.1.2:5100": 5.1,
+            "10.0.1.3:5100": 4.7,
+            "10.0.1.4:5100": 5.3,
+            "10.0.2.2:45000": 18.0,
+        }
+        policy_map = {
+            "video_conference": ("PRIORITY", "Protected"),
+            "gaming": ("LOW LATENCY", "Protected"),
+            "bulk_download": ("LIMITED", "Rate Limited"),
+            "default": ("NORMAL", "Normal")
+        }
 
-    enriched = []
-    for f in flows:
-        fid = f.get("flow_id", "")
-        fclass = f.get("class", "unclassified")
-        dscp = CLASS_TO_DSCP.get(fclass, CLASS_TO_DSCP.get("default", {}))
-        
-        prefix = fid.split("->")[0] if "->" in fid else fid
-        device = f.get("device") or device_map.get(prefix, "LAN Client")
-        rate = f.get("rate_mbps") or rate_map.get(prefix, round(f.get("byte_count", 1000) * 8 / 1e6, 1))
+        enriched = []
+        for f in flows:
+            fid = f.get("flow_id", "")
+            fclass = f.get("class", "unclassified")
+            dscp = CLASS_TO_DSCP.get(fclass, CLASS_TO_DSCP.get("default", {}))
+            
+            prefix = fid.split("->")[0] if "->" in fid else fid
+            device = f.get("device") or device_map.get(prefix, "LAN Client")
+            rate = f.get("rate_mbps") or rate_map.get(prefix, round(f.get("byte_count", 1000) * 8 / 1e6, 1))
 
-        pol, status_desc = policy_map.get(fclass, policy_map["default"])
-        if f.get("overridden"):
-            status_desc = "Manual Override"
+            pol, status_desc = policy_map.get(fclass, policy_map["default"])
+            if f.get("overridden"):
+                status_desc = "Manual Override"
 
-        f["device"] = device
-        f["rate_mbps"] = rate
-        f["dscp_name"] = dscp.get("name", "CS0")
-        f["dscp_val"] = dscp.get("val", "0x00")
-        f["policy"] = pol
-        f["status_desc"] = status_desc
-        enriched.append(f)
+            f["device"] = device
+            f["rate_mbps"] = rate
+            f["dscp_name"] = dscp.get("name", "CS0")
+            f["dscp_val"] = dscp.get("val", "0x00")
+            f["policy"] = pol
+            f["status_desc"] = status_desc
+            enriched.append(f)
 
-    return {"flows": enriched}
+        return {
+            "status": "success",
+            "total": len(enriched),
+            "active_window_sec": active_sec,
+            "flows": enriched,
+            "timestamp": time.time()
+        }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"status": "error", "message": str(e), "flows": [], "total": 0})
 
 @app.post("/api/intent")
 def submit_intent(req: IntentRequest):
@@ -643,6 +665,24 @@ body {
   transition: all 0.15s ease;
   border: 1px solid transparent;
   white-space: nowrap;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.table-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--brand-secondary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 .btn-primary {
   background: var(--brand-primary);
@@ -1089,18 +1129,18 @@ body {
 
     <ul class="nav-menu">
       <li class="nav-section-label">Monitoring</li>
-      <li><a class="nav-item active" onclick="switchTab('overview')"><svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a></li>
-      <li><a class="nav-item" onclick="switchTab('traffic')"><svg class="nav-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Live Traffic</a></li>
-      <li><a class="nav-item" onclick="switchTab('policies')"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Policies</a></li>
+      <li><a class="nav-item active" data-tab="overview" onclick="switchTab('overview', this)"><svg class="nav-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Overview</a></li>
+      <li><a class="nav-item" data-tab="traffic" onclick="switchTab('traffic', this)"><svg class="nav-icon" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Live Traffic</a></li>
+      <li><a class="nav-item" data-tab="policies" onclick="switchTab('policies', this)"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Policies</a></li>
       
       <li class="nav-section-label">Control & Tests</li>
-      <li><a class="nav-item" onclick="switchTab('intent')"><svg class="nav-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Intent</a></li>
-      <li><a class="nav-item" onclick="switchTab('experiments')"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M6 2v6h12V2"/><path d="M6 14v8h12v-8"/><line x1="6" y1="8" x2="18" y2="14"/></svg>Experiments</a></li>
-      <li><a class="nav-item" onclick="switchTab('events')"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Events</a></li>
+      <li><a class="nav-item" data-tab="intent" onclick="switchTab('intent', this)"><svg class="nav-icon" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Intent</a></li>
+      <li><a class="nav-item" data-tab="experiments" onclick="switchTab('experiments', this)"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M6 2v6h12V2"/><path d="M6 14v8h12v-8"/><line x1="6" y1="8" x2="18" y2="14"/></svg>Experiments</a></li>
+      <li><a class="nav-item" data-tab="events" onclick="switchTab('events', this)"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Events</a></li>
       
       <li class="nav-section-label">System</li>
-      <li><a class="nav-item" onclick="switchTab('reports')"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Reports</a></li>
-      <li><a class="nav-item" onclick="switchTab('settings')"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a></li>
+      <li><a class="nav-item" data-tab="reports" onclick="switchTab('reports', this)"><svg class="nav-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Reports</a></li>
+      <li><a class="nav-item" data-tab="settings" onclick="switchTab('settings', this)"><svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Settings</a></li>
     </ul>
 
     <div class="nav-bottom-status">
@@ -1356,10 +1396,16 @@ body {
     <section id="view-traffic" class="view-panel">
       <div class="section-header">
         <div>
-          <div class="section-title">Live Traffic Classification</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="section-title">Live Traffic Classification</div>
+            <span class="badge-status normal" id="flowStatusPill" style="font-size:10px;">● Live</span>
+          </div>
           <div class="section-desc">Real-time classification based on RFC header dynamics (Zero payload inspection)</div>
         </div>
-        <button class="btn btn-secondary btn-sm" onclick="callApi('/api/simulate/add-flows','POST')">Refresh Flows</button>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:11px;font-family:var(--font-mono);color:var(--text-secondary);" id="flowCountLabel">Loading flows...</span>
+          <button class="btn btn-secondary btn-sm" id="btnRefreshFlows" onclick="triggerFlowRefresh(true)">Refresh Flows</button>
+        </div>
       </div>
 
       <div class="card" style="background:#FAF9F6;padding:12px 16px;border-left:3px solid var(--brand-secondary);margin-bottom:16px;">
@@ -1382,7 +1428,13 @@ body {
             </tr>
           </thead>
           <tbody id="flowTableBody">
-            <tr><td colspan="9" style="text-align:center;padding:24px;color:var(--text-secondary);">Loading active flows...</td></tr>
+            <tr>
+              <td colspan="9" style="text-align:center;padding:36px 16px;color:var(--text-secondary);">
+                <div class="table-spinner"></div>
+                <div style="font-weight:600;font-size:13px;color:var(--text-primary);margin-top:10px;">Loading active flows...</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Querying gateway packet classification table</div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -1782,11 +1834,208 @@ body {
      APPLICATION JAVASCRIPT
      ====================================================================== -->
 <script>
-let currentSelectedFlowId = "";
+// ============================================================================
+// AQE PRODUCTION CLIENT RUNTIME & STATE MACHINE
+// ============================================================================
+
+// Utility: XSS safe escaping
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ─── FLOW STATE MACHINE ───
+const FlowState = {
+  LOADING: 'LOADING',
+  LOADED: 'LOADED',
+  EMPTY: 'EMPTY',
+  ERROR: 'ERROR',
+  REFRESHING: 'REFRESHING'
+};
+
+let currentFlowState = FlowState.LOADING;
+let lastFlowsCache = [];
+let flowAbortController = null;
+let isFlowFetchInFlight = false;
 let allEventsCache = [];
+let currentSelectedFlowId = "";
+
+// Helper to render flow table according to current state
+function renderFlowTable(state, flows = [], errorMsg = '') {
+  currentFlowState = state;
+  const tb = document.getElementById('flowTableBody');
+  const countLabel = document.getElementById('flowCountLabel');
+  const statusPill = document.getElementById('flowStatusPill');
+
+  if (!tb) return;
+
+  if (state === FlowState.LOADING) {
+    tb.innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align:center;padding:36px 16px;color:var(--text-secondary);">
+          <div class="table-spinner"></div>
+          <div style="font-weight:600;font-size:13px;color:var(--text-primary);margin-top:10px;">Loading active flows...</div>
+          <div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Querying gateway packet classification table</div>
+        </td>
+      </tr>
+    `;
+    if (statusPill) { statusPill.textContent = '● Querying'; statusPill.className = 'badge-status priority'; }
+    if (countLabel) countLabel.textContent = 'Synchronizing flows...';
+  }
+  else if (state === FlowState.EMPTY) {
+    tb.innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align:center;padding:40px 20px;color:var(--text-secondary);">
+          <div style="font-weight:600;font-size:13px;color:var(--text-primary);margin-bottom:6px;">No Active Flows Detected</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;max-width:440px;margin-left:auto;margin-right:auto;">
+            The gateway interface is currently idle. No active packet flows observed in the current observation window.
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="triggerFlowRefresh(true)">＋ Generate Test Traffic</button>
+        </td>
+      </tr>
+    `;
+    if (statusPill) { statusPill.textContent = '● Idle'; statusPill.className = 'badge-status normal'; }
+    if (countLabel) countLabel.textContent = '0 active flows (Network idle)';
+  }
+  else if (state === FlowState.ERROR) {
+    tb.innerHTML = `
+      <tr>
+        <td colspan="9" style="text-align:center;padding:36px 20px;">
+          <div style="font-weight:600;font-size:13px;color:var(--critical);margin-bottom:6px;">Unable to load active flows</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-bottom:14px;">${escapeHtml(errorMsg || 'Connection error or gateway service unavailable')}</div>
+          <button class="btn btn-secondary btn-sm" onclick="triggerFlowRefresh(true)">Retry Request</button>
+        </td>
+      </tr>
+    `;
+    if (statusPill) { statusPill.textContent = '● Error'; statusPill.className = 'badge-status rolled-back'; }
+    if (countLabel) countLabel.textContent = 'Sync error';
+  }
+  else if (state === FlowState.LOADED || state === FlowState.REFRESHING) {
+    if (flows && flows.length > 0) {
+      tb.innerHTML = flows.map(f => {
+        const conf = ((f.confidence || 0) * 100).toFixed(1) + '%';
+        const isOverridden = f.overridden;
+        const classColor = f.class === 'gaming' ? 'var(--brand-primary)' : f.class === 'video_conference' ? 'var(--brand-secondary)' : 'var(--warning)';
+        return `
+          <tr>
+            <td class="flow-id-code">${escapeHtml(f.flow_id)}</td>
+            <td><strong>${escapeHtml(f.device || 'Host')}</strong></td>
+            <td><span style="font-weight:600;color:${classColor};">${escapeHtml(f.class)}</span></td>
+            <td style="font-family:var(--font-mono);font-weight:600;color:var(--success);">${conf}</td>
+            <td style="font-family:var(--font-mono);">${f.rate_mbps || '—'} Mbps</td>
+            <td><span class="badge-status normal" style="font-size:10px;">${escapeHtml(f.dscp_name || 'CS0')}</span></td>
+            <td><strong>${escapeHtml(f.policy || 'NORMAL')}</strong></td>
+            <td><span style="color:${isOverridden ? 'var(--warning)' : 'var(--text-secondary)'};">${escapeHtml(f.status_desc || 'Normal')}</span></td>
+            <td>
+              <button class="btn btn-secondary btn-sm" onclick="openOverrideModal('${escapeHtml(f.flow_id)}', '${escapeHtml(f.class)}')">Override</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+      if (statusPill) {
+        statusPill.textContent = state === FlowState.REFRESHING ? '● Refreshing' : '● Live';
+        statusPill.className = 'badge-status ' + (state === FlowState.REFRESHING ? 'priority' : 'normal');
+      }
+      if (countLabel) countLabel.textContent = `Showing ${flows.length} active flow${flows.length === 1 ? '' : 's'}`;
+    }
+  }
+}
+
+// ─── DEDICATED FLOW FETCHER WITH ABORTCONTROLLER & TIMEOUT ───
+async function fetchFlows(isManual = false) {
+  if (isFlowFetchInFlight && !isManual) return;
+
+  if (flowAbortController) {
+    flowAbortController.abort();
+  }
+  flowAbortController = new AbortController();
+  const signal = flowAbortController.signal;
+
+  const refreshBtn = document.getElementById('btnRefreshFlows');
+  if (isManual && refreshBtn) {
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = 'Refreshing...';
+  }
+
+  if (!lastFlowsCache || lastFlowsCache.length === 0) {
+    if (currentFlowState !== FlowState.LOADED) {
+      renderFlowTable(FlowState.LOADING);
+    }
+  } else if (isManual) {
+    renderFlowTable(FlowState.REFRESHING, lastFlowsCache);
+  }
+
+  isFlowFetchInFlight = true;
+  const timeoutId = setTimeout(() => {
+    if (flowAbortController) flowAbortController.abort();
+  }, 5000); // 5s timeout
+
+  try {
+    const res = await fetch('/api/flows', { signal });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+
+    const data = await res.json();
+    const flows = Array.isArray(data.flows) ? data.flows : [];
+    lastFlowsCache = flows;
+
+    if (flows.length > 0) {
+      renderFlowTable(FlowState.LOADED, flows);
+    } else {
+      renderFlowTable(FlowState.EMPTY);
+    }
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      console.warn("Flow fetch aborted or timed out (5s)");
+      if (!lastFlowsCache || lastFlowsCache.length === 0) {
+        renderFlowTable(FlowState.ERROR, [], "Request timed out after 5.0 seconds. The gateway may be busy.");
+      }
+    } else {
+      console.error("Flow fetch error:", err);
+      if (!lastFlowsCache || lastFlowsCache.length === 0) {
+        renderFlowTable(FlowState.ERROR, [], err.message || "Network connection error");
+      }
+    }
+  } finally {
+    isFlowFetchInFlight = false;
+    flowAbortController = null;
+    if (refreshBtn) {
+      refreshBtn.disabled = false;
+      refreshBtn.textContent = 'Refresh Flows';
+    }
+  }
+}
+
+// ─── USER TRIGGERED REFRESH (DEBOUNCED & INTEGRATED) ───
+let refreshDebounceTimer = null;
+function triggerFlowRefresh(isManual = true) {
+  if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
+  refreshDebounceTimer = setTimeout(async () => {
+    if (isManual) {
+      try {
+        const simController = new AbortController();
+        const simTimeout = setTimeout(() => simController.abort(), 3000);
+        await fetch('/api/simulate/add-flows', { method: 'POST', signal: simController.signal });
+        clearTimeout(simTimeout);
+      } catch (e) {
+        console.warn("Simulate add-flows skipped:", e);
+      }
+    }
+    await fetchFlows(true);
+  }, 100);
+}
 
 // ─── TAB NAVIGATION ───
-function switchTab(tabId) {
+function switchTab(tabId, el) {
   document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
   
@@ -1798,123 +2047,150 @@ function switchTab(tabId) {
     intent: 'Temporary Intent', experiments: 'Experiments', events: 'Events',
     reports: 'Reports', settings: 'Settings & Production'
   };
-  document.getElementById('currentBreadcrumb').textContent = 'Adaptive QoS Engine / ' + (names[tabId] || 'Overview');
+  const bcrumb = document.getElementById('currentBreadcrumb');
+  if (bcrumb) {
+    bcrumb.textContent = 'Adaptive QoS Engine / ' + (names[tabId] || 'Overview');
+  }
 
-  event.currentTarget && event.currentTarget.classList.add('active');
+  if (el && el.classList) {
+    el.classList.add('active');
+  } else {
+    const item = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
+    if (item) item.classList.add('active');
+  }
+
+  if (tabId === 'traffic') {
+    fetchFlows(false);
+  }
 }
 
-// ─── POLLING API ───
-async function refreshState() {
+// ─── TELEMETRY & STATUS FETCHER ───
+async function refreshTelemetry() {
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), 4000);
   try {
-    // 1. Status
-    const s = await (await fetch('/api/status')).json();
-    const st = s.system_status || 'NORMAL';
-    const badge = document.getElementById('hdrStatusBadge');
-    badge.textContent = '● ' + st;
-    badge.className = 'badge-status ' + (st === 'NORMAL' ? 'normal' : st === 'DEGRADED' ? 'degraded' : st === 'PRIORITY_ACTIVE' ? 'priority' : 'rolled-back');
+    const sRes = await fetch('/api/status', { signal: ctrl.signal });
+    if (sRes.ok) {
+      const s = await sRes.json();
+      const st = s.system_status || 'NORMAL';
+      const badge = document.getElementById('hdrStatusBadge');
+      if (badge) {
+        badge.textContent = '● ' + st;
+        badge.className = 'badge-status ' + (st === 'NORMAL' ? 'normal' : st === 'DEGRADED' ? 'degraded' : st === 'PRIORITY_ACTIVE' ? 'priority' : 'rolled-back');
+      }
 
-    const wan = (s.wan_bandwidth_mbps || 100).toFixed(1);
-    document.getElementById('hdrWanVal').innerHTML = wan + ' Mbps <span style="font-size:10px;color:var(--text-secondary);">' + (wan < 90 ? '↓ Degraded' : 'Nominal') + '</span>';
-    document.getElementById('hdrActivePolicy').textContent = s.active_policy_name || 'DEFAULT FAIRNESS';
-    document.getElementById('hdrUptime').textContent = s.uptime || '00:00:00';
-    document.getElementById('topoWanRate').textContent = wan + ' Mbps';
-    document.getElementById('topoWanStatus').textContent = 'Target Shaping: ' + (s.current_policy_bw || 95) + ' Mbps';
-    document.getElementById('explainWan').textContent = wan;
-    document.getElementById('traceWan').textContent = wan + ' Mbps';
-    document.getElementById('traceShape').textContent = (s.current_policy_bw || 95) + ' Mbps';
+      const wan = (s.wan_bandwidth_mbps || 100).toFixed(1);
+      const wanEl = document.getElementById('hdrWanVal');
+      if (wanEl) {
+        wanEl.innerHTML = wan + ' Mbps <span style="font-size:10px;color:var(--text-secondary);">' + (wan < 90 ? '↓ Degraded' : 'Nominal') + '</span>';
+      }
+      const polEl = document.getElementById('hdrActivePolicy');
+      if (polEl) polEl.textContent = s.active_policy_name || 'DEFAULT FAIRNESS';
+      const upEl = document.getElementById('hdrUptime');
+      if (upEl) upEl.textContent = s.uptime || '00:00:00';
+      const tWan = document.getElementById('topoWanRate');
+      if (tWan) tWan.textContent = wan + ' Mbps';
+      const tStat = document.getElementById('topoWanStatus');
+      if (tStat) tStat.textContent = 'Target Shaping: ' + (s.current_policy_bw || 95) + ' Mbps';
+      const expWan = document.getElementById('explainWan');
+      if (expWan) expWan.textContent = wan;
+      const trWan = document.getElementById('traceWan');
+      if (trWan) trWan.textContent = wan + ' Mbps';
+      const trShp = document.getElementById('traceShape');
+      if (trShp) trShp.textContent = (s.current_policy_bw || 95) + ' Mbps';
 
-    // Active Intent UI
-    const ai = s.active_intent;
-    const intentBox = document.getElementById('activeIntentBox');
-    const intentBadge = document.getElementById('intentStatusBadge');
-    if (ai && ai.traffic_class) {
-      intentBadge.textContent = '● ACTIVE';
-      intentBadge.className = 'badge-status priority';
-      const rem = ai.remaining_sec || 0;
-      const m = Math.floor(rem / 60);
-      const sec = rem % 60;
-      intentBox.innerHTML = `
-        <div style="background:var(--surface-secondary);border:1px solid var(--border);border-radius:4px;padding:14px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <span style="font-weight:700;color:var(--brand-primary);">${ai.traffic_class.replace('_', ' ').toUpperCase()} PRIORITY</span>
-            <span style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:var(--brand-secondary);">${m}m ${sec}s left</span>
-          </div>
-          <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
-            ✓ Interactive latency bounded (&lt; 25ms)<br>
-            ✓ Video/Voice DSCP tags promoted to Tin 2/3<br>
-            ✓ Anti-starvation 20% bulk floor maintained
-          </div>
-          <button class="btn btn-danger btn-sm" style="width:100%;" onclick="cancelIntent()">Cancel Active Intent</button>
-        </div>
-      `;
-    } else {
-      intentBadge.textContent = '● Idle';
-      intentBadge.className = 'badge-status normal';
-      intentBox.innerHTML = `
-        <p style="color:var(--text-secondary);font-size:12px;padding:24px 0;text-align:center;">
-          No temporary intent currently active.<br>The engine is running default fair scheduling.
-        </p>
-      `;
+      // Active Intent UI
+      const ai = s.active_intent;
+      const intentBox = document.getElementById('activeIntentBox');
+      const intentBadge = document.getElementById('intentStatusBadge');
+      if (intentBox && intentBadge) {
+        if (ai && ai.traffic_class) {
+          intentBadge.textContent = '● ACTIVE';
+          intentBadge.className = 'badge-status priority';
+          const rem = ai.remaining_sec || 0;
+          const m = Math.floor(rem / 60);
+          const sec = rem % 60;
+          intentBox.innerHTML = `
+            <div style="background:var(--surface-secondary);border:1px solid var(--border);border-radius:4px;padding:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span style="font-weight:700;color:var(--brand-primary);">${escapeHtml(ai.traffic_class.replace('_', ' ').toUpperCase())} PRIORITY</span>
+                <span style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:var(--brand-secondary);">${m}m ${sec}s left</span>
+              </div>
+              <div style="font-size:11px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
+                ✓ Interactive latency bounded (&lt; 25ms)<br>
+                ✓ Video/Voice DSCP tags promoted to Tin 2/3<br>
+                ✓ Anti-starvation 20% bulk floor maintained
+              </div>
+              <button class="btn btn-danger btn-sm" style="width:100%;" onclick="cancelIntent()">Cancel Active Intent</button>
+            </div>
+          `;
+        } else {
+          intentBadge.textContent = '● Idle';
+          intentBadge.className = 'badge-status normal';
+          intentBox.innerHTML = `
+            <p style="color:var(--text-secondary);font-size:12px;padding:24px 0;text-align:center;">
+              No temporary intent currently active.<br>The engine is running default fair scheduling.
+            </p>
+          `;
+        }
+      }
     }
 
-    // 2. Metrics Telemetry
-    const m = await (await fetch('/api/metrics')).json();
-    if (m && m.length) {
-      const l = m[m.length - 1];
-      document.getElementById('valLatency').textContent = (l.latency_ms ?? 20.5).toFixed(1) + ' ms';
-      document.getElementById('valJitter').textContent = (l.jitter_ms ?? 0.18).toFixed(2) + ' ms';
-      document.getElementById('valLoss').textContent = (l.loss_pct ?? 0.0).toFixed(1) + ' %';
-      document.getElementById('valThroughput').textContent = (l.throughput_mbps ?? 16.9).toFixed(1) + ' Mbps';
-      document.getElementById('valQueue').textContent = (l.queue_depth_pkts ?? 0) + ' pkts';
-      document.getElementById('valFairness').textContent = (l.fairness_index ?? 0.96).toFixed(2);
+    // Metrics Telemetry
+    const mRes = await fetch('/api/metrics', { signal: ctrl.signal });
+    if (mRes.ok) {
+      const m = await mRes.json();
+      if (m && m.length) {
+        const l = m[m.length - 1];
+        const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        setVal('valLatency', (l.latency_ms ?? 20.5).toFixed(1) + ' ms');
+        setVal('valJitter', (l.jitter_ms ?? 0.18).toFixed(2) + ' ms');
+        setVal('valLoss', (l.loss_pct ?? 0.0).toFixed(1) + ' %');
+        setVal('valThroughput', (l.throughput_mbps ?? 16.9).toFixed(1) + ' Mbps');
+        setVal('valQueue', (l.queue_depth_pkts ?? 0) + ' pkts');
+        setVal('valFairness', (l.fairness_index ?? 0.96).toFixed(2));
+      }
     }
-
-    // 3. Flows
-    const fl = await (await fetch('/api/flows')).json();
-    const tb = document.getElementById('flowTableBody');
-    if (fl && fl.flows && fl.flows.length) {
-      tb.innerHTML = fl.flows.map(f => {
-        const conf = ((f.confidence || 0) * 100).toFixed(1) + '%';
-        const isOverridden = f.overridden;
-        return `
-          <tr>
-            <td class="flow-id-code">${f.flow_id}</td>
-            <td><strong>${f.device || 'Host'}</strong></td>
-            <td>${f.class}</td>
-            <td style="font-family:var(--font-mono);font-weight:600;color:var(--success);">${conf}</td>
-            <td style="font-family:var(--font-mono);">${f.rate_mbps || '—'} Mbps</td>
-            <td><span class="badge-status normal" style="font-size:10px;">${f.dscp_name}</span></td>
-            <td><strong>${f.policy || 'NORMAL'}</strong></td>
-            <td><span style="color:${isOverridden ? 'var(--warning)' : 'var(--text-secondary)'};">${f.status_desc}</span></td>
-            <td>
-              <button class="btn btn-secondary btn-sm" onclick="openOverrideModal('${f.flow_id}', '${f.class}')">Override</button>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    // 4. Events
-    const ev = await (await fetch('/api/events')).json();
-    allEventsCache = ev;
-    renderEvents(ev);
-
   } catch (err) {
-    console.warn("Poll tick failed:", err);
+    if (err.name !== 'AbortError') {
+      console.warn("Telemetry refresh warning:", err.message);
+    }
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
+// ─── EVENTS FETCHER ───
+async function refreshEvents() {
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), 4000);
+  try {
+    const res = await fetch('/api/events', { signal: ctrl.signal });
+    if (res.ok) {
+      const ev = await res.json();
+      allEventsCache = ev;
+      renderEvents(ev);
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.warn("Events refresh warning:", err.message);
+    }
+  } finally {
+    clearTimeout(tid);
   }
 }
 
 function renderEvents(list) {
   const tb = document.getElementById('eventsTableBody');
-  if (!list || !list.length) return;
+  if (!tb || !list || !list.length) return;
   tb.innerHTML = list.slice(0, 50).map(e => {
     const sev = e.level || 'INFO';
     const color = sev === 'CRITICAL' || sev === 'ERROR' ? 'var(--critical)' : sev === 'WARNING' || sev === 'WARN' ? 'var(--warning)' : sev === 'SUCCESS' ? 'var(--success)' : 'var(--brand-secondary)';
     return `
       <tr>
-        <td style="font-family:var(--font-mono);color:var(--text-secondary);">${e.ts}</td>
-        <td><span style="font-weight:700;font-size:10px;color:${color};text-transform:uppercase;">${sev}</span></td>
-        <td>${e.msg}</td>
+        <td style="font-family:var(--font-mono);color:var(--text-secondary);">${escapeHtml(e.ts)}</td>
+        <td><span style="font-weight:700;font-size:10px;color:${color};text-transform:uppercase;">${escapeHtml(sev)}</span></td>
+        <td>${escapeHtml(e.msg)}</td>
       </tr>
     `;
   }).join('');
@@ -1928,17 +2204,57 @@ function filterEvents(type) {
   }
 }
 
+// ─── MASTER POLLING LOOP (SAFE & NON-OVERLAPPING) ───
+let pollTimerId = null;
+let isPollingActive = false;
+
+async function pollMaster() {
+  if (isPollingActive) return;
+  if (document.hidden) {
+    // When tab is in background, pause aggressive polling and check back in 5s
+    pollTimerId = setTimeout(pollMaster, 5000);
+    return;
+  }
+
+  isPollingActive = true;
+  try {
+    await Promise.allSettled([
+      refreshTelemetry(),
+      fetchFlows(false),
+      refreshEvents()
+    ]);
+  } catch (err) {
+    console.warn("Master poll tick warning:", err);
+  } finally {
+    isPollingActive = false;
+    pollTimerId = setTimeout(pollMaster, 2500);
+  }
+}
+
+// Page visibility listener: resume immediately on focus
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    if (pollTimerId) clearTimeout(pollTimerId);
+    pollMaster();
+  }
+});
+
 // ─── USER INTENT ACTIONS ───
 async function submitCustomIntent() {
-  const text = document.getElementById('intentTextInput').value.trim();
+  const input = document.getElementById('intentTextInput');
+  const text = input ? input.value.trim() : '';
   if (!text) return;
-  await fetch('/api/intent', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text })
-  });
-  document.getElementById('intentTextInput').value = '';
-  refreshState();
+  try {
+    await fetch('/api/intent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    if (input) input.value = '';
+    refreshTelemetry();
+  } catch (e) {
+    alert("Failed to submit intent: " + e.message);
+  }
 }
 
 function setQuickIntent(text, sec) {
@@ -1946,41 +2262,59 @@ function setQuickIntent(text, sec) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text, duration_sec: sec })
-  }).then(() => refreshState());
+  }).then(() => refreshTelemetry()).catch(console.warn);
 }
 
 async function cancelIntent() {
-  await fetch('/api/intent', { method: 'DELETE' });
-  refreshState();
+  try {
+    await fetch('/api/intent', { method: 'DELETE' });
+    refreshTelemetry();
+  } catch (e) {
+    console.warn("Cancel intent error:", e);
+  }
 }
 
 // ─── OVERRIDE MODAL ───
 function openOverrideModal(flowId, currentClass) {
   currentSelectedFlowId = flowId;
-  document.getElementById('modalFlowId').textContent = flowId;
-  document.getElementById('modalClassSelect').value = currentClass || 'video_conference';
-  document.getElementById('overrideModal').classList.add('active');
+  const fidEl = document.getElementById('modalFlowId');
+  if (fidEl) fidEl.textContent = flowId;
+  const sel = document.getElementById('modalClassSelect');
+  if (sel) sel.value = currentClass || 'video_conference';
+  const modal = document.getElementById('overrideModal');
+  if (modal) modal.classList.add('active');
 }
 
 async function submitOverride() {
-  const corrected = document.getElementById('modalClassSelect').value;
-  await fetch('/api/override', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ flow_id: currentSelectedFlowId, corrected_class: corrected })
-  });
-  closeModal('overrideModal');
-  refreshState();
+  const sel = document.getElementById('modalClassSelect');
+  const corrected = sel ? sel.value : 'video_conference';
+  try {
+    await fetch('/api/override', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ flow_id: currentSelectedFlowId, corrected_class: corrected })
+    });
+    closeModal('overrideModal');
+    triggerFlowRefresh(false);
+  } catch (e) {
+    alert("Failed to apply override: " + e.message);
+  }
 }
 
 function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.remove('active');
 }
 
 // ─── SIMULATION SHORTCUTS ───
 async function callApi(url, method = 'POST') {
-  await fetch(url, { method });
-  refreshState();
+  try {
+    await fetch(url, { method });
+    triggerFlowRefresh(false);
+    refreshTelemetry();
+  } catch (e) {
+    console.warn("callApi error:", e);
+  }
 }
 
 // ─── EXPORT REPORT ───
@@ -2015,12 +2349,15 @@ Controller ID: EDGE-01 (gw namespace / veth-gw-wan)
 - Automated Remediation: Bounded, observable, reversible (Constraint C10)
 - Security: Zero plaintext secrets, private keys, or tokens committed
 `;
-  document.getElementById('reportMarkdownBlock').textContent = report;
-  document.getElementById('exportModal').classList.add('active');
+  const block = document.getElementById('reportMarkdownBlock');
+  if (block) block.textContent = report;
+  const modal = document.getElementById('exportModal');
+  if (modal) modal.classList.add('active');
 }
 
 function copyReportToClipboard() {
-  const text = document.getElementById('reportMarkdownBlock').textContent;
+  const block = document.getElementById('reportMarkdownBlock');
+  const text = block ? block.textContent : '';
   navigator.clipboard.writeText(text).then(() => {
     alert("Report copied to clipboard.");
     closeModal('exportModal');
@@ -2043,6 +2380,7 @@ function replayStep(idx) {
     setTimeout(() => replayStep(idx + 1), 1200);
   }
 }
+
 function resetReplay() {
   document.querySelectorAll('.replay-entry').forEach(el => {
     el.style.background = 'var(--surface-secondary)';
@@ -2050,9 +2388,13 @@ function resetReplay() {
   });
 }
 
-// Start polling
-refreshState();
-setInterval(refreshState, 2000);
+// ─── BOOTSTRAP ───
+document.addEventListener('DOMContentLoaded', () => {
+  pollMaster();
+});
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  pollMaster();
+}
 </script>
 
 </body>
