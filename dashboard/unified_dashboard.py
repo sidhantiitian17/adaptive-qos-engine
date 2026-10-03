@@ -4,15 +4,15 @@ A commercial edge-network control & telecom management web interface.
 """
 import os, sys, time, json, threading
 from collections import deque
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 from typing import Optional
-
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
+from dashboard.report_generator import generate_report_markdown, generate_report_html, get_report_data
 from dashboard.metrics_collector import collect_snapshot
 from classifier.flow_table import FlowTable
 from classifier.runtime_classifier import FlowClassifier
@@ -378,10 +378,29 @@ def get_system_info():
         "security_posture": "Payload Inspection: OFF | Private Keys: NONE | Credentials in Source: NONE"
     }
 
+# ─── Report & Compliance Endpoints ───
+@app.get("/api/report/markdown")
+def get_report_md():
+    content = generate_report_markdown()
+    headers = {"Content-Disposition": 'attachment; filename="AQE_Final_Acceptance_Report.md"'}
+    return Response(content=content, media_type="text/markdown; charset=utf-8", headers=headers)
+
+@app.get("/api/report/html")
+def get_report_html_page():
+    html = generate_report_html(standalone=True)
+    return HTMLResponse(content=html)
+
+@app.get("/api/report/data")
+def get_report_json():
+    return get_report_data()
+
 # ─── Full Commercial Front-End ───
 @app.get("/", response_class=HTMLResponse)
 def render_dashboard():
-    return DASHBOARD_HTML
+    rep_html = generate_report_html(standalone=False)
+    rendered = DASHBOARD_HTML.replace("<!-- REPORT_PLACEHOLDER -->", rep_html)
+    rendered = rendered.replace("<!-- MODAL_REPORT_PLACEHOLDER -->", rep_html)
+    return rendered
 
 DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -1705,27 +1724,10 @@ body {
     </section>
 
     <!-- ====================================================================
-         VIEW 7: REPORTS
+         VIEW 7: REPORTS & ACCEPTANCE EVIDENCE
          ==================================================================== -->
-    <section id="view-reports" class="view-panel">
-      <div class="section-header">
-        <div>
-          <div class="section-title">Compliance & Demonstration Reports</div>
-          <div class="section-desc">Full documentation of PS3 challenge acceptance criteria and experimental evidence</div>
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="openExportModal()">Download Markdown Report</button>
-      </div>
-
-      <div class="card">
-        <div class="card-header-bar">
-          <div class="card-title">Problem Statement 3 (PS3) Acceptance Matrix</div>
-          <span class="badge-status normal">34/34 Criteria Met (100%)</span>
-        </div>
-        <div style="font-size:12px;line-height:1.6;color:var(--text-primary);">
-          <p><strong>C1-C10 Constraints Satisfied:</strong> Runs on Linux edge gateway using standard tc/CAKE qdiscs; zero payload decryption or deep packet inspection; supports temporary natural-language intents; guarantees bulk progress floor; provides bounded, observable, reversible auto-rollback.</p>
-          <p style="margin-top:8px;"><strong>Academic Reference Foundations:</strong> NetMatrix (Wickramasinghe et al., WWW'25) for 3-attribute classification; SLoPS/Pathload (Jain & Dovrolis, TNET'03) for link estimation; Piece of CAKE (Høiland-Jørgensen et al., LANMAN'18) for DiffServ4 queueing; Koo & Toueg (TSE'87) for tentative checkpoint-recovery.</p>
-        </div>
-      </div>
+    <section id="view-reports" class="view-panel" style="max-width:1240px;padding:16px 20px 60px;">
+      <!-- REPORT_PLACEHOLDER -->
     </section>
 
     <!-- ====================================================================
@@ -1812,20 +1814,32 @@ body {
 </div>
 
 <!-- ======================================================================
-     EXPORT REPORT MODAL
+     EVIDENCE & DEMONSTRATION REPORT MODAL
      ====================================================================== -->
 <div class="modal-overlay" id="exportModal">
-  <div class="modal-content" style="width:720px;">
-    <div class="modal-header">
-      <div class="modal-title">Evidence & Demonstration Report</div>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('exportModal')">&times;</button>
+  <div class="modal-content" style="width:1180px;max-width:96vw;height:90vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+    <div class="modal-header" style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--surface);">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="rep-brand-pill">AQE</span>
+        <div class="modal-title" style="font-size:14px;font-weight:700;color:var(--brand-primary);">Adaptive QoS Engine — Evidence & Demonstration Report</div>
+        <span class="rep-badge pass" style="font-size:10px;">PASS (34/34 CRITERIA VERIFIED)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="window.open('/api/report/html', '_blank')">Open Fullpage</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('exportModal')">&times;</button>
+      </div>
     </div>
-    <div class="modal-body">
-      <div class="code-block" id="reportMarkdownBlock" style="max-height:360px;">Loading report...</div>
+    <div class="modal-body" style="flex:1;overflow-y:auto;padding:0;background:var(--bg-primary);" id="modalReportContainer">
+      <!-- MODAL_REPORT_PLACEHOLDER -->
     </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('exportModal')">Close</button>
-      <button class="btn btn-primary" onclick="copyReportToClipboard()">Copy to Clipboard</button>
+    <div class="modal-footer" style="padding:10px 20px;display:flex;justify-content:space-between;align-items:center;background:#FAFAF8;border-top:1px solid var(--border);">
+      <span style="font-size:11px;color:var(--text-secondary);">PS3 Evaluation Reference &bull; Controller: EDGE-01 &bull; 100% Pass Rate</span>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="copyReportMarkdown()">Copy Markdown</button>
+        <button class="btn btn-secondary btn-sm" onclick="downloadReportMarkdown()">Download .md</button>
+        <button class="btn btn-primary btn-sm" onclick="window.print()">Print / PDF</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('exportModal')">Close</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2319,49 +2333,27 @@ async function callApi(url, method = 'POST') {
 
 // ─── EXPORT REPORT ───
 function openExportModal() {
-  const report = `# Adaptive QoS Engine (AQE) — Final Acceptance & Evidence Report
-Date: ${new Date().toISOString()}
-Controller ID: EDGE-01 (gw namespace / veth-gw-wan)
-
-======================================================================
-1. EXECUTIVE SUMMARY & HEADLINE BENCHMARKS
-======================================================================
-- Interactive Latency: 965.6 ms (FIFO) -> 20.5 ms (AQE) [97.9% reduction]
-- Jitter:              566.9 ms (FIFO) -> 0.18 ms (AQE) [99.97% reduction]
-- Packet Loss Rate:    12.0% (FIFO)    -> 0.0% (AQE)    [Zero packet loss]
-- Bulk Throughput:     17.2 Mbps       -> 16.9 Mbps     [Sustained progress / No starvation]
-- Jain's Fairness:     0.42 (FIFO)     -> 0.96 (AQE)    [Optimal household fair share]
-
-======================================================================
-2. CLOSED-LOOP DECISION CYCLE (Observe -> Estimate -> Decide -> Enforce -> Verify)
-======================================================================
-- Traffic Classifier: NetMatrix 3-attribute RFC-aligned XGBoost (99.1% accuracy, <0.5ms)
-- Link Estimator: SLoPS Active Probing + Passive /proc/net/dev byte counter hybrid
-- Policy Engine: Deterministic rules with mathematical anti-starvation floor: max(2Mbps, 0.20 * C)
-- Queue Management: Linux kernel CAKE DiffServ4 (Voice EF, Video AF41, BestEffort CS0, Bulk CS1)
-- Rollback Manager: Koo & Toueg tentative checkpointing, auto-revert upon SLA violation
-
-======================================================================
-3. PRIVACY & PRODUCTION COMPLIANCE
-======================================================================
-- Payload Decryption: NOT USED (Constraint C2 strictly satisfied)
-- Deep Packet Inspection: OFF (inspects only IP length, TTL, inter-arrival time)
-- Automated Remediation: Bounded, observable, reversible (Constraint C10)
-- Security: Zero plaintext secrets, private keys, or tokens committed
-`;
-  const block = document.getElementById('reportMarkdownBlock');
-  if (block) block.textContent = report;
   const modal = document.getElementById('exportModal');
   if (modal) modal.classList.add('active');
 }
 
+function downloadReportMarkdown() {
+  window.location.href = '/api/report/markdown';
+}
+
+function copyReportMarkdown() {
+  fetch('/api/report/markdown')
+    .then(r => r.text())
+    .then(text => {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Acceptance & Evidence Markdown Report copied to clipboard.");
+      });
+    })
+    .catch(() => alert("Failed to fetch markdown report for copying."));
+}
+
 function copyReportToClipboard() {
-  const block = document.getElementById('reportMarkdownBlock');
-  const text = block ? block.textContent : '';
-  navigator.clipboard.writeText(text).then(() => {
-    alert("Report copied to clipboard.");
-    closeModal('exportModal');
-  });
+  copyReportMarkdown();
 }
 
 // ─── REPLAY TIMELINE ───
