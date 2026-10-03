@@ -533,27 +533,27 @@ def generate_report_html(standalone: bool = True) -> str:
   <!-- SECTION JUMP NAVIGATION (STICKY) -->
   <div class="rep-jump-nav no-print">
     <div class="rep-jump-label">JUMP TO:</div>
-    <a href="#rep-exec">Summary</a>
-    <a href="#rep-objs">Objectives</a>
-    <a href="#rep-arch">Architecture</a>
-    <a href="#rep-priv">Privacy</a>
-    <a href="#rep-matrix">Test Matrix</a>
-    <a href="#rep-compare">Baseline vs AQE</a>
-    <a href="#rep-class">Classification</a>
-    <a href="#rep-link">Capacity</a>
-    <a href="#rep-decide">Decision Chain</a>
-    <a href="#rep-intent">Intent NLP</a>
-    <a href="#rep-fair">Fairness & Anti-Starvation</a>
-    <a href="#rep-adapt">Adaptation</a>
-    <a href="#rep-rollback">Rollback</a>
-    <a href="#rep-overhead">CPU Overhead</a>
-    <a href="#rep-repro">Reproducibility</a>
-    <a href="#rep-evidence">Evidence Index</a>
-    <a href="#rep-trace">Traceability</a>
-    <a href="#rep-limits">Known Limitations</a>
-    <a href="#rep-licenses">Licenses</a>
-    <a href="#rep-signoff">Sign-Off</a>
-    <a href="#rep-appendix">Raw Logs</a>
+    <a href="#rep-exec" onclick="jumpToReportSection(event, 'rep-exec')">Summary</a>
+    <a href="#rep-objs" onclick="jumpToReportSection(event, 'rep-objs')">Objectives</a>
+    <a href="#rep-arch" onclick="jumpToReportSection(event, 'rep-arch')">Architecture</a>
+    <a href="#rep-priv" onclick="jumpToReportSection(event, 'rep-priv')">Privacy</a>
+    <a href="#rep-matrix" onclick="jumpToReportSection(event, 'rep-matrix')">Test Matrix</a>
+    <a href="#rep-compare" onclick="jumpToReportSection(event, 'rep-compare')">Baseline vs AQE</a>
+    <a href="#rep-class" onclick="jumpToReportSection(event, 'rep-class')">Classification</a>
+    <a href="#rep-link" onclick="jumpToReportSection(event, 'rep-link')">Capacity</a>
+    <a href="#rep-decide" onclick="jumpToReportSection(event, 'rep-decide')">Decision Chain</a>
+    <a href="#rep-intent" onclick="jumpToReportSection(event, 'rep-intent')">Intent NLP</a>
+    <a href="#rep-fair" onclick="jumpToReportSection(event, 'rep-fair')">Fairness & Anti-Starvation</a>
+    <a href="#rep-adapt" onclick="jumpToReportSection(event, 'rep-adapt')">Adaptation</a>
+    <a href="#rep-rollback" onclick="jumpToReportSection(event, 'rep-rollback')">Rollback</a>
+    <a href="#rep-overhead" onclick="jumpToReportSection(event, 'rep-overhead')">CPU Overhead</a>
+    <a href="#rep-repro" onclick="jumpToReportSection(event, 'rep-repro')">Reproducibility</a>
+    <a href="#rep-evidence" onclick="jumpToReportSection(event, 'rep-evidence')">Evidence Index</a>
+    <a href="#rep-trace" onclick="jumpToReportSection(event, 'rep-trace')">Traceability</a>
+    <a href="#rep-limits" onclick="jumpToReportSection(event, 'rep-limits')">Known Limitations</a>
+    <a href="#rep-licenses" onclick="jumpToReportSection(event, 'rep-licenses')">Licenses</a>
+    <a href="#rep-signoff" onclick="jumpToReportSection(event, 'rep-signoff')">Sign-Off</a>
+    <a href="#rep-appendix" onclick="jumpToReportSection(event, 'rep-appendix')">Raw Logs</a>
   </div>
 
   <!-- COVER / HEADER -->
@@ -606,7 +606,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </header>
 
   <!-- 1. EXECUTIVE SUMMARY -->
-  <section class="rep-section" id="rep-exec">
+  <section class="rep-section" id="rep-exec" data-section="rep-exec">
     <div class="rep-sec-header">
       <span class="rep-sec-num">01</span>
       <h2 class="rep-sec-title">Executive Summary & Headline KPIs</h2>
@@ -640,7 +640,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 2. PROBLEM STATEMENT & OBJECTIVES -->
-  <section class="rep-section" id="rep-objs">
+  <section class="rep-section" id="rep-objs" data-section="rep-objs">
     <div class="rep-sec-header">
       <span class="rep-sec-num">02</span>
       <h2 class="rep-sec-title">Problem Statement & Test Objectives</h2>
@@ -669,7 +669,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 3. SYSTEM ARCHITECTURE & TEST ENVIRONMENT -->
-  <section class="rep-section" id="rep-arch">
+  <section class="rep-section" id="rep-arch" data-section="rep-arch">
     <div class="rep-sec-header">
       <span class="rep-sec-num">03</span>
       <h2 class="rep-sec-title">System Architecture & Test Environment</h2>
@@ -714,7 +714,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 4. PRIVACY & SECURITY DECLARATION -->
-  <section class="rep-section" id="rep-priv">
+  <section class="rep-section" id="rep-priv" data-section="rep-priv">
     <div class="rep-sec-header">
       <span class="rep-sec-num">04</span>
       <h2 class="rep-sec-title">Privacy & Security Declaration</h2>
@@ -762,7 +762,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 5. EXPERIMENTAL TEST MATRIX -->
-  <section class="rep-section" id="rep-matrix">
+  <section class="rep-section" id="rep-matrix" data-section="rep-matrix">
     <div class="rep-sec-header">
       <span class="rep-sec-num">05</span>
       <h2 class="rep-sec-title">Experimental Test Matrix</h2>
@@ -820,7 +820,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 6. BASELINE VS AQE COMPARATIVE RESULTS -->
-  <section class="rep-section" id="rep-compare">
+  <section class="rep-section" id="rep-compare" data-section="rep-compare">
     <div class="rep-sec-header">
       <span class="rep-sec-num">06</span>
       <h2 class="rep-sec-title">Baseline vs Adaptive QoS Comparative Results</h2>
@@ -902,7 +902,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 7. TRAFFIC CLASSIFICATION VALIDATION -->
-  <section class="rep-section" id="rep-class">
+  <section class="rep-section" id="rep-class" data-section="rep-class">
     <div class="rep-sec-header">
       <span class="rep-sec-num">07</span>
       <h2 class="rep-sec-title">Traffic Classification Validation (AI vs Heuristic)</h2>
@@ -982,7 +982,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 8. LINK CAPACITY ESTIMATION VALIDATION -->
-  <section class="rep-section" id="rep-link">
+  <section class="rep-section" id="rep-link" data-section="rep-link">
     <div class="rep-sec-header">
       <span class="rep-sec-num">08</span>
       <h2 class="rep-sec-title">Link Capacity Estimation Validation</h2>
@@ -1000,7 +1000,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 9. DYNAMIC POLICY DECISION CHAIN -->
-  <section class="rep-section" id="rep-decide">
+  <section class="rep-section" id="rep-decide" data-section="rep-decide">
     <div class="rep-sec-header">
       <span class="rep-sec-num">09</span>
       <h2 class="rep-sec-title">Dynamic Policy Decision Chain</h2>
@@ -1030,7 +1030,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 10. TEMPORARY INTENT EVALUATION -->
-  <section class="rep-section" id="rep-intent">
+  <section class="rep-section" id="rep-intent" data-section="rep-intent">
     <div class="rep-sec-header">
       <span class="rep-sec-num">10</span>
       <h2 class="rep-sec-title">Temporary User Intent Evaluation</h2>
@@ -1072,7 +1072,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 11. FAIRNESS & ANTI-STARVATION GUARANTEES -->
-  <section class="rep-section" id="rep-fair">
+  <section class="rep-section" id="rep-fair" data-section="rep-fair">
     <div class="rep-sec-header">
       <span class="rep-sec-num">11</span>
       <h2 class="rep-sec-title">Fairness & Anti-Starvation Guarantees</h2>
@@ -1105,7 +1105,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 12. DYNAMIC ADAPTATION SPEED & STABILITY -->
-  <section class="rep-section" id="rep-adapt">
+  <section class="rep-section" id="rep-adapt" data-section="rep-adapt">
     <div class="rep-sec-header">
       <span class="rep-sec-num">12</span>
       <h2 class="rep-sec-title">Dynamic Adaptation Speed & Stability</h2>
@@ -1134,7 +1134,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 13. ROLLBACK & FAULT RECOVERY -->
-  <section class="rep-section" id="rep-rollback">
+  <section class="rep-section" id="rep-rollback" data-section="rep-rollback">
     <div class="rep-sec-header">
       <span class="rep-sec-num">13</span>
       <h2 class="rep-sec-title">Rollback & Fault Recovery (Koo & Toueg Protocol)</h2>
@@ -1167,7 +1167,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 14. SYSTEM OVERHEAD & RESOURCE UTILIZATION -->
-  <section class="rep-section" id="rep-overhead">
+  <section class="rep-section" id="rep-overhead" data-section="rep-overhead">
     <div class="rep-sec-header">
       <span class="rep-sec-num">14</span>
       <h2 class="rep-sec-title">System Overhead & Resource Utilization</h2>
@@ -1199,7 +1199,7 @@ def generate_report_html(standalone: bool = True) -> str:
   </section>
 
   <!-- 15. REPRODUCIBILITY & REPRODUCTION COMMANDS -->
-  <section class="rep-section" id="rep-repro">
+  <section class="rep-section" id="rep-repro" data-section="rep-repro">
     <div class="rep-sec-header">
       <span class="rep-sec-num">15</span>
       <h2 class="rep-sec-title">Reproducibility & Reproduction Commands</h2>
@@ -1223,7 +1223,7 @@ curl -s http://localhost:8080/api/status | jq .
   </section>
 
   <!-- 16. EVIDENCE INDEX CATALOG -->
-  <section class="rep-section" id="rep-evidence">
+  <section class="rep-section" id="rep-evidence" data-section="rep-evidence">
     <div class="rep-sec-header">
       <span class="rep-sec-num">16</span>
       <h2 class="rep-sec-title">Evidence Index Catalog</h2>
@@ -1313,7 +1313,7 @@ curl -s http://localhost:8080/api/status | jq .
   </section>
 
   <!-- 17. REQUIREMENTS TRACEABILITY MATRIX -->
-  <section class="rep-section" id="rep-trace">
+  <section class="rep-section" id="rep-trace" data-section="rep-trace">
     <div class="rep-sec-header">
       <span class="rep-sec-num">17</span>
       <h2 class="rep-sec-title">Requirements Traceability Matrix (C1-C10 Constraints)</h2>
@@ -1419,7 +1419,7 @@ curl -s http://localhost:8080/api/status | jq .
   </section>
 
   <!-- 18. KNOWN LIMITATIONS & PRODUCTION BOUNDARY -->
-  <section class="rep-section" id="rep-limits">
+  <section class="rep-section" id="rep-limits" data-section="rep-limits">
     <div class="rep-sec-header">
       <span class="rep-sec-num">18</span>
       <h2 class="rep-sec-title">Known Limitations & Production Boundary</h2>
@@ -1445,7 +1445,7 @@ curl -s http://localhost:8080/api/status | jq .
   </section>
 
   <!-- 19. THIRD-PARTY LICENSES & ATTRIBUTION -->
-  <section class="rep-section" id="rep-licenses">
+  <section class="rep-section" id="rep-licenses" data-section="rep-licenses">
     <div class="rep-sec-header">
       <span class="rep-sec-num">19</span>
       <h2 class="rep-sec-title">Third-Party Licenses & Open Source Attribution</h2>
@@ -1493,7 +1493,7 @@ curl -s http://localhost:8080/api/status | jq .
   </section>
 
   <!-- 20. FINAL ACCEPTANCE SIGN-OFF -->
-  <section class="rep-section" id="rep-signoff">
+  <section class="rep-section" id="rep-signoff" data-section="rep-signoff">
     <div class="rep-sec-header">
       <span class="rep-sec-num">20</span>
       <h2 class="rep-sec-title">Final Acceptance Sign-Off</h2>
@@ -1524,7 +1524,7 @@ curl -s http://localhost:8080/api/status | jq .
   </section>
 
   <!-- 21. TECHNICAL APPENDIX & RAW LOG DUMPS -->
-  <section class="rep-section" id="rep-appendix">
+  <section class="rep-section" id="rep-appendix" data-section="rep-appendix">
     <div class="rep-sec-header">
       <span class="rep-sec-num">21</span>
       <h2 class="rep-sec-title">Technical Appendix & Raw Log Dumps</h2>
@@ -1589,6 +1589,7 @@ ALL 34 ACCEPTANCE CRITERIA VERIFIED AND PASSED (100% PASS RATE)
     </div>
   </section>
 
+
   <!-- REPORT FOOTER -->
   <footer class="rep-footer">
     <div style="font-weight:600;color:var(--brand-primary);">Adaptive QoS Engine (AQE) — Final Acceptance & Evidence Report</div>
@@ -1596,6 +1597,45 @@ ALL 34 ACCEPTANCE CRITERIA VERIFIED AND PASSED (100% PASS RATE)
   </footer>
 </div>
 """
+    content += r"""
+  <!-- JUMP NAVIGATION LOGIC -->
+  <script>
+  function jumpToReportSection(event, sectionId) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const btn = event ? (event.currentTarget || event.target) : null;
+    const container = btn ? btn.closest('.report-wrapper') : document.getElementById('aqe-acceptance-report');
+    if (!container) return;
+
+    const target = container.querySelector('#' + sectionId) || container.querySelector('[data-section="' + sectionId + '"]');
+    if (!target) return;
+
+    // Check if inside modal scroll container
+    const modalScroll = container.closest('#modalReportContainer') || container.closest('.modal-body') || container.closest('.modal-content');
+    if (modalScroll) {
+      const parentRect = modalScroll.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const offset = targetRect.top - parentRect.top + modalScroll.scrollTop - 48;
+      modalScroll.scrollTo({
+        top: Math.max(0, offset),
+        behavior: 'smooth'
+      });
+    } else {
+      // Top-level page scroll: offset accounts for 64px top-header + 40px jump bar
+      const headerOffset = 115;
+      const elementPosition = target.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+      window.scrollTo({
+        top: Math.max(0, offsetPosition),
+        behavior: 'smooth'
+      });
+    }
+  }
+  </script>
+"""
+
 
     css = """
 <style>
@@ -1689,16 +1729,22 @@ ALL 34 ACCEPTANCE CRITERIA VERIFIED AND PASSED (100% PASS RATE)
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.98);
   backdrop-filter: blur(4px);
   border-bottom: 1px solid var(--border);
-  padding: 8px 0;
+  padding: 8px 12px;
   margin-bottom: 24px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   overflow-x: auto;
   white-space: nowrap;
+}
+#view-reports .rep-jump-nav {
+  top: 64px; /* Position cleanly below sticky top-header */
+}
+#exportModal .rep-jump-nav {
+  top: 0;
 }
 .rep-jump-label {
   font-size: 10px;
@@ -1717,7 +1763,9 @@ ALL 34 ACCEPTANCE CRITERIA VERIFIED AND PASSED (100% PASS RATE)
   border-radius: 3px;
   background: var(--surface-secondary);
   border: 1px solid var(--border);
-  transition: background 0.12s ease;
+  transition: background 0.12s ease, color 0.12s ease;
+  cursor: pointer;
+  user-select: none;
 }
 .rep-jump-nav a:hover {
   background: #D8D7D2;
@@ -1810,7 +1858,10 @@ ALL 34 ACCEPTANCE CRITERIA VERIFIED AND PASSED (100% PASS RATE)
 /* SECTIONS */
 .rep-section {
   margin-bottom: 36px;
-  scroll-margin-top: 50px;
+  scroll-margin-top: 120px;
+}
+#exportModal .rep-section {
+  scroll-margin-top: 60px;
 }
 .rep-sec-header {
   display: flex;

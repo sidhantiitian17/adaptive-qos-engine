@@ -2356,6 +2356,40 @@ function copyReportToClipboard() {
   copyReportMarkdown();
 }
 
+function jumpToReportSection(event, sectionId) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const btn = event ? (event.currentTarget || event.target) : null;
+  const container = btn ? btn.closest('.report-wrapper') : document.querySelector('.report-wrapper');
+  if (!container) return;
+
+  const target = container.querySelector('#' + sectionId) || container.querySelector('[data-section="' + sectionId + '"]');
+  if (!target) return;
+
+  // Check if inside modal scroll container
+  const modalScroll = container.closest('#modalReportContainer') || container.closest('.modal-body') || container.closest('.modal-content');
+  if (modalScroll) {
+    const parentRect = modalScroll.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const offset = targetRect.top - parentRect.top + modalScroll.scrollTop - 48;
+    modalScroll.scrollTo({
+      top: Math.max(0, offset),
+      behavior: 'smooth'
+    });
+  } else {
+    // Top-level page scroll: offset accounts for 64px top-header + 40px jump bar
+    const headerOffset = 115;
+    const elementPosition = target.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+    window.scrollTo({
+      top: Math.max(0, offsetPosition),
+      behavior: 'smooth'
+    });
+  }
+}
+
 // ─── REPLAY TIMELINE ───
 function replayStep(idx) {
   const entries = document.querySelectorAll('.replay-entry');
