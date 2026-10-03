@@ -174,12 +174,16 @@ class LiveFlowSniffer:
         self._stop_event.clear()
 
         def _worker():
-            sniff(
-                iface=self.ifaces,
-                prn=self._packet_handler,
-                stop_filter=lambda x: self._stop_event.is_set(),
-                store=False
-            )
+            try:
+                sniff(
+                    iface=self.ifaces,
+                    prn=self._packet_handler,
+                    stop_filter=lambda x: self._stop_event.is_set(),
+                    store=False
+                )
+            except Exception as e:
+                # Expected when running without kernel netns or ifaces not yet bound
+                pass
 
         self._thread = threading.Thread(target=_worker, daemon=True)
         self._thread.start()

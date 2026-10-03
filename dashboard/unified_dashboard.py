@@ -47,6 +47,19 @@ def log_event(msg, level="INFO"):
 
 log_event("Dashboard started. System in NORMAL state.", "INFO")
 
+def _bg_metric_worker():
+    while True:
+        try:
+            snap = collect_snapshot()
+            with open(LOG_FILE, "a") as f:
+                f.write(json.dumps(snap) + "\n")
+        except Exception:
+            pass
+        time.sleep(2)
+
+_bg_thread = threading.Thread(target=_bg_metric_worker, daemon=True)
+_bg_thread.start()
+
 # ─── Pydantic Models ───
 class IntentRequest(BaseModel):
     text: str
@@ -138,6 +151,10 @@ def submit_intent(req: IntentRequest):
     if action in ("none", None, "") and traffic_class not in ("other", "unknown"):
         action = "prioritize"
 
+    parsed["action"] = action
+    parsed["traffic_class"] = traffic_class
+    parsed["duration_sec"] = duration
+
     if action == "prioritize":
         scheduled = intent_scheduler.schedule_intent(
             traffic_class=traffic_class, action=action, duration_sec=duration,
@@ -226,6 +243,8 @@ def simulate_restore():
     system_state["wan_bandwidth_mbps"] = 100.0
     system_state["current_policy_bw"] = 100
     system_state["status"] = "NORMAL"
+    rollback_mgr.apply_policy(100, "diffserv4")
+    rollback_mgr.make_permanent(100)
     log_event("WAN bandwidth restored to 100 Mbps. System NORMAL.", "INFO")
     return {"status": "restored"}
 
