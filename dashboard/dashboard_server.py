@@ -196,12 +196,12 @@ def render_dashboard():
                 const fairness = list.map(d => d.fairness_index ?? 1.0);
 
                 const latest = list[list.length - 1];
-                document.getElementById('valLatency').innerText = `${latest.latency_ms ?? 0} ms`;
-                document.getElementById('valJitter').innerText = `${latest.jitter_ms ?? 0} ms`;
-                document.getElementById('valLoss').innerText = `${latest.loss_pct ?? 0} %`;
-                document.getElementById('valThroughput').innerText = `${latest.throughput_mbps ?? 0} Mbps`;
-                document.getElementById('valQueue').innerText = `${latest.queue_depth_pkts ?? 0} pkts`;
-                document.getElementById('valFairness').innerText = `${latest.fairness_index ?? 1.0}`;
+                document.getElementById('valLatency').innerText = latest.latency_ms != null ? `${latest.latency_ms} ms` : '--';
+                document.getElementById('valJitter').innerText = latest.jitter_ms != null ? `${latest.jitter_ms} ms` : '--';
+                document.getElementById('valLoss').innerText = latest.loss_pct != null ? `${latest.loss_pct} %` : '--';
+                document.getElementById('valThroughput').innerText = latest.throughput_mbps != null ? `${latest.throughput_mbps} Mbps` : '0.0 Mbps';
+                document.getElementById('valQueue').innerText = latest.queue_depth_pkts != null ? `${latest.queue_depth_pkts} pkts` : '--';
+                document.getElementById('valFairness').innerText = latest.fairness_index != null ? `${latest.fairness_index}` : '--';
 
                 createOrUpdateChart('latencyChart', labels, latencies, 'Latency (ms)', '#00f2fe');
                 createOrUpdateChart('jitterChart', labels, jitters, 'Jitter (ms)', '#f7b731');

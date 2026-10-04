@@ -32,12 +32,18 @@ class RollbackManager:
             if check.returncode != 0:
                 self.dry_run = True
 
-    def _run(self, cmd_str):
+    def _run(self, cmd_args):
         if self.dry_run:
             return 0, "mock_output"
-        full_cmd = cmd_str if os.geteuid() == 0 else f"sudo -n {cmd_str}"
+        import shlex
+        if isinstance(cmd_args, str):
+            args = shlex.split(cmd_args)
+        else:
+            args = list(cmd_args)
+        if os.geteuid() != 0 and (not args or args[0] != "sudo"):
+            args = ["sudo", "-n"] + args
         try:
-            res = subprocess.run(full_cmd, shell=True, capture_output=True, text=True)
+            res = subprocess.run(args, shell=False, capture_output=True, text=True)
             return res.returncode, res.stdout
         except Exception as e:
             return 1, str(e)

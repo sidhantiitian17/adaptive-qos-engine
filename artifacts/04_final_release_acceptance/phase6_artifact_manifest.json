@@ -1,6 +1,6 @@
 {
   "phase": "PHASE 6 FINAL SOFTWARE RELEASE ACCEPTANCE",
-  "timestamp": "2026-10-04T10:24:00Z",
+  "timestamp": "2026-10-04T11:08:00Z",
   "files": {
     "phase6_acceptance_matrix.md": {
       "sha256": "34b7086e0380bff99eb62778b2e7bb7682929ab1e3f8df0f1590776be64ce832",
@@ -51,7 +51,7 @@
       "size_bytes": 2334
     },
     "phase6_scenario_results.json": {
-      "sha256": "07dbb312a02d8c21cc55b8b338d4de6ef3df149b94692d4731e7d3404bc7c434",
+      "sha256": "62820a12495bc49c24dcd77c113c9f2300d306de5060c12b54b5eaa2b6a857f5",
       "size_bytes": 918
     },
     "phase6_zero_fabrication_audit.md": {

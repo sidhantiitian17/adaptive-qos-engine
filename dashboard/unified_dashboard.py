@@ -90,7 +90,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Adaptive QoS Engine (AQE)", version="3.2.0", lifespan=lifespan)
 
-# Helper for test traffic seeding (invoked ONLY when operator triggers it)
+# Helper for test traffic seeding (invoked ONLY when operator triggers /api/simulate/add-flows)
 def seed_test_traffic_flows():
     samples = [
         ("10.0.1.2:5000->10.0.3.2:5201/udp", "Work Laptop", 200, 64, 0.4, "video_conference", 8.2),
@@ -108,7 +108,11 @@ def seed_test_traffic_flows():
         f_entry = controller.flow_table.get(fid)
         if f_entry:
             f_entry["device"] = dev
+            f_entry["device_label"] = dev
             f_entry["rate_mbps"] = rate
+            f_entry["simulated_rate_mbps"] = rate
+            f_entry["is_simulation"] = True
+            f_entry["measurement_status"] = "simulated_profile"
         controller.dscp_marker.mark_host(fid.split(":")[0], res["class"])
 
 # ─── Models ───
@@ -224,14 +228,22 @@ def get_metrics():
                         d = json.loads(line)
                         if "latency_ms" not in d:
                             lat = d.get("latency", {})
+                            lat_val = lat.get("avg_ms") if isinstance(lat, dict) else d.get("latency_ms")
+                            jit_val = lat.get("jitter_ms") if isinstance(lat, dict) else d.get("jitter_ms")
+                            loss_val = lat.get("loss_pct") if isinstance(lat, dict) else d.get("loss_pct")
+                            tput_val = d.get("throughput_mbps")
+                            q_val = d.get("cake_stats", {}).get("queue_depth_pkts") if isinstance(d.get("cake_stats"), dict) else d.get("queue_depth_pkts")
+                            fair_val = d.get("fairness_index")
                             d = {
                                 "timestamp": d.get("timestamp", 0),
-                                "latency_ms": lat.get("avg_ms", 20.0),
-                                "jitter_ms": lat.get("jitter_ms", 0.2),
-                                "loss_pct": lat.get("loss_pct", 0.0),
-                                "throughput_mbps": d.get("throughput_mbps", 0.0),
-                                "queue_depth_pkts": d.get("cake_stats", {}).get("queue_depth_pkts", 0),
-                                "fairness_index": d.get("fairness_index", 1.0),
+                                "latency_ms": lat_val,
+                                "latency_status": "measured" if lat_val is not None else "unavailable",
+                                "jitter_ms": jit_val,
+                                "loss_pct": loss_val,
+                                "throughput_mbps": tput_val,
+                                "throughput_status": "measured" if tput_val is not None else "unavailable",
+                                "queue_depth_pkts": q_val,
+                                "fairness_index": fair_val,
                             }
                         data.append(d)
         except Exception:
@@ -244,22 +256,6 @@ def get_metrics():
 def get_flows(active_sec: int = 180):
     try:
         flows = controller.flow_table.get_active_flows(active_within_sec=active_sec)
-        device_map = {
-            "10.0.1.2:5000": "Work Laptop",
-            "10.0.2.2:9001": "Gaming PC",
-            "10.0.1.2:5100": "TV-1 (Living Room)",
-            "10.0.1.3:5100": "TV-2 (Bedroom)",
-            "10.0.1.4:5100": "TV-3 (Kitchen)",
-            "10.0.2.2:45000": "NAS / Downloads",
-        }
-        rate_map = {
-            "10.0.1.2:5000": 8.2,
-            "10.0.2.2:9001": 3.4,
-            "10.0.1.2:5100": 5.1,
-            "10.0.1.3:5100": 4.7,
-            "10.0.1.4:5100": 5.3,
-            "10.0.2.2:45000": 18.0,
-        }
         policy_map = {
             "video_conference": ("PRIORITY", "Protected"),
             "gaming": ("LOW LATENCY", "Protected"),
@@ -274,8 +270,29 @@ def get_flows(active_sec: int = 180):
             dscp = CLASS_TO_DSCP.get(fclass, CLASS_TO_DSCP.get("default", {}))
 
             prefix = fid.split("->")[0] if "->" in fid else fid
-            device = f.get("device") or device_map.get(prefix, "LAN Client")
-            rate = f.get("rate_mbps") or rate_map.get(prefix, round(f.get("byte_count", 1000) * 8 / 1e6, 1))
+            src_ip = prefix.split(":")[0]
+
+            is_sim = bool(f.get("is_simulation", False))
+            device = f.get("device")
+            if not device:
+                device = f"Simulated Device ({src_ip})" if is_sim else f"LAN Host ({src_ip})"
+
+            # Calculate authentic rate dynamically from byte counts and timestamps
+            dt = max(0.0, f.get("last_seen", 0) - f.get("first_seen", 0))
+            bytes_transferred = f.get("byte_count", 0)
+
+            if is_sim:
+                rate = f.get("simulated_rate_mbps") or f.get("rate_mbps")
+                m_status = "simulated_profile"
+            elif dt > 0.05 and bytes_transferred > 0:
+                rate = round((bytes_transferred * 8.0) / (dt * 1e6), 3)
+                m_status = "measured"
+            elif bytes_transferred > 0:
+                rate = round((bytes_transferred * 8.0) / (max(active_sec, 1) * 1e6), 3)
+                m_status = "measured"
+            else:
+                rate = None
+                m_status = "idle"
 
             pol, status_desc = policy_map.get(fclass, policy_map["default"])
             if f.get("overridden"):
@@ -283,6 +300,9 @@ def get_flows(active_sec: int = 180):
 
             f["device"] = device
             f["rate_mbps"] = rate
+            f["measured_rate_mbps"] = rate
+            f["measurement_status"] = m_status
+            f["is_simulation"] = is_sim
             f["dscp_name"] = dscp.get("name", "CS0")
             f["dscp_val"] = dscp.get("val", "0x00")
             f["policy"] = pol
@@ -388,6 +408,14 @@ def get_comparison():
                 "baseline_bulk_mbps": None, "optimized_bulk_mbps": None,
                 "baseline_fairness": None, "optimized_fairness": None,
                 "latency_reduction_pct": None, "jitter_reduction_pct": None
+            },
+            "classifier": {
+                "heuristic_accuracy": None,
+                "xgboost_accuracy": None,
+                "heuristic_qos_damage_ms": None,
+                "xgboost_qos_damage_ms": None,
+                "qos_damage_reduction_pct": None,
+                "status": "unavailable"
             }
         }
 
@@ -398,13 +426,54 @@ def get_comparison():
     a_lat = a_m.get("latency_ms")
     b_jit = b_m.get("jitter_ms")
     a_jit = a_m.get("jitter_ms")
-    b_loss = b_m.get("loss_pct", 0.0)
-    a_loss = a_m.get("loss_pct", 0.0)
-    b_bulk = b_m.get("bulk_throughput_mbps", 0.0)
-    a_bulk = a_m.get("bulk_throughput_mbps", 0.0)
+    b_loss = b_m.get("loss_pct")
+    a_loss = a_m.get("loss_pct")
+    b_bulk = b_m.get("bulk_throughput_mbps")
+    a_bulk = a_m.get("bulk_throughput_mbps")
 
     lat_red = round((b_lat - a_lat) / max(b_lat, 0.001) * 100, 1) if (b_lat is not None and a_lat is not None and b_lat > 0) else None
     jit_red = round((b_jit - a_jit) / max(b_jit, 0.001) * 100, 1) if (b_jit is not None and a_jit is not None and b_jit > 0) else None
+
+    # Dynamically derive fairness from Scenario C comparison if present
+    comp_c = db.get_latest_scenario_comparison("SCENARIO_C")
+    b_fair = None
+    a_fair = None
+    if comp_c:
+        b_c_m = comp_c.get("baseline_metrics", {})
+        a_c_m = comp_c.get("adaptive_metrics", {})
+        b_fair = b_c_m.get("fairness_index") or b_c_m.get("fairness") or b_c_m.get("jain_fairness")
+        a_fair = a_c_m.get("fairness_index") or a_c_m.get("fairness") or a_c_m.get("jain_fairness")
+
+    # Dynamically load classifier comparison metrics from authoritative evaluation artifact
+    classifier_stats = {
+        "heuristic_accuracy": None,
+        "xgboost_accuracy": None,
+        "heuristic_qos_damage_ms": None,
+        "xgboost_qos_damage_ms": None,
+        "qos_damage_reduction_pct": None,
+        "status": "unavailable"
+    }
+    downstream_file = os.path.join(PROJECT_ROOT, "experiments", "downstream_qos_results.json")
+    if os.path.exists(downstream_file):
+        try:
+            with open(downstream_file, "r") as f:
+                dq = json.load(f)
+                h_acc = round(dq.get("heuristic", {}).get("accuracy", 0.0) * 100, 1)
+                x_acc = round(dq.get("xgboost", {}).get("accuracy", 0.0) * 100, 1)
+                h_dam = round(dq.get("heuristic", {}).get("avg_latency_penalty_ms", 0.0), 1)
+                x_dam = round(dq.get("xgboost", {}).get("avg_latency_penalty_ms", 0.0), 1)
+                qos_red = round((h_dam - x_dam) / max(h_dam, 0.001) * 100, 1) if h_dam > 0 else 0.0
+                classifier_stats = {
+                    "heuristic_accuracy": h_acc,
+                    "xgboost_accuracy": x_acc,
+                    "heuristic_qos_damage_ms": h_dam,
+                    "xgboost_qos_damage_ms": x_dam,
+                    "qos_damage_reduction_pct": qos_red,
+                    "status": "measured",
+                    "provenance": "experiments/downstream_qos_results.json"
+                }
+        except Exception:
+            pass
 
     return {
         "status": "measured",
@@ -420,18 +489,12 @@ def get_comparison():
             "optimized_loss_pct": a_loss,
             "baseline_bulk_mbps": b_bulk,
             "optimized_bulk_mbps": a_bulk,
-            "baseline_fairness": 0.42,
-            "optimized_fairness": 0.96,
+            "baseline_fairness": b_fair,
+            "optimized_fairness": a_fair,
             "latency_reduction_pct": lat_red,
             "jitter_reduction_pct": jit_red
         },
-        "classifier": {
-            "heuristic_accuracy": 93.1,
-            "xgboost_accuracy": 99.1,
-            "heuristic_qos_damage_ms": 12.5,
-            "xgboost_qos_damage_ms": 2.3,
-            "qos_damage_reduction_pct": 82
-        }
+        "classifier": classifier_stats
     }
 
 class ImpairmentRequest(BaseModel):
@@ -2116,10 +2179,10 @@ function renderFlowTable(state, flows = [], errorMsg = '') {
         return `
           <tr>
             <td class="flow-id-code">${escapeHtml(f.flow_id)}</td>
-            <td><strong>${escapeHtml(f.device || 'Host')}</strong></td>
+            <td><strong>${escapeHtml(f.device || 'Host')}</strong> ${f.is_simulation ? '<span class="badge-status priority" style="font-size:9px;padding:1px 4px;margin-left:4px;">TEST</span>' : ''}</td>
             <td><span style="font-weight:600;color:${classColor};">${escapeHtml(f.class)}</span></td>
             <td style="font-family:var(--font-mono);font-weight:600;color:var(--success);">${conf}</td>
-            <td style="font-family:var(--font-mono);">${f.rate_mbps || '—'} Mbps</td>
+            <td style="font-family:var(--font-mono);">${f.rate_mbps != null ? Number(f.rate_mbps).toFixed(1) + ' Mbps' : '—'}</td>
             <td><span class="badge-status normal" style="font-size:10px;">${escapeHtml(f.dscp_name || 'CS0')}</span></td>
             <td><strong>${escapeHtml(f.policy || 'NORMAL')}</strong></td>
             <td><span style="color:${isOverridden ? 'var(--warning)' : 'var(--text-secondary)'};">${escapeHtml(f.status_desc || 'Normal')}</span></td>
@@ -2212,16 +2275,6 @@ let refreshDebounceTimer = null;
 function triggerFlowRefresh(isManual = true) {
   if (refreshDebounceTimer) clearTimeout(refreshDebounceTimer);
   refreshDebounceTimer = setTimeout(async () => {
-    if (isManual) {
-      try {
-        const simController = new AbortController();
-        const simTimeout = setTimeout(() => simController.abort(), 3000);
-        await fetch('/api/simulate/add-flows', { method: 'POST', signal: simController.signal });
-        clearTimeout(simTimeout);
-      } catch (e) {
-        console.warn("Simulate add-flows skipped:", e);
-      }
-    }
     await fetchFlows(true);
   }, 100);
 }
@@ -2335,12 +2388,12 @@ async function refreshTelemetry() {
       if (m && m.length) {
         const l = m[m.length - 1];
         const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-        setVal('valLatency', (l.latency_ms ?? 20.5).toFixed(1) + ' ms');
-        setVal('valJitter', (l.jitter_ms ?? 0.18).toFixed(2) + ' ms');
-        setVal('valLoss', (l.loss_pct ?? 0.0).toFixed(1) + ' %');
-        setVal('valThroughput', (l.throughput_mbps ?? 16.9).toFixed(1) + ' Mbps');
-        setVal('valQueue', (l.queue_depth_pkts ?? 0) + ' pkts');
-        setVal('valFairness', (l.fairness_index ?? 0.96).toFixed(2));
+        setVal('valLatency', l.latency_ms != null ? Number(l.latency_ms).toFixed(1) + ' ms' : '--');
+        setVal('valJitter', l.jitter_ms != null ? Number(l.jitter_ms).toFixed(2) + ' ms' : '--');
+        setVal('valLoss', l.loss_pct != null ? Number(l.loss_pct).toFixed(1) + ' %' : '--');
+        setVal('valThroughput', l.throughput_mbps != null ? Number(l.throughput_mbps).toFixed(1) + ' Mbps' : '0.0 Mbps');
+        setVal('valQueue', l.queue_depth_pkts != null ? l.queue_depth_pkts + ' pkts' : '--');
+        setVal('valFairness', l.fairness_index != null ? Number(l.fairness_index).toFixed(2) : '--');
       }
     }
   } catch (err) {

@@ -1,5 +1,5 @@
 {
-  "test_run_timestamp": "2026-10-04T10:22:30Z",
+  "test_run_timestamp": "2026-10-04T11:05:06Z",
   "environment": {
     "os": "Linux",
     "kernel": "6.18.40.1-microsoft-standard-WSL2+",
@@ -13,7 +13,7 @@
       "action": "GET /",
       "status": "PASS",
       "details": {
-        "html_bytes": 220203
+        "html_bytes": 220180
       }
     },
     {
@@ -83,12 +83,12 @@
         "current_policy_bw": 95,
         "active_intent": null,
         "active_policy_name": "DEFAULT FAIRNESS",
-        "last_safe_state": "10:21:40",
+        "last_safe_state": "11:04:29",
         "active_flows_count": 0,
         "dscp_rules_count": 0,
         "rollback_history_count": 1,
         "rollback_armed": true,
-        "uptime": "00:00:55"
+        "uptime": "00:00:43"
       }
     },
     {
@@ -97,7 +97,7 @@
       "action": "GET /api/metrics",
       "status": "PASS",
       "details": {
-        "timestamp": 1791109349.9896777,
+        "timestamp": 1791111906.7499163,
         "latency_ms": null,
         "latency_status": "unavailable",
         "jitter_ms": null,
@@ -135,7 +135,7 @@
           "latency_error": "sudo: a password is required",
           "cake_source": "gw:veth-gw-wan",
           "cake_error": "sudo: a password is required",
-          "rates_sample_dt": 1791109349.9792633
+          "rates_sample_dt": 1791111906.7350812
         }
       }
     },
@@ -233,7 +233,7 @@
         "overall_confidence": 0.318,
         "parser": "laya",
         "execution_status": "scheduled_and_applied",
-        "expires_at": 1791111164.918284
+        "expires_at": 1791113723.9646626
       }
     },
     {
@@ -252,7 +252,7 @@
         "overall_confidence": 0.635,
         "parser": "laya",
         "execution_status": "scheduled_and_applied",
-        "expires_at": 1791110266.056358
+        "expires_at": 1791112825.2282023
       }
     },
     {
@@ -271,7 +271,7 @@
         "overall_confidence": 0.176,
         "parser": "laya",
         "execution_status": "scheduled_and_applied",
-        "expires_at": 1791111167.1943083
+        "expires_at": 1791113726.4554884
       }
     },
     {
@@ -467,7 +467,7 @@
       "action": "Query active flows (1 loaded)",
       "status": "PASS",
       "details": {
-        "query_latency_ms": 0.008,
+        "query_latency_ms": 0.005,
         "flows": 1
       }
     },
@@ -477,7 +477,7 @@
       "action": "Query active flows (10 loaded)",
       "status": "PASS",
       "details": {
-        "query_latency_ms": 0.025,
+        "query_latency_ms": 0.028,
         "flows": 10
       }
     },
@@ -487,7 +487,7 @@
       "action": "Query active flows (25 loaded)",
       "status": "PASS",
       "details": {
-        "query_latency_ms": 0.029,
+        "query_latency_ms": 0.02,
         "flows": 25
       }
     },
@@ -497,7 +497,7 @@
       "action": "Query active flows (50 loaded)",
       "status": "PASS",
       "details": {
-        "query_latency_ms": 0.048,
+        "query_latency_ms": 0.033,
         "flows": 50
       }
     },
@@ -507,7 +507,7 @@
       "action": "Query active flows (100 loaded)",
       "status": "PASS",
       "details": {
-        "query_latency_ms": 0.101,
+        "query_latency_ms": 0.082,
         "flows": 100
       }
     },
@@ -575,23 +575,23 @@
   "rollback_lifecycle": {},
   "scalability": {
     "1_flows": {
-      "query_latency_ms": 0.008,
+      "query_latency_ms": 0.005,
       "status": "PASS"
     },
     "10_flows": {
-      "query_latency_ms": 0.025,
+      "query_latency_ms": 0.028,
       "status": "PASS"
     },
     "25_flows": {
-      "query_latency_ms": 0.029,
+      "query_latency_ms": 0.02,
       "status": "PASS"
     },
     "50_flows": {
-      "query_latency_ms": 0.048,
+      "query_latency_ms": 0.033,
       "status": "PASS"
     },
     "100_flows": {
-      "query_latency_ms": 0.101,
+      "query_latency_ms": 0.082,
       "status": "PASS"
     }
   },
