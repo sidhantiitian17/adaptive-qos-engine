@@ -102,11 +102,13 @@ class LiveFlowSniffer:
     Inspects only IP/IPv6 length, TTL/hop limit, and arrival timing.
     Payloads are completely ignored (Constraint C1).
     """
-    def __init__(self, ifaces=None, flow_table=None, classifier=None):
+    def __init__(self, ifaces=None, flow_table=None, classifier=None, namespace=None):
         self.flow_table = flow_table or FlowTable()
         self.classifier = classifier or FlowClassifier()
+        self.namespace = namespace
         self._stop_event = threading.Event()
         self._thread = None
+        self._subproc = None
         self.status = "stopped"
         self.last_error = None
         self.packet_count = 0
@@ -133,6 +135,19 @@ class LiveFlowSniffer:
             return ["lo"]
         return available if available else ["lo"]
 
+    def _record_raw_packet(self, flow_id: str, total_len: int, ttl: int, now: float):
+        self.packet_count += 1
+        inter_arrival_ms, history = self.flow_table.record_packet(flow_id, total_len, ttl, now)
+        count = len(history)
+        if count >= 3 and (count == 3 or count % 5 == 0):
+            res = self.classifier.predict_flow_history(history)
+            self.flow_table.update_classification(
+                flow_id,
+                res["class"],
+                res["confidence"],
+                res["probabilities"]
+            )
+
     def _packet_handler(self, pkt):
         try:
             from scapy.layers.inet import IP, TCP, UDP
@@ -146,7 +161,6 @@ class LiveFlowSniffer:
         if not is_ipv4 and not is_ipv6:
             return
 
-        self.packet_count += 1
         now = time.time()
         if is_ipv4:
             src_ip = pkt[IP].src
@@ -176,30 +190,78 @@ class LiveFlowSniffer:
 
         # Standard 5-tuple flow key
         flow_id = f"{src_ip}:{sport}->{dst_ip}:{dport}/{proto_str}"
-
-        # Record packet in flow table
-        inter_arrival_ms, history = self.flow_table.record_packet(flow_id, total_len, ttl, now)
-
-        # Run inference once we have at least 3 packets, or periodically every 5 packets
-        count = len(history)
-        if count >= 3 and (count == 3 or count % 5 == 0):
-            res = self.classifier.predict_flow_history(history)
-            self.flow_table.update_classification(
-                flow_id,
-                res["class"],
-                res["confidence"],
-                res["probabilities"]
-            )
+        self._record_raw_packet(flow_id, total_len, ttl, now)
 
     def start(self):
         """Start asynchronous sniffing on configured interfaces."""
-        from scapy.all import sniff
         self._stop_event.clear()
         self.status = "starting"
         self.last_error = None
 
         def _worker():
             try:
+                in_netns = False
+                if self.namespace and os.path.exists(f"/var/run/netns/{self.namespace}"):
+                    try:
+                        import ctypes
+                        libc = ctypes.CDLL("libc.so.6", use_errno=True)
+                        fd = os.open(f"/var/run/netns/{self.namespace}", os.O_RDONLY)
+                        ret = libc.setns(fd, 0x40000000)
+                        os.close(fd)
+                        if ret == 0:
+                            in_netns = True
+                    except Exception:
+                        pass
+
+                if not in_netns and self.namespace:
+                    import subprocess, sys
+                    cmd = [
+                        "sudo", "-n", "ip", "netns", "exec", self.namespace,
+                        sys.executable, "-u", "-c",
+                        "from scapy.all import sniff\n"
+                        "from scapy.layers.inet import IP, TCP, UDP\n"
+                        "from scapy.layers.inet6 import IPv6\n"
+                        "import sys, time\n"
+                        "def h(pkt):\n"
+                        "    now = time.time()\n"
+                        "    if IP in pkt:\n"
+                        "        src, dst = pkt[IP].src, pkt[IP].dst\n"
+                        "        tl, ttl = pkt[IP].len, pkt[IP].ttl\n"
+                        "        proto = 'tcp' if TCP in pkt else ('udp' if UDP in pkt else 'other')\n"
+                        "        sp = pkt[TCP].sport if TCP in pkt else (pkt[UDP].sport if UDP in pkt else 0)\n"
+                        "        dp = pkt[TCP].dport if TCP in pkt else (pkt[UDP].dport if UDP in pkt else 0)\n"
+                        "        sys.stdout.write(f'{src}:{sp}->{dst}:{dp}/{proto},{tl},{ttl},{now}\\n')\n"
+                        "        sys.stdout.flush()\n"
+                        "    elif IPv6 in pkt:\n"
+                        "        src, dst = pkt[IPv6].src, pkt[IPv6].dst\n"
+                        "        tl, ttl = pkt[IPv6].plen + 40, pkt[IPv6].hlim\n"
+                        "        proto = 'tcp' if TCP in pkt else ('udp' if UDP in pkt else 'other')\n"
+                        "        sp = pkt[TCP].sport if TCP in pkt else (pkt[UDP].sport if UDP in pkt else 0)\n"
+                        "        dp = pkt[TCP].dport if TCP in pkt else (pkt[UDP].dport if UDP in pkt else 0)\n"
+                        "        sys.stdout.write(f'{src}:{sp}->{dst}:{dp}/{proto},{tl},{ttl},{now}\\n')\n"
+                        "        sys.stdout.flush()\n"
+                        f"sniff(iface={repr(self.ifaces)}, prn=h, store=False)\n"
+                    ]
+                    self._subproc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    self.status = "running"
+                    while not self._stop_event.is_set() and self._subproc.poll() is None:
+                        line = self._subproc.stdout.readline()
+                        if line:
+                            parts = line.strip().split(",")
+                            if len(parts) == 4:
+                                fid, tl, ttl, ts = parts[0], int(parts[1]), int(parts[2]), float(parts[3])
+                                self._record_raw_packet(fid, tl, ttl, ts)
+                        else:
+                            time.sleep(0.01)
+                    if self._subproc.poll() is not None and self._subproc.returncode != 0:
+                        err = self._subproc.stderr.read().strip()
+                        self.status = "unavailable"
+                        self.last_error = err or f"Subprocess exited with code {self._subproc.returncode}"
+                    else:
+                        self.status = "stopped"
+                    return
+
+                from scapy.all import sniff
                 self.status = "running"
                 sniff(
                     iface=self.ifaces,
@@ -219,6 +281,12 @@ class LiveFlowSniffer:
 
     def stop(self):
         self._stop_event.set()
+        if self._subproc and self._subproc.poll() is None:
+            try:
+                self._subproc.terminate()
+                self._subproc.wait(timeout=1.0)
+            except Exception:
+                pass
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=2.0)
         if self.status != "unavailable":

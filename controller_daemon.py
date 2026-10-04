@@ -36,7 +36,7 @@ class AdaptiveQoSController:
         self.estimator = PassiveEstimator(iface=iface, namespace=namespace, nominal_capacity_mbps=nominal_capacity_mbps)
         self.flow_table = FlowTable()
         self.classifier = FlowClassifier()
-        self.sniffer = LiveFlowSniffer(ifaces=["veth-lan1-gw", "veth-lan2-gw"], flow_table=self.flow_table, classifier=self.classifier)
+        self.sniffer = LiveFlowSniffer(ifaces=["veth-lan1-gw", "veth-lan2-gw"], flow_table=self.flow_table, classifier=self.classifier, namespace=namespace)
         self.scheduler = IntentScheduler()
         self.rollback_mgr = RollbackManager(namespace=namespace, iface=iface, dry_run=dry_run)
         self.dscp_marker = DscpMarker(namespace=namespace, dry_run=dry_run)
