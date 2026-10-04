@@ -1566,33 +1566,33 @@ body {
       <div class="telemetry-strip">
         <div class="telemetry-card">
           <div class="telemetry-label">Latency</div>
-          <div class="telemetry-val" id="valLatency">20.5 ms</div>
-          <div class="telemetry-trend trend-good">↓ 97.9% vs FIFO (965ms)</div>
+          <div class="telemetry-val" id="valLatency">--</div>
+          <div class="telemetry-trend trend-neutral" id="trendLatency">Real-time probe</div>
         </div>
         <div class="telemetry-card">
           <div class="telemetry-label">Jitter</div>
-          <div class="telemetry-val" id="valJitter">0.18 ms</div>
-          <div class="telemetry-trend trend-good">↓ 99.97% (Eliminated)</div>
+          <div class="telemetry-val" id="valJitter">--</div>
+          <div class="telemetry-trend trend-neutral" id="trendJitter">Delay variation</div>
         </div>
         <div class="telemetry-card">
           <div class="telemetry-label">Packet Loss</div>
-          <div class="telemetry-val" id="valLoss">0.0 %</div>
-          <div class="telemetry-trend trend-good">Zero Loss (< 1.0%)</div>
+          <div class="telemetry-val" id="valLoss">--</div>
+          <div class="telemetry-trend trend-neutral" id="trendLoss">Drop percentage</div>
         </div>
         <div class="telemetry-card">
           <div class="telemetry-label">Throughput</div>
-          <div class="telemetry-val" id="valThroughput">16.9 Mbps</div>
-          <div class="telemetry-trend trend-neutral">Full link utilization</div>
+          <div class="telemetry-val" id="valThroughput">0.0 Mbps</div>
+          <div class="telemetry-trend trend-neutral" id="trendThroughput">WAN interface rate</div>
         </div>
         <div class="telemetry-card">
           <div class="telemetry-label">Queue Depth</div>
-          <div class="telemetry-val" id="valQueue">0 pkts</div>
-          <div class="telemetry-trend trend-good">Bufferbloat resolved</div>
+          <div class="telemetry-val" id="valQueue">--</div>
+          <div class="telemetry-trend trend-neutral" id="trendQueue">CAKE qdisc backlog</div>
         </div>
         <div class="telemetry-card">
           <div class="telemetry-label">Jain's Fairness</div>
-          <div class="telemetry-val" id="valFairness">0.96</div>
-          <div class="telemetry-trend trend-good">Stable (No starvation)</div>
+          <div class="telemetry-val" id="valFairness">1.00</div>
+          <div class="telemetry-trend trend-good" id="trendFairness">Idle / Fair allocation</div>
         </div>
       </div>
 
