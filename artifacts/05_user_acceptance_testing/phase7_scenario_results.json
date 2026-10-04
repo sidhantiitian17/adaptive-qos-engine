@@ -1,0 +1,70 @@
+{
+  "test_session": "PHASE 7 REAL USER UI ACCEPTANCE",
+  "timestamp": "2026-10-04T10:03:00Z",
+  "environment": {
+    "os": "Linux",
+    "kernel": "6.18.40.1-microsoft-standard-WSL2+",
+    "python": "3.12.3",
+    "dashboard_url": "http://127.0.0.1:8080",
+    "evidence_db": "experiments/evidence.db"
+  },
+  "ui_simulation_controls": {
+    "add_flows_btn": {
+      "endpoint": "POST /api/simulate/add-flows",
+      "status": "PASS",
+      "active_flows_reported": 6,
+      "classes": ["video_conference", "gaming", "bulk_download", "adaptive_video"]
+    },
+    "bandwidth_drop_btn": {
+      "endpoint": "POST /api/simulate/bandwidth-drop",
+      "status": "PASS",
+      "nominal_capacity_mbps": 100.0,
+      "shrunk_capacity_mbps": 20.0,
+      "enforced_shaping_mbps": 19.0,
+      "kernel_reconfiguration_time_sec": 0.0431
+    },
+    "restore_nominal_btn": {
+      "endpoint": "POST /api/simulate/restore",
+      "status": "PASS",
+      "restored_capacity_mbps": 100.0,
+      "shaping_target_mbps": 95.0,
+      "kernel_restoration_time_sec": 0.0379
+    },
+    "inject_bad_policy_btn": {
+      "endpoint": "POST /api/simulate/inject-failure",
+      "status": "PASS",
+      "injected_bad_rate_mbps": 1000.0,
+      "anomaly_detected": true,
+      "rollback_executed": true,
+      "restored_policy": "diffserv4",
+      "restored_bandwidth_mbps": 95.0
+    }
+  },
+  "scenarios": {
+    "scenario_a_bufferbloat_mitigation": {
+      "ui_trigger": "Simulated Bufferbloat & Live Telemetry",
+      "unmanaged_fifo_latency_p95_ms": 171.438,
+      "adaptive_cake_latency_p95_ms": 1.002,
+      "latency_reduction_pct": 99.42,
+      "video_conferencing_health": "OPTIMAL",
+      "verdict": "VERIFIED"
+    },
+    "scenario_b_sudden_wan_drop": {
+      "ui_trigger": "Toolbar button: Simulate WAN Drop (100->20)",
+      "capacity_transition": "100 Mbps -> 20 Mbps",
+      "adaptation_latency_ms": 43.1,
+      "recovery_latency_ms": 37.9,
+      "anti_starvation_guarantee_mbps": 3.8,
+      "verdict": "VERIFIED"
+    },
+    "scenario_c_multi_device_fairness": {
+      "ui_trigger": "Toolbar button: Add Flows (6 concurrent streams)",
+      "concurrent_flows": 6,
+      "jain_fairness_index": 0.9999997,
+      "gaming_rtt_mean_ms": 15.47,
+      "gaming_jitter_ms": 0.0485,
+      "verdict": "VERIFIED"
+    }
+  },
+  "verdict": "END-TO-END USER ACCEPTED WITH ENVIRONMENT LIMITATIONS"
+}

@@ -1,0 +1,25 @@
+{
+  "missing_interface_tc_application": {
+    "success": false,
+    "error_captured": "Cannot find device \"nonexistent_dev\"\n",
+    "is_bounded_and_reported": true
+  },
+  "missing_interface_telemetry": {
+    "status": "unavailable",
+    "error": "Cannot find device \"nonexistent_dev\"\n",
+    "is_explicit_unavailable": true
+  },
+  "probe_timeout_handling": {
+    "result": null,
+    "is_none_without_fabrication": true
+  },
+  "empty_classifier_history": {
+    "result": {
+      "class": "unclassified",
+      "confidence": 0.0,
+      "probabilities": {},
+      "needs_confirmation": true
+    },
+    "is_safe": true
+  }
+}

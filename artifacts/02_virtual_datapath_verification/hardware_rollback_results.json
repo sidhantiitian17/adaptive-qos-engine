@@ -1,0 +1,48 @@
+{
+  "router_wan_checkpoint_bandwidth_mbit": 95,
+  "bad_policy_injected_bandwidth_mbit": 1,
+  "rollback_restored_bandwidth_mbit": 95,
+  "qdisc_state_before": {
+    "status": "verified",
+    "qdisc_type": "cake",
+    "interface": "veth-gw-wan",
+    "namespace": "gw",
+    "bandwidth": "95Mbit",
+    "sent_bytes": 0,
+    "sent_packets": 0,
+    "dropped": 0,
+    "backlog_bytes": 0,
+    "backlog_pkts": 0,
+    "raw_output": "qdisc cake 8038: root refcnt 13 bandwidth 95Mbit diffserv4 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0 \n Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) \n backlog 0b 0p requeues 0\n memory used: 0b of 4750000b\n capacity estimate: 95Mbit\n min/max network layer size:        65535 /       0\n min/max overhead-adjusted size:    65535 /       0\n average network hdr offset:            0\n\n                   Bulk  Best Effort        Video        Voice\n  thresh       5937Kbit       95Mbit    47500Kbit    23750Kbit\n  target            5ms          5ms          5ms          5ms\n  interval        100ms        100ms        100ms        100ms\n  pk_delay          0us          0us          0us          0us\n  av_delay          0us          0us          0us          0us\n  sp_delay          0us          0us          0us          0us\n  backlog            0b           0b           0b           0b\n  pkts                0            0            0            0\n  bytes               0            0            0            0\n  way_inds            0            0            0            0\n  way_miss            0            0            0            0\n  way_cols            0            0            0            0\n  drops               0            0            0            0\n  marks               0            0            0            0\n  ack_drop            0            0            0            0\n  sp_flows            0            0            0            0\n  bk_flows            0            0            0            0\n  un_flows            0            0            0            0\n  max_len             0            0            0            0\n  quantum           300         1514         1449          724",
+    "error": null
+  },
+  "qdisc_state_during_bad": {
+    "status": "verified",
+    "qdisc_type": "cake",
+    "interface": "veth-gw-wan",
+    "namespace": "gw",
+    "bandwidth": "1Mbit",
+    "sent_bytes": 0,
+    "sent_packets": 0,
+    "dropped": 0,
+    "backlog_bytes": 0,
+    "backlog_pkts": 0,
+    "raw_output": "qdisc cake 8038: root refcnt 13 bandwidth 1Mbit diffserv4 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0 \n Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) \n backlog 0b 0p requeues 0\n memory used: 0b of 4Mb\n capacity estimate: 95Mbit\n min/max network layer size:        65535 /       0\n min/max overhead-adjusted size:    65535 /       0\n average network hdr offset:            0\n\n                   Bulk  Best Effort        Video        Voice\n  thresh       62496bit        1Mbit      500Kbit      250Kbit\n  target          291ms       18.2ms       36.3ms       72.7ms\n  interval        581ms        113ms        131ms        168ms\n  pk_delay          0us          0us          0us          0us\n  av_delay          0us          0us          0us          0us\n  sp_delay          0us          0us          0us          0us\n  backlog            0b           0b           0b           0b\n  pkts                0            0            0            0\n  bytes               0            0            0            0\n  way_inds            0            0            0            0\n  way_miss            0            0            0            0\n  way_cols            0            0            0            0\n  drops               0            0            0            0\n  marks               0            0            0            0\n  ack_drop            0            0            0            0\n  sp_flows            0            0            0            0\n  bk_flows            0            0            0            0\n  un_flows            0            0            0            0\n  max_len             0            0            0            0\n  quantum           300          300          300          300",
+    "error": null
+  },
+  "qdisc_state_after_rollback": {
+    "status": "verified",
+    "qdisc_type": "cake",
+    "interface": "veth-gw-wan",
+    "namespace": "gw",
+    "bandwidth": "95Mbit",
+    "sent_bytes": 0,
+    "sent_packets": 0,
+    "dropped": 0,
+    "backlog_bytes": 0,
+    "backlog_pkts": 0,
+    "raw_output": "qdisc cake 8038: root refcnt 13 bandwidth 95Mbit diffserv4 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0 \n Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) \n backlog 0b 0p requeues 0\n memory used: 0b of 4750000b\n capacity estimate: 95Mbit\n min/max network layer size:        65535 /       0\n min/max overhead-adjusted size:    65535 /       0\n average network hdr offset:            0\n\n                   Bulk  Best Effort        Video        Voice\n  thresh       5937Kbit       95Mbit    47500Kbit    23750Kbit\n  target            5ms          5ms          5ms          5ms\n  interval        100ms        100ms        100ms        100ms\n  pk_delay          0us          0us          0us          0us\n  av_delay          0us          0us          0us          0us\n  sp_delay          0us          0us          0us          0us\n  backlog            0b           0b           0b           0b\n  pkts                0            0            0            0\n  bytes               0            0            0            0\n  way_inds            0            0            0            0\n  way_miss            0            0            0            0\n  way_cols            0            0            0            0\n  drops               0            0            0            0\n  marks               0            0            0            0\n  ack_drop            0            0            0            0\n  sp_flows            0            0            0            0\n  bk_flows            0            0            0            0\n  un_flows            0            0            0            0\n  max_len             0            0            0            0\n  quantum           300         1514         1449          724",
+    "error": null
+  },
+  "rollback_verified": true
+}

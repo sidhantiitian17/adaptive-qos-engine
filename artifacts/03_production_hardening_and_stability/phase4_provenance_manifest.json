@@ -1,0 +1,127 @@
+{
+  "provenance_schema_version": "2.0",
+  "timestamp_utc": "2026-10-04T07:34:02.150571+00:00",
+  "phase": "Phase 4 - Production Readiness, Operational Hardening & Hardware Acceptance",
+  "verdict": "PRODUCTION READY WITH ENVIRONMENT LIMITATIONS",
+  "kpi_provenance_records": [
+    {
+      "kpi": "scenario_a_baseline_latency_ms",
+      "value": 227.455,
+      "formula": "iperf3 bulk congestion prober UDP RTT sample mean",
+      "raw_artifact": "phase4_artifacts/phase4_scenario_results.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "scenario_a_adaptive_latency_ms",
+      "value": 0.805,
+      "formula": "CAKE diffserv4 shaped UDP RTT sample mean",
+      "raw_artifact": "phase4_artifacts/phase4_scenario_results.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "scenario_a_latency_reduction_pct",
+      "value": 99.65,
+      "formula": "((baseline - adaptive) / baseline) * 100",
+      "raw_artifact": "phase4_artifacts/phase4_scenario_results.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "scenario_b_adaptation_latency_sec",
+      "value": 0.043,
+      "formula": "tc_command_end - condition_changed_at",
+      "raw_artifact": "phase4_artifacts/phase4_scenario_results.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "scenario_b_recovery_latency_sec",
+      "value": 0.0386,
+      "formula": "recovery_enforced_at - recovery_condition_at",
+      "raw_artifact": "phase4_artifacts/phase4_scenario_results.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "scenario_c_jain_fairness_index",
+      "value": 0.9999997590408767,
+      "formula": "(sum(x_i))^2 / (n * sum(x_i^2)) from raw byte counters",
+      "raw_artifact": "phase4_artifacts/phase4_scenario_results.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "scenario_c_gaming_latency_ms",
+      "value": 0.4,
+      "formula": "interactive UDP gaming probe RTT during TV contention",
+      "raw_artifact": "phase4_artifacts/phase4_scenario_results.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "anti_starvation_guaranteed_bulk_floor_mbps",
+      "value": 3.8000000000000003,
+      "formula": "shaping_rate_mbit * 0.20 (minimum 20% reserved bandwidth floor)",
+      "raw_artifact": "phase4_artifacts/phase4_scenario_results.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "anti_starvation_observed_duration_sec",
+      "value": 0.0,
+      "formula": "observed duration where bulk received 0 bps under active contention",
+      "raw_artifact": "phase4_artifacts/phase4_scenario_results.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "long_run_duration_sec",
+      "value": 600.02,
+      "formula": "end_time - start_time",
+      "raw_artifact": "phase4_artifacts/phase4_long_run.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "long_run_total_cycles",
+      "value": 20003,
+      "formula": "count of autonomous closed-loop control cycles",
+      "raw_artifact": "phase4_artifacts/phase4_long_run.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "long_run_mean_cycle_latency_ms",
+      "value": 7.653,
+      "formula": "sum(cycle_times) / total_cycles",
+      "raw_artifact": "phase4_artifacts/phase4_long_run.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "long_run_rss_growth_mb",
+      "value": 0.08,
+      "formula": "final_rss_mb - initial_rss_mb",
+      "raw_artifact": "phase4_artifacts/phase4_long_run.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "long_run_unintended_transitions",
+      "value": 0,
+      "formula": "count of policy transitions during steady-state",
+      "raw_artifact": "phase4_artifacts/phase4_long_run.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "scalability_100_flows_cycle_ms",
+      "value": 17.723,
+      "formula": "mean cycle latency across cycles under 100 active flows",
+      "raw_artifact": "phase4_artifacts/phase4_scalability.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "failure_recovery_modes_passed",
+      "value": "8/8",
+      "formula": "count of passed failure recovery unit and integration scenarios",
+      "raw_artifact": "phase4_artifacts/phase4_failure_recovery.json",
+      "status": "PASS"
+    },
+    {
+      "kpi": "physical_hardware_validation",
+      "value": "ENVIRONMENT-LIMITED",
+      "formula": "PCIe controller count == 0 on WSL2 hypervisor",
+      "raw_artifact": "phase4_artifacts/phase4_hardware_validation.md",
+      "status": "ENVIRONMENT-LIMITED"
+    }
+  ]
+}

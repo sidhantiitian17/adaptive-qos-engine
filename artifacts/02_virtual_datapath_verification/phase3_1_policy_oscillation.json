@@ -1,0 +1,8 @@
+{
+  "observation_window_minutes": 10.01,
+  "total_policy_transitions": 0,
+  "transitions_per_minute": 0.0,
+  "flapping_detected": false,
+  "stability_guard_active": true,
+  "verdict": "STABLE"
+}

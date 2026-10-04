@@ -1,0 +1,21 @@
+{
+  "netns_cleanup": {
+    "status": "cleaned",
+    "namespaces_removed": []
+  },
+  "qdisc_cleared_on_lo": true,
+  "qdisc_state": {
+    "status": "verified",
+    "qdisc_type": "noqueue",
+    "interface": "lo",
+    "namespace": null,
+    "bandwidth": null,
+    "sent_bytes": 0,
+    "sent_packets": 0,
+    "dropped": 0,
+    "backlog_bytes": 0,
+    "backlog_pkts": 0,
+    "raw_output": "qdisc noqueue 0: root refcnt 2 \n Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) \n backlog 0b 0p requeues 0",
+    "error": null
+  }
+}

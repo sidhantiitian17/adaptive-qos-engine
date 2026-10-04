@@ -1,0 +1,32 @@
+{
+  "method": "RFC 3550 / Consecutive RTT Mean Absolute Difference (MAD)",
+  "formula": "Jitter = (1 / (N - 1)) * sum(|RTT_i - RTT_{i-1}| for i in 2..N)",
+  "first_10_samples": [
+    54.585,
+    52.111,
+    49.437,
+    54.974,
+    52.884,
+    48.227,
+    54.856,
+    58.617,
+    55.736,
+    56.924
+  ],
+  "consecutive_absolute_differences": [
+    2.474,
+    2.674,
+    5.537,
+    2.09,
+    4.657,
+    6.629,
+    3.761,
+    2.881,
+    1.188
+  ],
+  "sum_of_differences": 31.891,
+  "denominator_n_minus_1": 9,
+  "calculated_jitter_ms": 3.5434,
+  "prober_library_output_ms": 3.5434,
+  "is_match": true
+}

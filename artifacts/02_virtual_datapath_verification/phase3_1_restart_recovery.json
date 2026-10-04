@@ -1,0 +1,5 @@
+{
+  "nonexistent_interface_handled_gracefully": false,
+  "telemetry_on_missing_interface": "unavailable",
+  "controller_daemon_restart_reconnect": "Verified - controller discovers existing qdisc without crashing"
+}

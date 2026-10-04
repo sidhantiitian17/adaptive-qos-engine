@@ -1,0 +1,14 @@
+{
+  "experiment_id": "exp_scenario_c_1791054300_39b31b",
+  "scenario": "SCENARIO_C",
+  "mode": "ADAPTIVE",
+  "tv_throughputs": [
+    0.666,
+    0.672,
+    0.643
+  ],
+  "fairness_index": 1.0,
+  "gaming_latency_ms": 7.207,
+  "gaming_jitter_ms": 3.3638,
+  "active_flows_classified": 6
+}

@@ -1,0 +1,183 @@
+ZERO FABRICATION SCAN RESULTS (Found 60 matches):
+================================================================================
+
+[classifier/traffic_generators.py:2] (Matched: synthetic)
+  --> Synthetic traffic generators jo teen broad categories simulate karte hain:
+
+[classifier/baseline_heuristic.py:10] (Matched: synthetic)
+  --> Simple rules (humare synthetic traffic generators ke design se derived):
+
+[classifier/runtime_classifier.py:122] (Matched: fallback)
+  --> """Detect available interfaces; prefer veth pairs if present, else fallback to lo."""
+
+[enforcement/dscp_marker.py:30] (Matched: mock)
+  --> self.mock_rules = []
+
+[enforcement/dscp_marker.py:68] (Matched: mock)
+  --> self.mock_rules.append({"ip": ip_address, "class": traffic_class, "dscp": dscp_info["name"]})
+
+[enforcement/dscp_marker.py:86] (Matched: mock)
+  --> self.mock_rules.append({
+
+[enforcement/dscp_marker.py:103] (Matched: mock)
+  --> self.mock_rules = [r for r in self.mock_rules if r.get("ip") != ip_address and r.get("src_ip") != ip_address]
+
+[enforcement/dscp_marker.py:125] (Matched: mock)
+  --> self.mock_rules.clear()
+
+[enforcement/dscp_marker.py:134] (Matched: mock)
+  --> return [dict(r) for r in self.mock_rules]
+
+[estimator/passive_estimator.py:93] (Matched: estimated)
+  --> Return the estimated available link capacity.
+
+[estimator/passive_estimator.py:117] (Matched: estimated)
+  --> """Return provenance metadata distinguishing configured, estimated, and measured values."""
+
+[estimator/passive_estimator.py:127] (Matched: estimated)
+  --> "estimated_capacity_mbps": self.get_effective_capacity(),
+
+[estimator/link_estimator.py:89] (Matched: estimated)
+  --> print(f"\nEstimated available bandwidth: {result} Mbps")
+
+[estimator/assert_within_tolerance.py:18] (Matched: estimated)
+  --> print(f"Estimated    : {result} Mbps")
+
+[experiments/scenario_runner.py:8] (Matched: synthetic)
+  --> Zero fabrication. Synthetic fallback constants completely purged.
+
+[experiments/scenario_runner.py:8] (Matched: fallback)
+  --> Zero fabrication. Synthetic fallback constants completely purged.
+
+[experiments/scenario_runner.py:39] (Matched: fallback)
+  --> # Interface detection: use veth if available, otherwise fallback to lo
+
+[experiments/scenario_runner.py:385] (Matched: synthetic)
+  --> # Extract genuine gaming RTT and jitter from prober (zero synthetic fallback)
+
+[experiments/scenario_runner.py:385] (Matched: fallback)
+  --> # Extract genuine gaming RTT and jitter from prober (zero synthetic fallback)
+
+[experiments/scenario_runner.py:426] (Matched: synthetic)
+  --> print("Testing ScenarioRunner with real packet generation and zero synthetic metrics:")
+
+[network/execution_backend.py:179] (Matched: fallback)
+  --> # 4. Fallback
+
+[network/tc_manager.py:39] (Matched: mock)
+  --> return 0, f"mock_tc_output for {' '.join(cmd_args)}", ""
+
+[network/tc_manager.py:46] (Matched: fallback)
+  --> # If namespace doesn't exist or failed due to missing netns, fallback to direct exec
+
+[network/tc_manager.py:128] (Matched: fallback)
+  --> # Fallback to del and add
+
+[policy_engine/policy_rules.py:11] (Matched: estimated)
+  --> available_bandwidth_mbps: estimated WAN capacity
+
+[policy_engine/rollback_manager.py:31] (Matched: mock)
+  --> return 0, "mock_output"
+
+[policy_engine/rollback_manager.py:83] (Matched: simulated)
+  --> print(f"[HEALTH CHECK (MOCK)] Simulated excessive latency for {latest.get('bandwidth_mbit')}mbit.")
+
+[policy_engine/rollback_manager.py:83] (Matched: mock)
+  --> print(f"[HEALTH CHECK (MOCK)] Simulated excessive latency for {latest.get('bandwidth_mbit')}mbit.")
+
+[policy_engine/rollback_manager.py:116] (Matched: fallback)
+  --> fallback = self.last_good_config if self.last_good_config is not None else 10
+
+[policy_engine/rollback_manager.py:118] (Matched: fallback)
+  --> f"root cake bandwidth {fallback}mbit diffserv4")
+
+[policy_engine/rollback_manager.py:120] (Matched: fallback)
+  --> print(f"[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: {fallback}mbit")
+
+[policy_engine/rollback_manager.py:140] (Matched: mock)
+  --> # 2. Apply bad policy (<=1mbit in mock triggers health check failure)
+
+[policy_engine/integrated_engine.py:2] (Matched: mock)
+  --> End-to-end integration: Estimator -> Classifier (simplified, mock for now)
+
+[policy_engine/integrated_engine.py:22] (Matched: mock)
+  --> # Step 2: Mock classifier output (real version would use trained XGBoost model
+
+[dashboard/unified_dashboard.py:223] (Matched: fallback)
+  --> from api.intent_parser_fallback import parse_intent_fallback
+
+[dashboard/unified_dashboard.py:229] (Matched: fallback)
+  --> parsed = parse_intent_fallback(req.text)
+
+[dashboard/unified_dashboard.py:230] (Matched: fallback)
+  --> parsed["parser"] = "fallback"
+
+[dashboard/unified_dashboard.py:349] (Matched: simulated)
+  --> controller.run_one_cycle(simulated_capacity_mbps=float(req.rate_mbps))
+
+[dashboard/unified_dashboard.py:399] (Matched: simulated)
+  --> res = controller.run_one_cycle(simulated_capacity_mbps=20.0)
+
+[dashboard/unified_dashboard.py:1115] (Matched: 0\.12)
+  --> box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+
+[dashboard/unified_dashboard.py:1459] (Matched: estimated)
+  --> <div class="trace-action">Estimated WAN Capacity: <span id="traceWan">100 Mbps</span></div>
+
+[dashboard/unified_dashboard.py:1637] (Matched: fallback)
+  --> <span style="font-size:11px;color:var(--text-secondary);">Laya NLP + Fallback</span>
+
+[dashboard/metrics_collector.py:85] (Matched: fallback)
+  --> """Measures latency, jitter, and packet loss using ICMP probe without fake fallback."""
+
+[dashboard/metrics_collector.py:85] (Matched: fake)
+  --> """Measures latency, jitter, and packet loss using ICMP probe without fake fallback."""
+
+[dashboard/metrics_collector.py:251] (Matched: fallback)
+  --> print("MetricsCollector verification: Clean metrics PASS (no fake fallbacks) ✅")
+
+[dashboard/metrics_collector.py:251] (Matched: fake)
+  --> print("MetricsCollector verification: Clean metrics PASS (no fake fallbacks) ✅")
+
+[dashboard/report_generator.py:941] (Matched: simulated)
+  --> <td>Simulated bad policy (1 Mbps rate limit)</td>
+
+[dashboard/report_generator.py:1070] (Matched: estimated)
+  --> <li><strong>Capacity Accuracy:</strong> Estimated available capacity converged to <strong>20.0 Mbps</strong> (nominal 0.0% error margin).</li>
+
+[dashboard/report_generator.py:1506] (Matched: simulated)
+  --> <li><strong>NetEm Rate & Delay Impairment:</strong> WAN bandwidth drops and propagation delays are simulated via the kernel <span class="rep-mono">sch_netem</span> module.</li>
+
+[dashboard/report_generator.py:1840] (Matched: 0\.12)
+  --> transition: background 0.12s ease, color 0.12s ease;
+
+[api/intent_parser_fallback.py:2] (Matched: fallback)
+  --> Simple keyword-based fallback, agar Laya available na ho.
+
+[api/intent_parser_fallback.py:7] (Matched: fallback)
+  --> def parse_intent_fallback(text: str) -> dict:
+
+[api/intent_parser_fallback.py:36] (Matched: fallback)
+  --> "needs_confirmation": True,  # fallback hamesha confirmation maangta hai (safety)
+
+[api/intent_parser_fallback.py:38] (Matched: fallback)
+  --> "note": "parsed via fallback rules, not Laya"
+
+[api/intent_parser_fallback.py:43] (Matched: fallback)
+  --> print(json.dumps(parse_intent_fallback("mujhe 20 min video call priority chahiye"), indent=2))
+
+[api/server.py:27] (Matched: fallback)
+  --> from api.intent_parser_fallback import parse_intent_fallback
+
+[api/server.py:63] (Matched: fallback)
+  --> Ingest natural language intent, parse via Laya (with fallback),
+
+[api/server.py:70] (Matched: fallback)
+  --> parsed = parse_intent_fallback(req.text)
+
+[api/server.py:71] (Matched: fallback)
+  --> parsed["parser"] = "fallback"
+
+[api/server.py:72] (Matched: fallback)
+  --> parsed["fallback_reason"] = str(e)
+

@@ -1,0 +1,54 @@
+{
+  "topology": "CLIENT (lan1: 10.0.1.2) -> ROUTER (gw) -> WAN SERVER (wanhost: 10.0.3.2)",
+  "trace_records": [
+    {
+      "traffic_class": "VOICE",
+      "dscp": "EF",
+      "tos_hex": "0xb8",
+      "packets_sent": 25,
+      "bytes_per_packet": 160,
+      "client_egress": "veth-lan1 (lan1)",
+      "router_ingress": "veth-lan1-gw (gw)",
+      "router_egress": "veth-gw-wan (gw)",
+      "server_ingress": "veth-wan-gw (wanhost)",
+      "preservation_status": "PRESERVED"
+    },
+    {
+      "traffic_class": "VIDEO_CONFERENCE",
+      "dscp": "AF41",
+      "tos_hex": "0x88",
+      "packets_sent": 35,
+      "bytes_per_packet": 300,
+      "client_egress": "veth-lan1 (lan1)",
+      "router_ingress": "veth-lan1-gw (gw)",
+      "router_egress": "veth-gw-wan (gw)",
+      "server_ingress": "veth-wan-gw (wanhost)",
+      "preservation_status": "PRESERVED"
+    },
+    {
+      "traffic_class": "BULK_DOWNLOAD",
+      "dscp": "CS1",
+      "tos_hex": "0x20",
+      "packets_sent": 60,
+      "bytes_per_packet": 1200,
+      "client_egress": "veth-lan1 (lan1)",
+      "router_ingress": "veth-lan1-gw (gw)",
+      "router_egress": "veth-gw-wan (gw)",
+      "server_ingress": "veth-wan-gw (wanhost)",
+      "preservation_status": "PRESERVED"
+    },
+    {
+      "traffic_class": "BEST_EFFORT",
+      "dscp": "CS0",
+      "tos_hex": "0x0",
+      "packets_sent": 20,
+      "bytes_per_packet": 500,
+      "client_egress": "veth-lan1 (lan1)",
+      "router_ingress": "veth-lan1-gw (gw)",
+      "router_egress": "veth-gw-wan (gw)",
+      "server_ingress": "veth-wan-gw (wanhost)",
+      "preservation_status": "PRESERVED"
+    }
+  ],
+  "cake_wan_statistics": "qdisc cake 8030: root refcnt 13 bandwidth 20Mbit diffserv4 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0 \n Sent 103640 bytes 140 pkt (dropped 0, overlimits 0 requeues 0) \n backlog 0b 0p requeues 0\n memory used: 2304b of 4Mb\n capacity estimate: 20Mbit\n min/max network layer size:          211 /    1251\n min/max overhead-adjusted size:      211 /    1251\n average network hdr offset:            6\n\n                   Bulk  Best Effort        Video        Voice\n  thresh       1250Kbit       20Mbit       10Mbit        5Mbit\n  target         14.5ms          5ms          5ms          5ms\n  interval        110ms        100ms        100ms        100ms\n  pk_delay          8us          3us          3us          4us\n  av_delay          0us          0us          0us          0us\n  sp_delay          0us          0us          0us          0us\n  backlog            0b           0b           0b           0b\n  pkts               60           20           35           25\n  bytes           75060        11020        12285         5275\n  way_inds            0            0            0            0\n  way_miss            1            1            1            1\n  way_cols            0            0            0            0\n  drops               0            0            0            0\n  marks               0            0            0            0\n  ack_drop            0            0            0            0\n  sp_flows            1            0            1            1\n  bk_flows            0            1            0            0\n  un_flows            0            0            0            0\n  max_len          1251          551          351          211\n  quantum           300          610          305          300\n\n"
+}

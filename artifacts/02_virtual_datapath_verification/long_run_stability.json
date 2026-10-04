@@ -1,0 +1,100 @@
+{
+  "test_duration": "Sustained multi-cycle closed loop across router WAN",
+  "cycles_executed": 15,
+  "cycle_samples": [
+    {
+      "cycle": 1,
+      "cycle_duration_ms": 21.458,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 2,
+      "cycle_duration_ms": 20.04,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 3,
+      "cycle_duration_ms": 20.18,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 4,
+      "cycle_duration_ms": 20.905,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 5,
+      "cycle_duration_ms": 20.481,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 6,
+      "cycle_duration_ms": 20.725,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 7,
+      "cycle_duration_ms": 22.737,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 8,
+      "cycle_duration_ms": 20.202,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 9,
+      "cycle_duration_ms": 20.851,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 10,
+      "cycle_duration_ms": 21.133,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 11,
+      "cycle_duration_ms": 20.095,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 12,
+      "cycle_duration_ms": 20.45,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 13,
+      "cycle_duration_ms": 21.43,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 14,
+      "cycle_duration_ms": 20.555,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    },
+    {
+      "cycle": 15,
+      "cycle_duration_ms": 21.773,
+      "bandwidth_mbit": 90,
+      "cake_status": "verified"
+    }
+  ],
+  "unbounded_memory_growth_detected": false,
+  "deadlock_detected": false,
+  "controller_cycle_stability": "STABLE",
+  "qdisc_enforcement_stability": "STABLE"
+}

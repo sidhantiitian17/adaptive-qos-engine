@@ -1,0 +1,10 @@
+{
+  "experiment_id": "exp_scenario_b_hardware_1791055240_12d6f3",
+  "initial_capacity_mbps": 100.0,
+  "collapsed_capacity_mbps": 20.0,
+  "adapted_shaping_mbps": 19,
+  "detection_and_decision_latency_sec": 0.0256,
+  "enforcement_latency_sec": 0.0219,
+  "total_adaptation_time_sec": 0.0475,
+  "recovery_latency_sec": 0.0461
+}

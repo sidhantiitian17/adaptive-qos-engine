@@ -1,0 +1,8 @@
+{
+  "initial_rss_mb": 163.47,
+  "final_rss_mb": 164.6,
+  "rss_growth_mb": 1.12,
+  "mean_cycle_ms": 8.027,
+  "p95_cycle_ms": 8.567,
+  "total_test_duration_minutes": 10.01
+}

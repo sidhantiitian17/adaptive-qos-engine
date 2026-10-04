@@ -22,7 +22,16 @@ echo "        STARTING ADAPTIVE QOS ENGINE END-TO-END                  "
 echo "================================================================="
 
 # 1. Stop any previous instances
-echo -e "\n[1/5] Cleaning up any previous running instances..."
+echo -e "\n[1/4] Cleaning up any previous running instances..."
+if [ -f ".engine.pid" ]; then
+    PID=$(cat .engine.pid 2>/dev/null || true)
+    if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+        echo "Stopping previous unified engine (PID $PID)..."
+        kill "$PID" 2>/dev/null || true
+    fi
+    rm -f .engine.pid
+fi
+
 if [ -f ".dashboard.pid" ]; then
     PID=$(cat .dashboard.pid 2>/dev/null || true)
     if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
@@ -69,29 +78,17 @@ else
     echo "  (All policy decisions, ML classification, intent NLP, and rollback operate normally)"
 fi
 
-# 3. Start Unified Dashboard
-echo -e "\n[3/5] Starting Unified 5-Zone Dashboard (FastAPI on :8080)..."
-nohup $PYTHON -u dashboard/unified_dashboard.py > dashboard.log 2>&1 &
-DASHBOARD_PID=$!
-disown $DASHBOARD_PID 2>/dev/null || true
-echo $DASHBOARD_PID > .dashboard.pid
-echo "  Unified Dashboard started (PID $DASHBOARD_PID, log: dashboard.log)"
+# 3. Start Unified Engine (FastAPI Control Plane + Embedded Autonomous Controller)
+echo -e "\n[3/4] Starting Unified Adaptive QoS Engine (Authoritative Control Plane on :8080)..."
+mkdir -p logs
+nohup $PYTHON -u dashboard/unified_dashboard.py < /dev/null > logs/engine.log 2>&1 &
+ENGINE_PID=$!
+disown $ENGINE_PID 2>/dev/null || true
+echo $ENGINE_PID > .engine.pid
+echo "  Unified Engine started (PID $ENGINE_PID, log: logs/engine.log)"
 
-# 4. Start Controller Daemon
-echo -e "\n[4/5] Starting Autonomous Controller Daemon..."
-CTRL_FLAGS="--interval 2"
-if [ "$CAN_SUDO" = false ]; then
-    CTRL_FLAGS="$CTRL_FLAGS --dry-run"
-fi
-
-nohup $PYTHON -u controller_daemon.py $CTRL_FLAGS > controller.log 2>&1 &
-CTRL_PID=$!
-disown $CTRL_PID 2>/dev/null || true
-echo $CTRL_PID > .controller.pid
-echo "  Controller Daemon started (PID $CTRL_PID, log: controller.log)"
-
-# 5. Verification & Health Probes
-echo -e "\n[5/5] Waiting for services to become healthy and ready..."
+# 4. Verification & Health Probes
+echo -e "\n[4/4] Waiting for unified engine to become healthy and ready..."
 MAX_RETRIES=20
 READY=false
 for i in $(seq 1 $MAX_RETRIES); do
@@ -103,28 +100,22 @@ for i in $(seq 1 $MAX_RETRIES); do
 done
 
 if [ "$READY" = true ]; then
-    echo "  ✅ Dashboard service is UP and responding at http://localhost:8080"
-    # Seed sample traffic flows so UI immediately displays active flows
-    echo "  Seeding sample classified traffic flows..."
-    curl -s -X POST http://127.0.0.1:8080/api/simulate/add-flows >/dev/null 2>&1 || true
+    echo "  ✅ Unified Engine service is UP and responding at http://localhost:8080"
     
     echo ""
     echo "================================================================="
     echo "   🚀 ADAPTIVE QOS ENGINE IS RUNNING SUCCESSFULLY!              "
     echo "================================================================="
-    echo "  Dashboard URL:      http://localhost:8080"
-    echo "  API Documentation:  http://localhost:8080/docs"
-    echo "  Dashboard PID:      $DASHBOARD_PID"
-    echo "  Controller PID:     $CTRL_PID"
+    echo "  Authoritative Engine URL:  http://localhost:8080"
+    echo "  API Documentation:         http://localhost:8080/docs"
+    echo "  Engine PID:                $ENGINE_PID"
     echo ""
-    echo "  Logs:"
-    echo "    - Dashboard:      tail -f dashboard.log"
-    echo "    - Controller:     tail -f controller.log"
+    echo "  Logs:                      tail -f logs/engine.log"
     echo ""
     echo "  To stop the application cleanly, run:"
     echo "    ./stop_all.sh"
     echo "================================================================="
 else
-    echo "  ❌ Failed to reach dashboard within timeout. Check dashboard.log for errors."
+    echo "  ❌ Failed to reach dashboard within timeout. Check logs/engine.log for errors."
     exit 1
 fi

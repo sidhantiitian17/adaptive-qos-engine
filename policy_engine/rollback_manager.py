@@ -8,11 +8,19 @@ import subprocess
 import time
 import re
 import json
+import threading
 
 class RollbackManager:
-    def __init__(self, namespace="gw", iface="veth-gw-wan", dry_run=False):
-        self.namespace = namespace
-        self.iface = iface
+    def __init__(self, namespace="gw", iface="veth-gw-wan", dry_run=False, tc_manager=None):
+        self._lock = threading.Lock()
+        if tc_manager is not None:
+            self.tc_manager = tc_manager
+            self.namespace = getattr(tc_manager, "namespace", namespace)
+            self.iface = getattr(tc_manager, "iface", iface)
+        else:
+            self.tc_manager = None
+            self.namespace = namespace
+            self.iface = iface
         self.dry_run = dry_run
         self.last_good_config = None  # last known-good bandwidth (Mbps)
         self.history_log = []
@@ -27,7 +35,7 @@ class RollbackManager:
     def _run(self, cmd_str):
         if self.dry_run:
             return 0, "mock_output"
-        full_cmd = f"sudo -n {cmd_str}"
+        full_cmd = cmd_str if os.geteuid() == 0 else f"sudo -n {cmd_str}"
         try:
             res = subprocess.run(full_cmd, shell=True, capture_output=True, text=True)
             return res.returncode, res.stdout
@@ -45,22 +53,23 @@ class RollbackManager:
         Apply new shaping rate tentatively.
         Takes snapshot, updates qdisc, and tracks in history log.
         """
-        snapshot = self.checkpoint()
-        cmd = (f"ip netns exec {self.namespace} tc qdisc change dev {self.iface} "
-               f"root cake bandwidth {bandwidth_mbit}mbit {diffserv}")
-        code, out = self._run(cmd)
+        with self._lock:
+            snapshot = self.checkpoint()
+            cmd = (f"ip netns exec {self.namespace} tc qdisc change dev {self.iface} "
+                   f"root cake bandwidth {bandwidth_mbit}mbit {diffserv}")
+            code, out = self._run(cmd)
 
-        success = (code == 0)
-        entry = {
-            "timestamp": time.time(),
-            "bandwidth_mbit": bandwidth_mbit,
-            "diffserv": diffserv,
-            "status": "tentative",
-            "applied_successfully": success
-        }
-        self.history_log.append(entry)
-        print(f"[ROLLBACK_MGR] Applied tentative policy: {bandwidth_mbit}mbit ({diffserv}) -> Success: {success}")
-        return success
+            success = (code == 0)
+            entry = {
+                "timestamp": time.time(),
+                "bandwidth_mbit": bandwidth_mbit,
+                "diffserv": diffserv,
+                "status": "tentative",
+                "applied_successfully": success
+            }
+            self.history_log.append(entry)
+            print(f"[ROLLBACK_MGR] Applied tentative policy: {bandwidth_mbit}mbit ({diffserv}) -> Success: {success}")
+            return success
 
     def health_check(
         self,
@@ -72,52 +81,69 @@ class RollbackManager:
         Post-apply verification: measures RTT latency and packet loss.
         Fails if latency > threshold or packet loss > max_loss_pct.
         """
-        if self.dry_run:
-            # In dry-run, if the latest tentative bandwidth is <= 1 Mbps, simulate high latency failure
-            latest = self.history_log[-1] if self.history_log else {}
-            if latest.get("bandwidth_mbit", 10) <= 1:
-                print(f"[HEALTH CHECK (MOCK)] Simulated excessive latency for {latest.get('bandwidth_mbit')}mbit.")
+        with self._lock:
+            if self.dry_run:
+                # In dry-run, if the latest tentative bandwidth is <= 1 Mbps, simulate high latency failure
+                latest = self.history_log[-1] if self.history_log else {}
+                if latest.get("bandwidth_mbit", 10) <= 1:
+                    print(f"[HEALTH CHECK (MOCK)] Simulated excessive latency for {latest.get('bandwidth_mbit')}mbit.")
+                    return False
+                return True
+
+            code, out = self._run(f"ip netns exec lan1 ping -c 3 -W 2 {target_ip}")
+            if code != 0:
+                print("[HEALTH CHECK] Ping command failed entirely. Unhealthy.")
                 return False
-            return True
 
-        code, out = self._run(f"ip netns exec lan1 ping -c 3 -W 2 {target_ip}")
-        if code != 0:
-            print("[HEALTH CHECK] Ping command failed entirely. Unhealthy.")
+            match_rtt = re.search(r"rtt min/avg/max/mdev = [\d.]+/([\d.]+)/", out)
+            match_loss = re.search(r"(\d+)% packet loss", out)
+
+            if match_rtt and match_loss:
+                avg_latency = float(match_rtt.group(1))
+                loss_pct = float(match_loss.group(1))
+                print(f"[HEALTH CHECK] Avg Latency: {avg_latency}ms (limit: {latency_threshold_ms}ms) | Loss: {loss_pct}%")
+
+                healthy = (avg_latency <= latency_threshold_ms) and (loss_pct <= max_loss_pct)
+                return healthy
+
             return False
-
-        match_rtt = re.search(r"rtt min/avg/max/mdev = [\d.]+/([\d.]+)/", out)
-        match_loss = re.search(r"(\d+)% packet loss", out)
-
-        if match_rtt and match_loss:
-            avg_latency = float(match_rtt.group(1))
-            loss_pct = float(match_loss.group(1))
-            print(f"[HEALTH CHECK] Avg Latency: {avg_latency}ms (limit: {latency_threshold_ms}ms) | Loss: {loss_pct}%")
-
-            healthy = (avg_latency <= latency_threshold_ms) and (loss_pct <= max_loss_pct)
-            return healthy
-
-        return False
 
     def make_permanent(self, bandwidth_mbit: int):
         """Mark configuration as permanent (known-good checkpoint) following health check pass."""
-        if self.history_log:
-            self.history_log[-1]["status"] = "permanent"
-        self.last_good_config = bandwidth_mbit
-        print(f"[ROLLBACK_MGR] Committed bandwidth={bandwidth_mbit}mbit as permanent known-good.")
+        with self._lock:
+            if self.history_log:
+                self.history_log[-1]["status"] = "permanent"
+            self.last_good_config = bandwidth_mbit
+            print(f"[ROLLBACK_MGR] Committed bandwidth={bandwidth_mbit}mbit as permanent known-good.")
 
     def rollback(self):
         """Roll back to last known-good configuration or safe default."""
-        fallback = self.last_good_config if self.last_good_config is not None else 10
-        cmd = (f"ip netns exec {self.namespace} tc qdisc change dev {self.iface} "
-               f"root cake bandwidth {fallback}mbit diffserv4")
-        self._run(cmd)
-        print(f"[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: {fallback}mbit")
+        with self._lock:
+            fallback = self.last_good_config if self.last_good_config is not None else 10
+            cmd = (f"ip netns exec {self.namespace} tc qdisc change dev {self.iface} "
+                   f"root cake bandwidth {fallback}mbit diffserv4")
+            self._run(cmd)
+            print(f"[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: {fallback}mbit")
 
-        if self.history_log:
-            self.history_log[-1]["status"] = "rolled_back"
+            if self.history_log:
+                self.history_log[-1]["status"] = "rolled_back"
 
     def get_history(self):
-        return list(self.history_log)
+        with self._lock:
+            return [dict(e) for e in self.history_log]
+
+    def commit_known_good(self, bandwidth="95mbit", diffserv="diffserv4"):
+        bw_int = int(str(bandwidth).replace("mbit", "").replace("M", "").replace("mbps", ""))
+        self.make_permanent(bw_int)
+        return True
+
+    def apply_tentative(self, bandwidth="1mbit", diffserv="diffserv4"):
+        bw_int = int(str(bandwidth).replace("mbit", "").replace("M", "").replace("mbps", ""))
+        return self.apply_policy(bw_int, diffserv)
+
+    def revert(self):
+        self.rollback()
+        return True
 
 
 if __name__ == "__main__":

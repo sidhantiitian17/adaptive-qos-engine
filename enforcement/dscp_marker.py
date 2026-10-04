@@ -9,6 +9,8 @@ Maps classified traffic flows to standard DiffServ codepoints:
 import subprocess
 import shutil
 import re
+import os
+import threading
 
 CLASS_TO_DSCP = {
     "video_conference": {"name": "AF41", "val": "0x22"},
@@ -20,10 +22,9 @@ CLASS_TO_DSCP = {
 
 CHAIN_NAME = "QOS_MARKING"
 
-import os
-
 class DscpMarker:
     def __init__(self, namespace="gw", dry_run=False):
+        self._lock = threading.Lock()
         self.namespace = namespace
         self.dry_run = dry_run
         self.mock_rules = []
@@ -59,44 +60,45 @@ class DscpMarker:
 
     def mark_host(self, ip_address: str, traffic_class: str) -> bool:
         """Mark all packets from a specific host IP with appropriate DSCP."""
-        dscp_info = CLASS_TO_DSCP.get(traffic_class, CLASS_TO_DSCP["default"])
-        tool = "ip6tables" if ":" in ip_address else "iptables"
+        with self._lock:
+            dscp_info = CLASS_TO_DSCP.get(traffic_class, CLASS_TO_DSCP["default"])
+            tool = "ip6tables" if ":" in ip_address else "iptables"
 
-        if self.dry_run:
-            self.mock_rules.append({"ip": ip_address, "class": traffic_class, "dscp": dscp_info["name"]})
-            return True
+            if self.dry_run:
+                self.mock_rules.append({"ip": ip_address, "class": traffic_class, "dscp": dscp_info["name"]})
+                return True
 
-        # Remove existing rules for this IP to prevent duplication
-        self.clear_host(ip_address)
+            # Remove existing rules for this IP to prevent duplication
+            self._clear_host_locked(ip_address)
 
-        cmd = [tool, "-t", "mangle", "-A", CHAIN_NAME, "-s", ip_address,
-               "-j", "DSCP", "--set-dscp-class", dscp_info["name"]]
-        code, out, err = self._exec(cmd)
-        return code == 0
+            cmd = [tool, "-t", "mangle", "-A", CHAIN_NAME, "-s", ip_address,
+                   "-j", "DSCP", "--set-dscp-class", dscp_info["name"]]
+            code, out, err = self._exec(cmd)
+            return code == 0
 
     def mark_flow(self, src_ip: str, proto: str, sport: int, dport: int, traffic_class: str) -> bool:
         """Mark specific 5-tuple flow with appropriate DSCP."""
-        dscp_info = CLASS_TO_DSCP.get(traffic_class, CLASS_TO_DSCP["default"])
-        tool = "ip6tables" if ":" in src_ip else "iptables"
+        with self._lock:
+            dscp_info = CLASS_TO_DSCP.get(traffic_class, CLASS_TO_DSCP["default"])
+            tool = "ip6tables" if ":" in src_ip else "iptables"
 
-        if self.dry_run:
-            self.mock_rules.append({
-                "src_ip": src_ip, "proto": proto, "sport": sport,
-                "dport": dport, "class": traffic_class, "dscp": dscp_info["name"]
-            })
-            return True
+            if self.dry_run:
+                self.mock_rules.append({
+                    "src_ip": src_ip, "proto": proto, "sport": sport,
+                    "dport": dport, "class": traffic_class, "dscp": dscp_info["name"]
+                })
+                return True
 
-        cmd = [tool, "-t", "mangle", "-A", CHAIN_NAME, "-s", src_ip,
-               "-p", proto.lower(), "--sport", str(sport)]
-        if dport and dport > 0:
-            cmd.extend(["--dport", str(dport)])
-        cmd.extend(["-j", "DSCP", "--set-dscp-class", dscp_info["name"]])
+            cmd = [tool, "-t", "mangle", "-A", CHAIN_NAME, "-s", src_ip,
+                   "-p", proto.lower(), "--sport", str(sport)]
+            if dport and dport > 0:
+                cmd.extend(["--dport", str(dport)])
+            cmd.extend(["-j", "DSCP", "--set-dscp-class", dscp_info["name"]])
 
-        code, out, err = self._exec(cmd)
-        return code == 0
+            code, out, err = self._exec(cmd)
+            return code == 0
 
-    def clear_host(self, ip_address: str):
-        """Remove marking rules for a given IP."""
+    def _clear_host_locked(self, ip_address: str):
         if self.dry_run:
             self.mock_rules = [r for r in self.mock_rules if r.get("ip") != ip_address and r.get("src_ip") != ip_address]
             return
@@ -111,26 +113,33 @@ class DscpMarker:
                     num = line.split()[0]
                     self._exec([tool, "-t", "mangle", "-D", CHAIN_NAME, num])
 
+    def clear_host(self, ip_address: str):
+        """Remove marking rules for a given IP."""
+        with self._lock:
+            self._clear_host_locked(ip_address)
+
     def clear_all(self):
         """Flush all QoS marking rules."""
-        if self.dry_run:
-            self.mock_rules.clear()
-            return
-        for tool in ["iptables", "ip6tables"]:
-            self._exec([tool, "-t", "mangle", "-F", CHAIN_NAME])
+        with self._lock:
+            if self.dry_run:
+                self.mock_rules.clear()
+                return
+            for tool in ["iptables", "ip6tables"]:
+                self._exec([tool, "-t", "mangle", "-F", CHAIN_NAME])
 
     def get_rules(self):
         """Return list of active rules in the QOS_MARKING chain."""
-        if self.dry_run:
-            return list(self.mock_rules)
-        rules = []
-        for tool in ["iptables", "ip6tables"]:
-            code, out, _ = self._exec([tool, "-t", "mangle", "-L", CHAIN_NAME, "-v", "-n"])
-            if code == 0:
-                for line in out.strip().split("\n")[2:]:
-                    if line.strip():
-                        rules.append(f"{tool}: {line.strip()}")
-        return rules
+        with self._lock:
+            if self.dry_run:
+                return [dict(r) for r in self.mock_rules]
+            rules = []
+            for tool in ["iptables", "ip6tables"]:
+                code, out, _ = self._exec([tool, "-t", "mangle", "-L", CHAIN_NAME, "-v", "-n"])
+                if code == 0:
+                    for line in out.strip().split("\n")[2:]:
+                        if line.strip():
+                            rules.append(f"{tool}: {line.strip()}")
+            return rules
 
 
 if __name__ == "__main__":

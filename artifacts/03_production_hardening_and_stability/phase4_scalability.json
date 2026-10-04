@@ -1,0 +1,46 @@
+{
+  "10": {
+    "flow_count": 10,
+    "flow_table_size": 10,
+    "packet_insert_latency_us": 5.33,
+    "classifier_inference_latency_ms": 7.928,
+    "controller_cycle_latency_ms": 518.174,
+    "db_batch_write_latency_ms": 6.406,
+    "rss_mb": 163.09,
+    "cpu_percent": 1.5,
+    "shaping_target_mbit": 95
+  },
+  "25": {
+    "flow_count": 25,
+    "flow_table_size": 25,
+    "packet_insert_latency_us": 3.07,
+    "classifier_inference_latency_ms": 4.764,
+    "controller_cycle_latency_ms": 17.612,
+    "db_batch_write_latency_ms": 7.427,
+    "rss_mb": 163.21,
+    "cpu_percent": 1.5,
+    "shaping_target_mbit": 95
+  },
+  "50": {
+    "flow_count": 50,
+    "flow_table_size": 50,
+    "packet_insert_latency_us": 3.91,
+    "classifier_inference_latency_ms": 3.266,
+    "controller_cycle_latency_ms": 22.604,
+    "db_batch_write_latency_ms": 7.652,
+    "rss_mb": 163.41,
+    "cpu_percent": 1.5,
+    "shaping_target_mbit": 95
+  },
+  "100": {
+    "flow_count": 100,
+    "flow_table_size": 100,
+    "packet_insert_latency_us": 3.77,
+    "classifier_inference_latency_ms": 2.878,
+    "controller_cycle_latency_ms": 17.723,
+    "db_batch_write_latency_ms": 8.195,
+    "rss_mb": 163.66,
+    "cpu_percent": 1.5,
+    "shaping_target_mbit": 95
+  }
+}

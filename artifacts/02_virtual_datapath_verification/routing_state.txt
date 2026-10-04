@@ -1,0 +1,24 @@
+=== PHASE 3 ROUTING STATE ACROSS ALL NODES ===
+
+--- ROUTER (gw) IPv4 ROUTES ---
+10.0.1.0/24 dev veth-lan1-gw proto kernel scope link src 10.0.1.1 
+10.0.2.0/24 dev veth-lan2-gw proto kernel scope link src 10.0.2.1 
+10.0.3.0/24 dev veth-gw-wan proto kernel scope link src 10.0.3.1 
+
+--- ROUTER (gw) IPv6 ROUTES ---
+fd00:1::/64 dev veth-lan1-gw proto kernel metric 256 pref medium
+fd00:2::/64 dev veth-lan2-gw proto kernel metric 256 pref medium
+fd00:3::/64 dev veth-gw-wan proto kernel metric 256 pref medium
+fe80::/64 dev veth-lan1-gw proto kernel metric 256 pref medium
+fe80::/64 dev veth-lan2-gw proto kernel metric 256 pref medium
+fe80::/64 dev veth-gw-wan proto kernel metric 256 pref medium
+
+--- CLIENT (lan1) IPv4 ROUTES ---
+default via 10.0.1.1 dev veth-lan1 
+10.0.1.0/24 dev veth-lan1 proto kernel scope link src 10.0.1.2 
+
+--- WAN SERVER (wanhost) IPv4 ROUTES ---
+10.0.1.0/24 via 10.0.3.1 dev veth-wan-gw 
+10.0.2.0/24 via 10.0.3.1 dev veth-wan-gw 
+10.0.3.0/24 dev veth-wan-gw proto kernel scope link src 10.0.3.2 
+

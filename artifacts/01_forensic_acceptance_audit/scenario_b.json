@@ -1,0 +1,22 @@
+{
+  "baseline": {
+    "experiment_id": "exp_scenario_b_1791054288_da34b8",
+    "scenario": "SCENARIO_B",
+    "mode": "BASELINE",
+    "initial_capacity_mbps": 100.0,
+    "collapsed_capacity_mbps": 20.0,
+    "target_shaping_mbps": 100.0,
+    "adaptation_time_sec": 30.0,
+    "recovery_time_sec": 30.0
+  },
+  "adaptive": {
+    "experiment_id": "exp_scenario_b_1791054289_06e984",
+    "scenario": "SCENARIO_B",
+    "mode": "ADAPTIVE",
+    "initial_capacity_mbps": 100.0,
+    "collapsed_capacity_mbps": 20.0,
+    "target_shaping_mbps": 19,
+    "adaptation_time_sec": 0.0356,
+    "recovery_time_sec": 0.0449
+  }
+}

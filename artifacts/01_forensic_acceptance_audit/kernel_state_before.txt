@@ -1,0 +1,15 @@
+=== KERNEL STATE BEFORE CAKE ENFORCEMENT ===
+EUID: 0
+PID: 115126
+
+--- IP LINKS ---
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+
+--- IP ROUTES ---
+
+--- TC QDISC SHOW ---
+qdisc noqueue 0: root refcnt 2 
+ Sent 0 bytes 0 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+

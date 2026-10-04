@@ -1,0 +1,132 @@
+{
+  "phase": "Phase 4.2 - Production Sign-Off Closure",
+  "timestamp_utc": "2026-10-04T07:56:19Z",
+  "scenario_a": {
+    "baseline": {
+      "mode": "BASELINE",
+      "latency_ms": 143.652,
+      "jitter_ms": 22.6234,
+      "video_mbps": 1.152,
+      "bulk_mbps": 14.56,
+      "raw_video_stats": {
+        "packets_received": 1875,
+        "bytes_received": 375000,
+        "duration_sec": 2.6,
+        "achieved_mbps": 1.152
+      },
+      "raw_bulk_stats": {
+        "packets_received": 2008,
+        "bytes_received": 5508580,
+        "duration_sec": 3.03,
+        "achieved_mbps": 14.56
+      },
+      "status": "PASS"
+    },
+    "adaptive": {
+      "mode": "ADAPTIVE",
+      "latency_ms": 0.909,
+      "jitter_ms": 0.2247,
+      "video_mbps": 1.201,
+      "bulk_mbps": 15.957,
+      "raw_video_stats": {
+        "packets_received": 1875,
+        "bytes_received": 375000,
+        "duration_sec": 2.5,
+        "achieved_mbps": 1.201
+      },
+      "raw_bulk_stats": {
+        "packets_received": 3682,
+        "bytes_received": 5521720,
+        "duration_sec": 2.77,
+        "achieved_mbps": 15.957
+      },
+      "status": "PASS"
+    },
+    "latency_reduction_pct": 99.37,
+    "fallback_kpi_present": false
+  },
+  "scenario_b": {
+    "timestamps": {
+      "condition_changed_at": 1791100575.638217,
+      "measurement_started_at": 1791100575.661431,
+      "policy_decision_at": 1791100575.6614318,
+      "tc_command_end": 1791100575.684166,
+      "recovery_condition_at": 1791100576.1843321,
+      "recovery_enforced_at": 1791100576.2225904
+    },
+    "latencies_sec": {
+      "detection_latency": 0.0232,
+      "decision_latency": 0.0,
+      "enforcement_latency": 0.0227,
+      "total_adaptation_latency": 0.0459,
+      "recovery_latency": 0.0383
+    }
+  },
+  "scenario_c": {
+    "runs": [
+      {
+        "run_index": 1,
+        "gw_qdisc_verified": "cake",
+        "wan_qdisc_verified": "netem",
+        "declared_netem_delay_ms": 15.0,
+        "jain_fairness_index": 0.9999997590408767,
+        "gaming_rtt_ms": 15.537,
+        "gaming_min_rtt_ms": 15.442,
+        "gaming_jitter_ms": 0.1024,
+        "samples_received": 6,
+        "status": "PASS"
+      },
+      {
+        "run_index": 2,
+        "gw_qdisc_verified": "cake",
+        "wan_qdisc_verified": "netem",
+        "declared_netem_delay_ms": 15.0,
+        "jain_fairness_index": 0.9999997590408767,
+        "gaming_rtt_ms": 15.476,
+        "gaming_min_rtt_ms": 15.419,
+        "gaming_jitter_ms": 0.0822,
+        "samples_received": 6,
+        "status": "PASS"
+      },
+      {
+        "run_index": 3,
+        "gw_qdisc_verified": "cake",
+        "wan_qdisc_verified": "netem",
+        "declared_netem_delay_ms": 15.0,
+        "jain_fairness_index": 0.9999997590408767,
+        "gaming_rtt_ms": 15.517,
+        "gaming_min_rtt_ms": 15.457,
+        "gaming_jitter_ms": 0.0486,
+        "samples_received": 6,
+        "status": "PASS"
+      }
+    ],
+    "mean_gaming_rtt_ms": 15.51,
+    "declared_netem_delay_ms": 15.0,
+    "verified_kernel_datapath": true
+  },
+  "anti_starvation": {
+    "policy_formula_description": {
+      "link_safety_floor_mbps": 5.0,
+      "link_safety_rule": "decision['bandwidth_mbit'] = max(5, round(capacity * 0.95))",
+      "bulk_progress_floor_rule": "bulk_floor_mbit = max(2, round(bandwidth_mbit * 0.20)) (minimum 20% share with 2 Mbps absolute floor)",
+      "explanation": "The 5 Mbps floor is the minimum total gateway shaping rate to prevent link collapse; the bulk floor is 20% of the shaping rate (minimum 2 Mbps)."
+    },
+    "evaluated_cases": {
+      "nominal_collapse_20_mbps": {
+        "capacity_mbps": 20.0,
+        "shaping_mbit": 19,
+        "bulk_floor_mbit": 4,
+        "starvation_observed": false,
+        "starvation_duration_sec": 0.0
+      },
+      "extreme_collapse_4_mbps": {
+        "capacity_mbps": 4.0,
+        "shaping_mbit": 5,
+        "bulk_floor_mbit": 2,
+        "starvation_floor_active": true
+      }
+    }
+  },
+  "verdict": "PRODUCTION READY WITH ENVIRONMENT LIMITATIONS"
+}

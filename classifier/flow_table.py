@@ -125,6 +125,10 @@ class FlowTable:
                     del self.last_packet_time[fid]
             return len(stale)
 
+    def size(self):
+        with self.lock:
+            return len(self.flows)
+
     def get_summary(self):
         """Return high-level summary of active classes."""
         active = self.get_active_flows()

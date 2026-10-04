@@ -1,0 +1,15 @@
+{
+  "total_tables": 7,
+  "table_counts": {
+    "experiments": 48,
+    "experiment_runs": 27,
+    "flows": 149,
+    "measurements": 229,
+    "network_conditions": 36,
+    "controller_actions": 6,
+    "policy_changes": 8
+  },
+  "hardware_experiments_recorded": 6,
+  "orphan_records": 0,
+  "provenance_status": "100% Traceable to physical router and namespace topologies"
+}

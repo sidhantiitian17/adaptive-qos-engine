@@ -1,0 +1,16 @@
+{
+  "router_missing_interface_tc": {
+    "success": false,
+    "error": "Cannot find device \"veth-nonexisten\"\n",
+    "is_bounded": true
+  },
+  "router_missing_interface_telemetry": {
+    "status": "unavailable",
+    "error": "Cannot find device \"veth-nonexisten\"\n",
+    "is_unavailable": true
+  },
+  "router_wan_interface_down_recovery": {
+    "action": "ip link set veth-gw-wan down / up",
+    "verified": true
+  }
+}

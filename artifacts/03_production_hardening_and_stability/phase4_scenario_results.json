@@ -1,0 +1,41 @@
+{
+  "scenario_a": {
+    "baseline_latency_ms": 227.455,
+    "adaptive_latency_ms": 0.805,
+    "latency_reduction_pct": 99.65,
+    "video_throughput_baseline": 1.14,
+    "video_throughput_adaptive": 0.95
+  },
+  "scenario_b": {
+    "timestamps": {
+      "condition_changed_at": 1791098376.0155597,
+      "measurement_started_at": 1791098376.038344,
+      "policy_decision_at": 1791098376.0383446,
+      "tc_command_end": 1791098376.0585346,
+      "recovery_condition_at": 1791098376.5586562,
+      "recovery_enforced_at": 1791098376.5972495
+    },
+    "latencies_sec": {
+      "detection_latency": 0.0228,
+      "decision_latency": 0.0,
+      "enforcement_latency": 0.0202,
+      "total_adaptation_latency": 0.043,
+      "recovery_latency": 0.0386
+    }
+  },
+  "scenario_c": {
+    "jain_fairness_index": 0.9999997590408767,
+    "gaming_latency_ms": 0.4
+  },
+  "anti_starvation": {
+    "total_capacity_mbps": 20.0,
+    "shaping_rate_mbit": 19,
+    "priority_class": "video_conference",
+    "bulk_class": "bulk_download",
+    "guaranteed_bulk_floor_mbps": 3.8000000000000003,
+    "guaranteed_bulk_floor_pct": 20.0,
+    "starvation_observed": false,
+    "starvation_duration_sec": 0.0,
+    "status": "PASS"
+  }
+}

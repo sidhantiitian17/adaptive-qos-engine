@@ -45,7 +45,9 @@ def decide_policy(available_bandwidth_mbps: float, active_flows: list, user_inte
     # Minimum guaranteed allocation for bulk traffic
     bulk_floor_mbit = max(2, round(decision["bandwidth_mbit"] * 0.20))
     decision["min_bulk_bandwidth_mbit"] = bulk_floor_mbit
-    decision["reasoning"].append(f"Guaranteed bulk progress floor set to {bulk_floor_mbit} Mbps (minimum 20% share)")
+    decision["reasoning"].append(
+        f"Guaranteed bulk progress floor: AQE is shaping the link to {decision['bandwidth_mbit']} Mbps and reserving a minimum {bulk_floor_mbit} Mbps policy floor for bulk traffic (20% of the shaped rate)"
+    )
 
     # Flow balancing analysis
     has_video = any(f.get("class") == "video_conference" for f in active_flows)

@@ -1,0 +1,62 @@
+{
+  "phase": "PHASE 6 FINAL SOFTWARE RELEASE ACCEPTANCE",
+  "timestamp": "2026-10-04T10:24:00Z",
+  "files": {
+    "phase6_acceptance_matrix.md": {
+      "sha256": "34b7086e0380bff99eb62778b2e7bb7682929ab1e3f8df0f1590776be64ce832",
+      "size_bytes": 12057
+    },
+    "phase6_api_acceptance_report.md": {
+      "sha256": "670c0a8ba9f5410b6addda5af8620918e96e7b7575c686094381498135036d53",
+      "size_bytes": 3974
+    },
+    "phase6_dashboard_acceptance_report.md": {
+      "sha256": "b2894243a8cbdcfd937654ebf309754fedaefa42451646b501d7858027ef42a1",
+      "size_bytes": 4320
+    },
+    "phase6_deployment_verification.md": {
+      "sha256": "9e33f2452aa1ab9f7ba9312f321afeba30bbe62a384785132aa26fc4c73cdb5c",
+      "size_bytes": 2550
+    },
+    "phase6_end_to_end_test_report.md": {
+      "sha256": "584fe4f05460444c4d5d1dde287b094abbfb7dda98a00410e3fe2177b8a39282",
+      "size_bytes": 9234
+    },
+    "phase6_final_release_acceptance_report.md": {
+      "sha256": "ce08b7040ecd4658bac78bc8e1ca5253e2f03614524ff30f7b4b00f8d076cd4f",
+      "size_bytes": 8699
+    },
+    "phase6_known_limitations.md": {
+      "sha256": "0b065d0b45f56b76736b9ecbabcd3125c2e2fd13243a03a7144a44dbc7213000",
+      "size_bytes": 2441
+    },
+    "phase6_kpi_recalculation.md": {
+      "sha256": "3195488a7b247847cfb660cd9c303f668d5fcf1f5b29d8b1776bfb2f9ace956e",
+      "size_bytes": 3912
+    },
+    "phase6_memory_cpu_report.md": {
+      "sha256": "17bdf907e0cd97895aabea59838e90b4ff855661655d84feb87597ab995ff546",
+      "size_bytes": 2044
+    },
+    "phase6_provenance_manifest.json": {
+      "sha256": "edc87f3279e7f38e29d06d4e461a8047aafac4f192f68b79993983a4083f9b18",
+      "size_bytes": 1022
+    },
+    "phase6_reproducibility_report.md": {
+      "sha256": "c1aa2b7cdeea0bee67d7e95a8cbc72083dd508d0c5cb4410957f56298578e747",
+      "size_bytes": 2553
+    },
+    "phase6_scalability_report.md": {
+      "sha256": "4365a58268065ab8d19c541bbd80877f7c618e92e70c4ec60752a80ea35df79e",
+      "size_bytes": 2334
+    },
+    "phase6_scenario_results.json": {
+      "sha256": "07dbb312a02d8c21cc55b8b338d4de6ef3df149b94692d4731e7d3404bc7c434",
+      "size_bytes": 918
+    },
+    "phase6_zero_fabrication_audit.md": {
+      "sha256": "cc9a2069a1051158d84006ff7b208ccf114f2f2c1c8f653b116c8a4e505651f5",
+      "size_bytes": 3005
+    }
+  }
+}

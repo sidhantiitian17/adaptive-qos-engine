@@ -1,0 +1,25 @@
+{
+  "system": "Linux LAPTOP-TBJCL2G7 6.18.40.1-microsoft-standard-WSL2+ #2 SMP PREEMPT_DYNAMIC Sun Sep 27 22:19:13 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux",
+  "kernel_version": "6.18.40.1-microsoft-standard-WSL2+",
+  "cpu": {
+    "model": "AMD Ryzen 5 5600H with Radeon Graphics",
+    "cores": "12",
+    "architecture": "x86_64",
+    "bogomips": "6587.48"
+  },
+  "memory": {
+    "total_bytes": 7976136704,
+    "used_bytes": 2345406464,
+    "free_bytes": 3783270400,
+    "available_bytes": 5630730240
+  },
+  "virtualization": "Microsoft",
+  "kernel_features": {
+    "cake_scheduler": true,
+    "netem_impairment": true,
+    "user_namespaces": true,
+    "network_namespaces": true,
+    "ipv4_forwarding": true,
+    "ipv6_forwarding": true
+  }
+}

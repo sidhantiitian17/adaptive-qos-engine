@@ -1,0 +1,7 @@
+{
+  "checkpoint_policy": "95M",
+  "bad_policy_injected": "1M",
+  "qdisc_bad_bandwidth": "1Mbit",
+  "qdisc_restored_bandwidth": "95Mbit",
+  "rollback_verified": true
+}

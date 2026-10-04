@@ -1,0 +1,204 @@
+{
+  "tables": {
+    "experiments": {
+      "count": 31,
+      "columns": [
+        "experiment_id",
+        "scenario_id",
+        "mode",
+        "configuration_json",
+        "configuration_hash",
+        "start_time",
+        "end_time",
+        "status",
+        "git_revision"
+      ]
+    },
+    "experiment_runs": {
+      "count": 10,
+      "columns": [
+        "run_id",
+        "experiment_id",
+        "run_index",
+        "start_time",
+        "end_time",
+        "status"
+      ]
+    },
+    "flows": {
+      "count": 65,
+      "columns": [
+        "id",
+        "flow_id",
+        "experiment_id",
+        "traffic_class",
+        "protocol",
+        "source_ip",
+        "source_port",
+        "dest_ip",
+        "dest_port",
+        "confidence",
+        "classifier_source",
+        "first_seen",
+        "last_seen",
+        "packet_count",
+        "byte_count"
+      ]
+    },
+    "measurements": {
+      "count": 157,
+      "columns": [
+        "measurement_id",
+        "experiment_id",
+        "run_id",
+        "flow_id",
+        "timestamp",
+        "metric_name",
+        "value",
+        "unit",
+        "source",
+        "namespace",
+        "interface",
+        "measurement_method",
+        "status"
+      ]
+    },
+    "network_conditions": {
+      "count": 28,
+      "columns": [
+        "condition_id",
+        "experiment_id",
+        "timestamp",
+        "configured_capacity_mbps",
+        "configured_delay_ms",
+        "configured_jitter_ms",
+        "configured_loss_pct",
+        "applied_qdisc",
+        "target_interface",
+        "verified_kernel_state"
+      ]
+    },
+    "controller_actions": {
+      "count": 5,
+      "columns": [
+        "action_id",
+        "experiment_id",
+        "timestamp",
+        "action_type",
+        "decision_json",
+        "target_bw_mbit",
+        "diffserv_mode",
+        "result"
+      ]
+    },
+    "policy_changes": {
+      "count": 3,
+      "columns": [
+        "change_id",
+        "experiment_id",
+        "timestamp",
+        "previous_policy",
+        "new_policy",
+        "reason"
+      ]
+    },
+    "errors": {
+      "count": 0,
+      "columns": [
+        "error_id",
+        "experiment_id",
+        "timestamp",
+        "stage",
+        "error_type",
+        "error_message"
+      ]
+    }
+  },
+  "orphan_checks": {
+    "experiment_runs": 0,
+    "flows": 0,
+    "measurements": 0,
+    "network_conditions": 0,
+    "controller_actions": 0,
+    "policy_changes": 0,
+    "errors": 0
+  },
+  "timestamp_checks": {
+    "min_start_time": 1791051052.9183555,
+    "max_start_time": 1791053771.9209542,
+    "current_time": 1791054068.779624,
+    "future_timestamps_found": false
+  },
+  "runs_and_linkage": {},
+  "kpi_provenance_check": {},
+  "measurement_statuses": [
+    {
+      "status": "measured",
+      "cnt": 156,
+      "distinct_metrics": 17
+    },
+    {
+      "status": "unavailable",
+      "cnt": 1,
+      "distinct_metrics": 1
+    }
+  ],
+  "scenario_mode_breakdown": [
+    {
+      "scenario_id": "SCENARIO_A",
+      "mode": "ADAPTIVE",
+      "exp_count": 11
+    },
+    {
+      "scenario_id": "SCENARIO_A",
+      "mode": "BASELINE",
+      "exp_count": 4
+    },
+    {
+      "scenario_id": "SCENARIO_B",
+      "mode": "ADAPTIVE",
+      "exp_count": 5
+    },
+    {
+      "scenario_id": "SCENARIO_B",
+      "mode": "BASELINE",
+      "exp_count": 3
+    },
+    {
+      "scenario_id": "SCENARIO_C",
+      "mode": "ADAPTIVE",
+      "exp_count": 4
+    },
+    {
+      "scenario_id": "SCENARIO_C",
+      "mode": "BASELINE",
+      "exp_count": 4
+    }
+  ],
+  "recent_policy_changes": [
+    {
+      "change_id": "pchg_4d58ca65d3ab43709b613eb9e39811e0",
+      "experiment_id": "exp_scenario_b_1791053752_0cdc3c",
+      "timestamp": 1791053756.9348826,
+      "previous_policy": "CONGESTION_MANAGEMENT_19M",
+      "new_policy": "DEFAULT_FAIRNESS_95M",
+      "reason": "WAN restored to 100M; recovered CAKE shaping to 95M"
+    },
+    {
+      "change_id": "pchg_671d9618e86542aa9c99ec4e638a38e7",
+      "experiment_id": "exp_scenario_b_1791053752_0cdc3c",
+      "timestamp": 1791053753.4136338,
+      "previous_policy": "DEFAULT_FAIRNESS_100M",
+      "new_policy": "CONGESTION_MANAGEMENT_19M",
+      "reason": "WAN collapsed from 100M to 20M; adapted shaping to 19M"
+    },
+    {
+      "change_id": "pchg_1ff8bff5e2244985b6618a1df6b120e8",
+      "experiment_id": "exp_scenario_b_1791053752_71c53f",
+      "timestamp": 1791053752.795991,
+      "previous_policy": "UNMANAGED_FIFO",
+      "new_policy": "UNMANAGED_FIFO",
+      "reason": "Static unmanaged baseline; no adaptation triggered"
+    }
+  ]
+}

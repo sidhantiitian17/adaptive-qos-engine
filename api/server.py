@@ -1,13 +1,22 @@
 """
-REST API for Intent-Aware QoS Engine:
-Provides natural-language intent ingestion, real-time misclassification overrides,
-flow monitoring, and active policy status endpoints.
+[DEPRECATED PROTOTYPE SERVER]
+This standalone prototype API on port 8000 is deprecated as of Phase 1 State Unification.
+The authoritative application state, control plane, and API endpoints are now unified
+and actively maintained in dashboard/unified_dashboard.py on port 8080.
+Do NOT start this server concurrently with the unified dashboard to avoid split-brain state.
 """
 import os
 import sys
+import warnings
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
+
+warnings.warn(
+    "api/server.py is deprecated. Use dashboard/unified_dashboard.py for the authoritative AQE control plane.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 # Ensure project modules are resolvable
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

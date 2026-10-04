@@ -100,16 +100,38 @@ class LiveFlowSniffer:
     """
     Live packet sniffer capturing headers from specified interfaces.
     Inspects only IP/IPv6 length, TTL/hop limit, and arrival timing.
-    Payloads are completely ignored.
+    Payloads are completely ignored (Constraint C1).
     """
     def __init__(self, ifaces=None, flow_table=None, classifier=None):
-        self.ifaces = ifaces or ["veth-lan1-gw", "veth-lan2-gw"]
-        if isinstance(self.ifaces, str):
-            self.ifaces = [self.ifaces]
         self.flow_table = flow_table or FlowTable()
         self.classifier = classifier or FlowClassifier()
         self._stop_event = threading.Event()
         self._thread = None
+        self.status = "stopped"
+        self.last_error = None
+        self.packet_count = 0
+
+        # Intelligent interface selection:
+        if ifaces is not None:
+            self.ifaces = [ifaces] if isinstance(ifaces, str) else list(ifaces)
+        else:
+            self.ifaces = self._detect_interfaces()
+
+    @staticmethod
+    def _detect_interfaces() -> list:
+        """Detect available interfaces; prefer veth pairs if present, else fallback to lo."""
+        available = []
+        try:
+            available = os.listdir("/sys/class/net")
+        except Exception:
+            pass
+
+        preferred = [i for i in ["veth-lan1-gw", "veth-lan2-gw", "veth-gw-wan"] if i in available]
+        if preferred:
+            return preferred
+        if "lo" in available:
+            return ["lo"]
+        return available if available else ["lo"]
 
     def _packet_handler(self, pkt):
         try:
@@ -124,6 +146,7 @@ class LiveFlowSniffer:
         if not is_ipv4 and not is_ipv6:
             return
 
+        self.packet_count += 1
         now = time.time()
         if is_ipv4:
             src_ip = pkt[IP].src
@@ -172,26 +195,43 @@ class LiveFlowSniffer:
         """Start asynchronous sniffing on configured interfaces."""
         from scapy.all import sniff
         self._stop_event.clear()
+        self.status = "starting"
+        self.last_error = None
 
         def _worker():
             try:
+                self.status = "running"
                 sniff(
                     iface=self.ifaces,
                     prn=self._packet_handler,
                     stop_filter=lambda x: self._stop_event.is_set(),
                     store=False
                 )
+                if self.status == "running":
+                    self.status = "stopped"
             except Exception as e:
-                # Expected when running without kernel netns or ifaces not yet bound
-                pass
+                self.status = "unavailable"
+                self.last_error = str(e)
 
         self._thread = threading.Thread(target=_worker, daemon=True)
         self._thread.start()
+        time.sleep(0.05)
 
     def stop(self):
         self._stop_event.set()
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=2.0)
+        if self.status != "unavailable":
+            self.status = "stopped"
+
+    def get_status(self) -> dict:
+        return {
+            "status": self.status,
+            "interfaces": self.ifaces,
+            "packet_count": self.packet_count,
+            "last_error": self.last_error,
+            "active_flows": len(self.flow_table.get_active_flows(10))
+        }
 
 
 def test_sniffer(duration=5, iface="veth-lan1-gw"):

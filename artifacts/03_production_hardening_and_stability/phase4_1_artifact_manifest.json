@@ -1,0 +1,140 @@
+{
+  "manifest_version": "2.1",
+  "timestamp_utc": "2026-10-04T07:47:46.587308+00:00",
+  "phase": "Phase 4.1 - Final Production Evidence Audit",
+  "total_artifacts": 22,
+  "artifacts": [
+    {
+      "filename": "phase4_1_acceptance_matrix.md",
+      "relative_path": "phase4_artifacts/phase4_1_acceptance_matrix.md",
+      "size_bytes": 12313,
+      "sha256": "7d2d74acb92c75faaf5c7a788884574633efd675b303acdefa7c1642d5157f4d"
+    },
+    {
+      "filename": "phase4_1_discrepancy_log.md",
+      "relative_path": "phase4_artifacts/phase4_1_discrepancy_log.md",
+      "size_bytes": 5056,
+      "sha256": "a837aedb13a645694df0f21b6e74b22500aef43eda993c6b9297dc55c84bc63c"
+    },
+    {
+      "filename": "phase4_1_final_production_evidence_audit.md",
+      "relative_path": "phase4_artifacts/phase4_1_final_production_evidence_audit.md",
+      "size_bytes": 11102,
+      "sha256": "c2ef4cfc38fc7125326eab9d86e78f35ba81687acde2ec533a5f7b84c4c60006"
+    },
+    {
+      "filename": "phase4_1_kpi_recalculation.md",
+      "relative_path": "phase4_artifacts/phase4_1_kpi_recalculation.md",
+      "size_bytes": 5933,
+      "sha256": "4414882ea40c2b8f258b28da3d4a28ededbde1b47512f45a662e1bbfabae1536"
+    },
+    {
+      "filename": "phase4_1_memory_analysis.md",
+      "relative_path": "phase4_artifacts/phase4_1_memory_analysis.md",
+      "size_bytes": 3764,
+      "sha256": "a99da9b1c7066e6241e5d9e83841fabdf3a86a5c7df085b483a4d8c0b1d56f54"
+    },
+    {
+      "filename": "phase4_1_provenance_manifest.json",
+      "relative_path": "phase4_artifacts/phase4_1_provenance_manifest.json",
+      "size_bytes": 4507,
+      "sha256": "e5ca41167500c5136dbb1278bab024f25c98f4c2272381855c631d25edba1480"
+    },
+    {
+      "filename": "phase4_acceptance_matrix.md",
+      "relative_path": "phase4_artifacts/phase4_acceptance_matrix.md",
+      "size_bytes": 12504,
+      "sha256": "a32df86bb25b31d61c2c4c271472c34b823c495087744a89067452f9a138b05e"
+    },
+    {
+      "filename": "phase4_artifact_manifest.json",
+      "relative_path": "phase4_artifacts/phase4_artifact_manifest.json",
+      "size_bytes": 3695,
+      "sha256": "1f4fe5044fd25ed488e8b85ea48c67f2de6a10813278ea99ee9b7b0d30200dd3"
+    },
+    {
+      "filename": "phase4_baseline_audit.md",
+      "relative_path": "phase4_artifacts/phase4_baseline_audit.md",
+      "size_bytes": 7312,
+      "sha256": "8b87b87bfd01d44eb093850e494ff9e5edf665f316ea6d48efbc10bf97b805dd"
+    },
+    {
+      "filename": "phase4_failure_recovery.json",
+      "relative_path": "phase4_artifacts/phase4_failure_recovery.json",
+      "size_bytes": 3193,
+      "sha256": "8fcbf5486f13f435ab3d5854fd78c3815c4e8b1f5618a3a5ede0575eafe3835c"
+    },
+    {
+      "filename": "phase4_failure_recovery.md",
+      "relative_path": "phase4_artifacts/phase4_failure_recovery.md",
+      "size_bytes": 2204,
+      "sha256": "5025a9aa244993923000adb6066bfa9de1710589c1ea907816101688139d979d"
+    },
+    {
+      "filename": "phase4_final_signoff.md",
+      "relative_path": "phase4_artifacts/phase4_final_signoff.md",
+      "size_bytes": 8342,
+      "sha256": "b3759e3d28c243e90c0b80bdea4eebdb724997fbfe670c17978f2d588aeb7b78"
+    },
+    {
+      "filename": "phase4_hardware_validation.md",
+      "relative_path": "phase4_artifacts/phase4_hardware_validation.md",
+      "size_bytes": 1147,
+      "sha256": "70e1cb6fe4d4ff40dbd53a39fc2b2e6e5196f411a899b9c104507cd307c374c4"
+    },
+    {
+      "filename": "phase4_license_audit.md",
+      "relative_path": "phase4_artifacts/phase4_license_audit.md",
+      "size_bytes": 2384,
+      "sha256": "03a265c30f9505a4754afa76029f5959523f47967bf4105ab8088899db3087d5"
+    },
+    {
+      "filename": "phase4_long_run.json",
+      "relative_path": "phase4_artifacts/phase4_long_run.json",
+      "size_bytes": 21595,
+      "sha256": "fd4b4eacafc2dddc7b5f85d3b5bdce09b1e35e5d41e6dc4dc124302f074ec01d"
+    },
+    {
+      "filename": "phase4_long_run.md",
+      "relative_path": "phase4_artifacts/phase4_long_run.md",
+      "size_bytes": 983,
+      "sha256": "432a646f060f5dc4469c4723521d7a3bbeae14ab76656dac72c76335dea7e117"
+    },
+    {
+      "filename": "phase4_provenance_manifest.json",
+      "relative_path": "phase4_artifacts/phase4_provenance_manifest.json",
+      "size_bytes": 4419,
+      "sha256": "0560b2431c2d3d008037f3a0b8d09b3907b83ac1d5e0706b3aaf1aeaaa9c3d4a"
+    },
+    {
+      "filename": "phase4_scalability.json",
+      "relative_path": "phase4_artifacts/phase4_scalability.json",
+      "size_bytes": 1234,
+      "sha256": "32df0a61711502f7e9a0a8da6df6cd9008d8d76dd04820608a66af4021b23785"
+    },
+    {
+      "filename": "phase4_scalability.md",
+      "relative_path": "phase4_artifacts/phase4_scalability.md",
+      "size_bytes": 1639,
+      "sha256": "971270c11296b65b26c8cb35aa4d69fb08078b09d0142743947bca5d2577abb4"
+    },
+    {
+      "filename": "phase4_scenario_results.json",
+      "relative_path": "phase4_artifacts/phase4_scenario_results.json",
+      "size_bytes": 1207,
+      "sha256": "d25d61acb80be92e09c07d92ff7a1b9bedc7f619b2cc799d23301b7d57bb9a27"
+    },
+    {
+      "filename": "phase4_scenario_results.md",
+      "relative_path": "phase4_artifacts/phase4_scenario_results.md",
+      "size_bytes": 1523,
+      "sha256": "49f64e1ef7dd8f1cf338f341a71596c0eeed1132733d6d466cd6db224a373e0c"
+    },
+    {
+      "filename": "phase4_security_audit.md",
+      "relative_path": "phase4_artifacts/phase4_security_audit.md",
+      "size_bytes": 4866,
+      "sha256": "fa548786f4bd35e4bf1cd318e3ce4839d0f304d0e665a86ff0aaa8c507dbbe28"
+    }
+  ]
+}

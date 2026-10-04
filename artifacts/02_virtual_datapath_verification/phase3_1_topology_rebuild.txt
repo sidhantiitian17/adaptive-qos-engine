@@ -1,0 +1,64 @@
+=== PHASE 3.1 MULTI-NODE TOPOLOGY REBUILD DUMP ===
+Timestamp: 1791056676.7885268 (ISO: 2026-10-03 19:44:36 UTC)
+
+--- Namespaces ---
+wanhost (id: 3)
+lan2 (id: 2)
+lan1 (id: 0)
+gw (id: 1)
+
+--- Node: lan1 Interfaces ---
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+veth-lan1@if2    UP             10.0.1.2/24 fd00:1::2/64 fe80::4458:91ff:fe9a:77e0/64
+--- Node: lan1 IPv4 Routes ---
+default via 10.0.1.1 dev veth-lan1 
+10.0.1.0/24 dev veth-lan1 proto kernel scope link src 10.0.1.2
+--- Node: lan1 IPv6 Routes ---
+fd00:1::/64 dev veth-lan1 proto kernel metric 256 pref medium
+fe80::/64 dev veth-lan1 proto kernel metric 256 pref medium
+default via fd00:1::1 dev veth-lan1 metric 1024 pref medium
+
+--- Node: lan2 Interfaces ---
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+veth-lan2@if4    UP             10.0.2.2/24 fd00:2::2/64 fe80::e0f1:53ff:feb1:d/64
+--- Node: lan2 IPv4 Routes ---
+default via 10.0.2.1 dev veth-lan2 
+10.0.2.0/24 dev veth-lan2 proto kernel scope link src 10.0.2.2
+--- Node: lan2 IPv6 Routes ---
+fd00:2::/64 dev veth-lan2 proto kernel metric 256 pref medium
+fe80::/64 dev veth-lan2 proto kernel metric 256 pref medium
+default via fd00:2::1 dev veth-lan2 metric 1024 pref medium
+
+--- Node: gw Interfaces ---
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+veth-lan1-gw@if3 UP             10.0.1.1/24 fd00:1::1/64 fe80::58c3:bcff:fe2c:ac19/64 
+veth-lan2-gw@if5 UP             10.0.2.1/24 fd00:2::1/64 fe80::f8d3:3dff:fe0e:6b22/64 
+veth-gw-wan@if6  UP             10.0.3.1/24 fd00:3::1/64 fe80::3c12:79ff:fead:8746/64
+--- Node: gw IPv4 Routes ---
+10.0.1.0/24 dev veth-lan1-gw proto kernel scope link src 10.0.1.1 
+10.0.2.0/24 dev veth-lan2-gw proto kernel scope link src 10.0.2.1 
+10.0.3.0/24 dev veth-gw-wan proto kernel scope link src 10.0.3.1
+--- Node: gw IPv6 Routes ---
+fd00:1::/64 dev veth-lan1-gw proto kernel metric 256 pref medium
+fd00:2::/64 dev veth-lan2-gw proto kernel metric 256 pref medium
+fd00:3::/64 dev veth-gw-wan proto kernel metric 256 pref medium
+fe80::/64 dev veth-lan1-gw proto kernel metric 256 pref medium
+fe80::/64 dev veth-lan2-gw proto kernel metric 256 pref medium
+fe80::/64 dev veth-gw-wan proto kernel metric 256 pref medium
+
+--- Node: wanhost Interfaces ---
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+veth-wan-gw@if7  UP             10.0.3.2/24 fd00:3::2/64 fe80::54a6:59ff:fee3:c4b9/64
+--- Node: wanhost IPv4 Routes ---
+10.0.1.0/24 via 10.0.3.1 dev veth-wan-gw 
+10.0.2.0/24 via 10.0.3.1 dev veth-wan-gw 
+10.0.3.0/24 dev veth-wan-gw proto kernel scope link src 10.0.3.2
+--- Node: wanhost IPv6 Routes ---
+fd00:1::/64 via fd00:3::1 dev veth-wan-gw metric 1024 pref medium
+fd00:2::/64 via fd00:3::1 dev veth-wan-gw metric 1024 pref medium
+fd00:3::/64 dev veth-wan-gw proto kernel metric 256 pref medium
+fe80::/64 dev veth-wan-gw proto kernel metric 256 pref medium
+
+--- Router Forwarding Sysctl State ---
+gw net.ipv4.ip_forward: net.ipv4.ip_forward = 1
+gw net.ipv6.conf.all.forwarding: net.ipv6.conf.all.forwarding = 1

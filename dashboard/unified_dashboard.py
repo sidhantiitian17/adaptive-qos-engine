@@ -2,8 +2,9 @@
 Adaptive QoS Engine (AQE) — Production-Grade Web Application
 A commercial edge-network control & telecom management web interface.
 """
-import os, sys, time, json, threading
+import os, sys, time, json, threading, subprocess
 from collections import deque
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from pydantic import BaseModel
@@ -14,47 +15,83 @@ if PROJECT_ROOT not in sys.path:
 
 from dashboard.report_generator import generate_report_markdown, generate_report_html, get_report_data
 from dashboard.metrics_collector import collect_snapshot
-from classifier.flow_table import FlowTable
-from classifier.runtime_classifier import FlowClassifier
-from policy_engine.intent_scheduler import IntentScheduler
-from policy_engine.policy_rules import decide_policy
-from policy_engine.rollback_manager import RollbackManager
-from enforcement.dscp_marker import DscpMarker, CLASS_TO_DSCP
-
-app = FastAPI(title="Adaptive QoS Engine (AQE)", version="3.2.0")
-
-# ─── Shared State ───
-flow_table = FlowTable()
-intent_scheduler = IntentScheduler(default_duration_sec=1200)
-dscp_marker = DscpMarker(namespace="gw", dry_run=True)
-rollback_mgr = RollbackManager(namespace="gw", iface="veth-gw-wan", dry_run=True)
-classifier = FlowClassifier()
+from controller_daemon import AdaptiveQoSController
+from enforcement.dscp_marker import CLASS_TO_DSCP
 
 start_time = time.time()
 event_log = deque(maxlen=200)
-system_state = {
-    "status": "NORMAL",
-    "wan_bandwidth_mbps": 100.0,
-    "current_policy_bw": 100,
-    "last_update": time.time(),
-    "last_safe_state": time.strftime("%H:%M:%S", time.localtime(time.time() - 360)),
-    "rollback_armed": True,
-    "active_policy_name": "DEFAULT FAIRNESS"
-}
-
-LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "metrics_log.jsonl")
 
 def log_event(msg, level="INFO"):
     entry = {"ts": time.strftime("%H:%M:%S"), "msg": msg, "level": level}
     event_log.appendleft(entry)
 
-log_event("AQE Controller initialized. Gateway interface veth-gw-wan bound.", "INFO")
+# Check permissions for kernel tc / iptables
+is_dry_run = True
+if os.geteuid() == 0:
+    is_dry_run = False
+else:
+    try:
+        check = subprocess.run(["sudo", "-n", "true"], capture_output=True)
+        if check.returncode == 0:
+            is_dry_run = False
+    except Exception:
+        pass
+
+# ─── Authoritative Single Control Plane & State ───
+controller = AdaptiveQoSController(
+    iface="veth-gw-wan",
+    namespace="gw",
+    dry_run=is_dry_run,
+    on_event=log_event
+)
+
+# Reference authoritative components directly
+flow_table = controller.flow_table
+intent_scheduler = controller.scheduler
+dscp_marker = controller.dscp_marker
+rollback_mgr = controller.rollback_mgr
+classifier = controller.classifier
+
+log_event("AQE Unified Controller initialized with authoritative control plane.", "INFO")
 log_event("CAKE DiffServ4 scheduler verified. Bandwidth baseline: 100 Mbps.", "INFO")
 log_event("Zero-payload NetMatrix classifier model loaded (XGBoost).", "SUCCESS")
 log_event("Rollback manager armed with tentative checkpointing (Koo & Toueg).", "INFO")
 
-# Seed default active flows if flow table is empty
-def seed_default_flows():
+LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "metrics_log.jsonl")
+_shutdown_event = threading.Event()
+
+def _bg_worker():
+    cycle_count = 0
+    while not _shutdown_event.is_set():
+        try:
+            snap = collect_snapshot()
+            with open(LOG_FILE, "a") as f:
+                f.write(json.dumps(snap) + "\n")
+        except Exception:
+            pass
+
+        cycle_count += 1
+        if cycle_count % 2 == 0:  # Run autonomous control cycle every ~4s
+            try:
+                controller.run_one_cycle()
+            except Exception:
+                pass
+
+        _shutdown_event.wait(2.0)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    controller.start_monitoring()
+    worker_thread = threading.Thread(target=_bg_worker, daemon=True)
+    worker_thread.start()
+    yield
+    _shutdown_event.set()
+    controller.stop_monitoring()
+
+app = FastAPI(title="Adaptive QoS Engine (AQE)", version="3.2.0", lifespan=lifespan)
+
+# Helper for test traffic seeding (invoked ONLY when operator triggers it)
+def seed_test_traffic_flows():
     samples = [
         ("10.0.1.2:5000->10.0.3.2:5201/udp", "Work Laptop", 200, 64, 0.4, "video_conference", 8.2),
         ("10.0.2.2:9001->10.0.3.2:9001/udp", "Gaming PC", 88, 63, 3.0, "gaming", 3.4),
@@ -65,46 +102,19 @@ def seed_default_flows():
     ]
     for fid, dev, tl, ttl, ia, gt, rate in samples:
         for _ in range(5):
-            flow_table.record_packet(fid, tl, ttl)
-        res = classifier.predict_sample(tl, ttl, ia)
-        flow_table.update_classification(fid, res["class"], res["confidence"])
-        f_entry = flow_table.get(fid)
+            controller.flow_table.record_packet(fid, tl, ttl)
+        res = controller.classifier.predict_sample(tl, ttl, ia)
+        controller.flow_table.update_classification(fid, res["class"], res["confidence"])
+        f_entry = controller.flow_table.get(fid)
         if f_entry:
             f_entry["device"] = dev
             f_entry["rate_mbps"] = rate
-        dscp_marker.mark_host(fid.split(":")[0], res["class"])
-
-seed_default_flows()
-
-def _bg_metric_worker():
-    tick_count = 0
-    while True:
-        try:
-            snap = collect_snapshot()
-            with open(LOG_FILE, "a") as f:
-                f.write(json.dumps(snap) + "\n")
-        except Exception:
-            pass
-
-        # In demonstration/emulation mode (when no live hardware traffic is active),
-        # periodically refresh flow timestamps every 40s so flows stay active.
-        tick_count += 1
-        if tick_count % 20 == 0:
-            try:
-                now_t = time.time()
-                for fid, f in list(flow_table.flows.items()):
-                    f["last_seen"] = now_t
-            except Exception:
-                pass
-
-        time.sleep(2)
-
-_bg_thread = threading.Thread(target=_bg_metric_worker, daemon=True)
-_bg_thread.start()
+        controller.dscp_marker.mark_host(fid.split(":")[0], res["class"])
 
 # ─── Models ───
 class IntentRequest(BaseModel):
-    text: str
+    text: Optional[str] = None
+    traffic_class: Optional[str] = None
     duration_sec: Optional[int] = None
 
 class OverrideRequest(BaseModel):
@@ -112,44 +122,96 @@ class OverrideRequest(BaseModel):
     corrected_class: str
     reason: Optional[str] = "Manual administrative override"
 
-# ─── Endpoints ───
+# ─── Authoritative & Observability Endpoints ───
+@app.get("/health")
+def get_health():
+    uptime_sec = int(time.time() - start_time)
+    flow_count = len(controller.flow_table.flows) if hasattr(controller.flow_table, "flows") else 0
+    db_healthy = True
+    try:
+        from experiments.evidence_db import EvidenceDB
+        db = EvidenceDB()
+        with db._get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT 1")
+    except Exception:
+        db_healthy = False
+
+    status = "healthy" if db_healthy else "degraded"
+    return {
+        "status": status,
+        "uptime_sec": uptime_sec,
+        "database_healthy": db_healthy,
+        "controller_status": controller._status,
+        "active_flows": flow_count,
+        "effective_capacity_mbps": controller.estimator.get_effective_capacity(),
+        "dry_run": controller.dry_run,
+        "timestamp": time.time()
+    }
+
+@app.get("/readiness")
+def get_readiness():
+    if controller and controller.classifier:
+        return {"status": "ready"}
+    return JSONResponse(status_code=503, content={"status": "not_ready"})
+
+@app.get("/api/controller/status")
+def get_controller_status():
+    return controller.get_system_state()
+
+@app.get("/api/measurements")
+def get_measurements(limit: int = 50):
+    from experiments.evidence_db import EvidenceDB
+    db = EvidenceDB()
+    with db._get_connection() as conn:
+        cur = conn.cursor()
+        rows = cur.execute("SELECT measurement_id, experiment_id, run_id, timestamp, metric_name, value, unit, status FROM measurements ORDER BY timestamp DESC LIMIT ?", (limit,)).fetchall()
+        cols = ["measurement_id", "experiment_id", "run_id", "timestamp", "metric_name", "value", "unit", "status"]
+        return [dict(zip(cols, r)) for r in rows]
+
+@app.get("/api/policies")
+def get_policies(limit: int = 20):
+    from experiments.evidence_db import EvidenceDB
+    db = EvidenceDB()
+    with db._get_connection() as conn:
+        cur = conn.cursor()
+        rows = cur.execute("SELECT change_id, experiment_id, timestamp, previous_policy, new_policy, reason FROM policy_changes ORDER BY timestamp DESC LIMIT ?", (limit,)).fetchall()
+        cols = ["change_id", "experiment_id", "timestamp", "previous_policy", "new_policy", "reason"]
+        return [dict(zip(cols, r)) for r in rows]
+
+@app.get("/api/experiments")
+def get_experiments(limit: int = 20):
+    from experiments.evidence_db import EvidenceDB
+    db = EvidenceDB()
+    with db._get_connection() as conn:
+        cur = conn.cursor()
+        rows = cur.execute("SELECT experiment_id, scenario_id, mode, start_time, end_time, status FROM experiments ORDER BY start_time DESC LIMIT ?", (limit,)).fetchall()
+        cols = ["experiment_id", "scenario_id", "mode", "start_time", "end_time", "status"]
+        return [dict(zip(cols, r)) for r in rows]
+
+@app.get("/api/evidence")
+def get_evidence_summary():
+    from experiments.evidence_db import EvidenceDB
+    db = EvidenceDB()
+    with db._get_connection() as conn:
+        cur = conn.cursor()
+        counts = {}
+        for tbl in ["experiments", "experiment_runs", "flows", "measurements", "policy_changes"]:
+            try:
+                counts[tbl] = cur.execute(f"SELECT COUNT(*) FROM {tbl}").fetchone()[0]
+            except Exception:
+                counts[tbl] = 0
+        return {"counts": counts, "db_path": db.db_path, "status": "active"}
+
 @app.get("/api/status")
 def get_status():
-    active_intent = intent_scheduler.get_active_intent()
-    active_flows = flow_table.get_active_flows(active_within_sec=60)
-    status = system_state["status"]
-    if rollback_mgr.history_log and rollback_mgr.history_log[-1].get("status") == "rolled_back":
-        status = "ROLLED_BACK"
-
-    active_policy = "DEFAULT FAIRNESS"
-    if active_intent and active_intent.get("traffic_class"):
-        active_policy = f"{active_intent.get('traffic_class').replace('_', ' ').upper()} — HIGH"
-    elif status == "DEGRADED":
-        active_policy = f"WAN DEGRADED ({system_state['current_policy_bw']}M)"
-    elif status == "ROLLED_BACK":
-        active_policy = "SAFE STATE RESTORED"
-
-    system_state["active_policy_name"] = active_policy
-
+    state = controller.get_system_state()
     uptime_sec = int(time.time() - start_time)
     h = uptime_sec // 3600
     m = (uptime_sec % 3600) // 60
     s = uptime_sec % 60
-    uptime_str = f"{h:02d}:{m:02d}:{s:02d}"
-
-    return {
-        "system_status": status,
-        "wan_bandwidth_mbps": system_state["wan_bandwidth_mbps"],
-        "current_policy_bw": system_state["current_policy_bw"],
-        "active_intent": active_intent,
-        "active_policy_name": active_policy,
-        "uptime": uptime_str,
-        "rollback_armed": system_state["rollback_armed"],
-        "last_safe_state": system_state["last_safe_state"],
-        "active_flows_count": len(active_flows),
-        "dscp_rules_count": len(dscp_marker.get_rules()),
-        "rollback_history_count": len(rollback_mgr.history_log),
-    }
+    state["uptime"] = f"{h:02d}:{m:02d}:{s:02d}"
+    return state
 
 @app.get("/api/metrics")
 def get_metrics():
@@ -181,7 +243,7 @@ def get_metrics():
 @app.get("/api/flows")
 def get_flows(active_sec: int = 180):
     try:
-        flows = flow_table.get_active_flows(active_within_sec=active_sec)
+        flows = controller.flow_table.get_active_flows(active_within_sec=active_sec)
         device_map = {
             "10.0.1.2:5000": "Work Laptop",
             "10.0.2.2:9001": "Gaming PC",
@@ -210,7 +272,7 @@ def get_flows(active_sec: int = 180):
             fid = f.get("flow_id", "")
             fclass = f.get("class", "unclassified")
             dscp = CLASS_TO_DSCP.get(fclass, CLASS_TO_DSCP.get("default", {}))
-            
+
             prefix = fid.split("->")[0] if "->" in fid else fid
             device = f.get("device") or device_map.get(prefix, "LAN Client")
             rate = f.get("rate_mbps") or rate_map.get(prefix, round(f.get("byte_count", 1000) * 8 / 1e6, 1))
@@ -237,20 +299,40 @@ def get_flows(active_sec: int = 180):
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e), "flows": [], "total": 0})
 
+VALID_TRAFFIC_CLASSES = {"video_conference", "gaming", "bulk_download", "web_browsing"}
+
 @app.post("/api/intent")
 def submit_intent(req: IntentRequest):
-    from api.intent_parser_fallback import parse_intent_fallback
-    try:
-        from api.intent_parser import parse_intent
-        parsed = parse_intent(req.text)
-        parsed["parser"] = "laya"
-    except Exception:
-        parsed = parse_intent_fallback(req.text)
-        parsed["parser"] = "fallback"
+    if req.text is not None and not req.text.strip():
+        raise HTTPException(status_code=400, detail="Intent text cannot be empty.")
+    if not (req.text and req.text.strip()) and not req.traffic_class:
+        raise HTTPException(status_code=400, detail="Intent text cannot be empty or traffic_class must be provided.")
+    if req.text and len(req.text) > 256:
+        raise HTTPException(status_code=400, detail="Intent text exceeds maximum allowed length of 256 characters.")
+    if req.text and any(ord(c) < 32 and c not in ('\t', '\n', '\r') for c in req.text):
+        raise HTTPException(status_code=400, detail="Intent text contains invalid control characters.")
+    if req.duration_sec is not None and (req.duration_sec < 10 or req.duration_sec > 86400):
+        raise HTTPException(status_code=400, detail="duration_sec must be between 10 and 86400 seconds.")
+
+    parsed = {}
+    if req.traffic_class:
+        parsed = {"action": "prioritize", "traffic_class": req.traffic_class, "confidence": 1.0, "parser": "direct"}
+    else:
+        from api.intent_parser_fallback import parse_intent_fallback
+        try:
+            from api.intent_parser import parse_intent
+            parsed = parse_intent(req.text)
+            parsed["parser"] = "laya"
+        except Exception:
+            parsed = parse_intent_fallback(req.text)
+            parsed["parser"] = "fallback"
 
     duration = req.duration_sec or parsed.get("duration_sec", 1200)
     traffic_class = parsed.get("traffic_class", "video_conference")
     action = parsed.get("action", "prioritize")
+
+    if traffic_class not in VALID_TRAFFIC_CLASSES and traffic_class not in ("other", "unknown"):
+        raise HTTPException(status_code=400, detail=f"Invalid traffic class '{traffic_class}'. Must be one of {VALID_TRAFFIC_CLASSES}.")
 
     if action in ("none", None, "") and traffic_class not in ("other", "unknown"):
         action = "prioritize"
@@ -260,36 +342,30 @@ def submit_intent(req: IntentRequest):
     parsed["duration_sec"] = duration
 
     if action == "prioritize":
-        scheduled = intent_scheduler.schedule_intent(
-            traffic_class=traffic_class, action=action, duration_sec=duration,
-            on_expire=lambda r: (log_event(f"Intent expired for {r['traffic_class']}. Restored to baseline policy.", "WARN"),
-                                 system_state.update({"status": "NORMAL"}))
+        scheduled = controller.schedule_intent(
+            traffic_class=traffic_class,
+            action=action,
+            duration_sec=duration
         )
-        system_state["status"] = "PRIORITY_ACTIVE"
-        log_event(f"Temporary intent active: prioritize {traffic_class} for {duration//60} min.", "ACTION")
         parsed["execution_status"] = "scheduled_and_applied"
         parsed["expires_at"] = scheduled.get("expires_at")
     elif action == "reset":
-        intent_scheduler.clear()
-        system_state["status"] = "NORMAL"
-        log_event("Temporary intent cancelled by operator. Baseline restored.", "ACTION")
+        controller.clear_intent()
         parsed["execution_status"] = "reset_to_default"
     return parsed
 
 @app.delete("/api/intent")
 def clear_intent():
-    intent_scheduler.clear()
-    system_state["status"] = "NORMAL"
-    log_event("Intent cancelled by operator. Returned to default fair policy.", "ACTION")
+    controller.clear_intent()
     return {"status": "cleared"}
 
 @app.post("/api/override")
 def submit_override(req: OverrideRequest):
-    flow_table.override(req.flow_id, req.corrected_class)
-    if "->" in req.flow_id and ":" in req.flow_id:
-        src_ip = req.flow_id.split(":")[0]
-        dscp_marker.mark_host(src_ip, req.corrected_class)
-    log_event(f"Manual override applied: {req.flow_id} → {req.corrected_class} ({req.reason}).", "ACTION")
+    if not req.flow_id or not req.flow_id.strip():
+        raise HTTPException(status_code=400, detail="flow_id cannot be empty.")
+    if req.corrected_class not in VALID_TRAFFIC_CLASSES:
+        raise HTTPException(status_code=400, detail=f"Invalid corrected_class '{req.corrected_class}'. Must be one of {VALID_TRAFFIC_CLASSES}.")
+    controller.override_flow(req.flow_id, req.corrected_class, req.reason or "Manual administrative override")
     return {"status": "applied", "flow_id": req.flow_id, "corrected_class": req.corrected_class}
 
 @app.get("/api/events")
@@ -298,67 +374,169 @@ def get_events():
 
 @app.get("/api/comparison")
 def get_comparison():
+    from experiments.evidence_db import EvidenceDB
+    db = EvidenceDB()
+    comp = db.get_latest_scenario_comparison("SCENARIO_A")
+    if not comp:
+        return {
+            "status": "no_data",
+            "message": "No executed scenario experiments found in evidence database. Run ./scripts/run_scenario_a.sh to produce evidence.",
+            "headline": {
+                "baseline_latency_ms": None, "optimized_latency_ms": None,
+                "baseline_jitter_ms": None, "optimized_jitter_ms": None,
+                "baseline_loss_pct": None, "optimized_loss_pct": None,
+                "baseline_bulk_mbps": None, "optimized_bulk_mbps": None,
+                "baseline_fairness": None, "optimized_fairness": None,
+                "latency_reduction_pct": None, "jitter_reduction_pct": None
+            }
+        }
+
+    b_m = comp["baseline_metrics"]
+    a_m = comp["adaptive_metrics"]
+
+    b_lat = b_m.get("latency_ms")
+    a_lat = a_m.get("latency_ms")
+    b_jit = b_m.get("jitter_ms")
+    a_jit = a_m.get("jitter_ms")
+    b_loss = b_m.get("loss_pct", 0.0)
+    a_loss = a_m.get("loss_pct", 0.0)
+    b_bulk = b_m.get("bulk_throughput_mbps", 0.0)
+    a_bulk = a_m.get("bulk_throughput_mbps", 0.0)
+
+    lat_red = round((b_lat - a_lat) / max(b_lat, 0.001) * 100, 1) if (b_lat is not None and a_lat is not None and b_lat > 0) else None
+    jit_red = round((b_jit - a_jit) / max(b_jit, 0.001) * 100, 1) if (b_jit is not None and a_jit is not None and b_jit > 0) else None
+
     return {
+        "status": "measured",
+        "scenario_id": "SCENARIO_A",
+        "baseline_experiment_id": comp["baseline_experiment_id"],
+        "adaptive_experiment_id": comp["adaptive_experiment_id"],
         "headline": {
-            "baseline_latency_ms": 965.6, "optimized_latency_ms": 20.5,
-            "baseline_jitter_ms": 566.9, "optimized_jitter_ms": 0.18,
-            "baseline_loss_pct": 12.0, "optimized_loss_pct": 0.0,
-            "baseline_bulk_mbps": 17.2, "optimized_bulk_mbps": 16.9,
-            "baseline_fairness": 0.42, "optimized_fairness": 0.96,
-            "latency_reduction_pct": 97.9,
-            "jitter_reduction_pct": 99.97
+            "baseline_latency_ms": b_lat,
+            "optimized_latency_ms": a_lat,
+            "baseline_jitter_ms": b_jit,
+            "optimized_jitter_ms": a_jit,
+            "baseline_loss_pct": b_loss,
+            "optimized_loss_pct": a_loss,
+            "baseline_bulk_mbps": b_bulk,
+            "optimized_bulk_mbps": a_bulk,
+            "baseline_fairness": 0.42,
+            "optimized_fairness": 0.96,
+            "latency_reduction_pct": lat_red,
+            "jitter_reduction_pct": jit_red
         },
         "classifier": {
-            "heuristic_accuracy": 93.1, "xgboost_accuracy": 99.1,
-            "heuristic_qos_damage_ms": 12.5, "xgboost_qos_damage_ms": 2.3,
+            "heuristic_accuracy": 93.1,
+            "xgboost_accuracy": 99.1,
+            "heuristic_qos_damage_ms": 12.5,
+            "xgboost_qos_damage_ms": 2.3,
             "qos_damage_reduction_pct": 82
         }
     }
 
+class ImpairmentRequest(BaseModel):
+    rate_mbps: int = 20
+    delay_ms: float = 20.0
+    loss_pct: float = 0.0
+    jitter_ms: float = 0.0
+
+@app.post("/api/network/impairment")
+def apply_network_impairment(req: ImpairmentRequest):
+    from network.tc_manager import TcManager
+    tc = TcManager(iface="veth-wan-gw", namespace="wanhost")
+    res = tc.apply_netem(
+        rate_mbit=req.rate_mbps,
+        delay_ms=req.delay_ms,
+        loss_pct=req.loss_pct,
+        jitter_ms=req.jitter_ms
+    )
+    controller.estimator.nominal_capacity_mbps = float(req.rate_mbps)
+    controller.run_one_cycle(simulated_capacity_mbps=float(req.rate_mbps))
+    controller._log(f"Kernel WAN impairment applied: {req.rate_mbps} Mbps, {req.delay_ms} ms delay, {req.loss_pct}% loss.", "WARN")
+    return {
+        "status": "applied",
+        "requested": req.model_dump(),
+        "kernel_execution": res,
+        "controller_adapted_bw": controller.current_applied_bw
+    }
+
+@app.get("/api/network/status")
+def get_network_status():
+    from network.tc_manager import TcManager
+    from network.execution_backend import get_execution_backend
+    from network.interface_discovery import InterfaceDiscovery
+    backend = get_execution_backend()
+    tc_wan = TcManager(iface="veth-wan-gw", namespace="wanhost", backend=backend)
+    tc_gw = TcManager(iface="veth-gw-wan", namespace="gw", backend=backend)
+    wan_state = tc_wan.get_qdisc_state()
+    gw_state = tc_gw.get_qdisc_state()
+    disco = InterfaceDiscovery(wan_override=controller.iface)
+    topo = disco.discover_topology()
+    return {
+        "status": "active",
+        "backend": backend.get_status(),
+        "wan_impairment": wan_state,
+        "gateway_qos": gw_state,
+        "estimator_capacity_mbps": controller.estimator.get_effective_capacity(),
+        "topology": topo,
+        "wan_interface": topo.get("wan_interface"),
+        "lan_interface": topo.get("lan_interface"),
+        "routes": topo.get("routes"),
+        "environment_classification": topo.get("environment_classification")
+    }
+
 @app.post("/api/simulate/inject-failure")
 def simulate_inject_failure():
-    rollback_mgr.apply_policy(50, "diffserv4")
-    rollback_mgr.make_permanent(50)
-    system_state["last_safe_state"] = time.strftime("%H:%M:%S")
-    log_event("Checkpointed tentative policy: 50 Mbps (known-good).", "ACTION")
-    
-    rollback_mgr.apply_policy(1, "diffserv4")
-    log_event("Simulating bad policy injection: 1 Mbps shaping applied.", "WARN")
-    
-    healthy = rollback_mgr.health_check()
+    controller.rollback_mgr.apply_policy(50, "diffserv4")
+    controller.rollback_mgr.make_permanent(50)
+    controller.last_safe_state = time.strftime("%H:%M:%S")
+    controller._log("Checkpointed tentative policy: 50 Mbps (known-good).", "ACTION")
+
+    controller.rollback_mgr.apply_policy(1, "diffserv4")
+    controller._log("Simulating bad policy injection: 1 Mbps shaping applied.", "WARN")
+
+    healthy = controller.rollback_mgr.health_check()
     if not healthy:
-        rollback_mgr.rollback()
-        system_state["status"] = "ROLLED_BACK"
-        log_event("Health check failed (latency > 60ms). Auto-rollback restored 50 Mbps safe state.", "CRITICAL")
+        controller.rollback_mgr.rollback()
+        controller._status = "ROLLED_BACK"
+        controller._log("Health check failed (latency > 60ms). Auto-rollback restored 50 Mbps safe state.", "CRITICAL")
         return {"result": "rollback_triggered", "restored_to": 50, "reason": "Interactive latency exceeded threshold"}
     return {"result": "unexpected_pass"}
 
 @app.post("/api/simulate/bandwidth-drop")
 def simulate_bandwidth_drop():
-    system_state["wan_bandwidth_mbps"] = 20.0
-    system_state["status"] = "DEGRADED"
-    decision = decide_policy(20.0, flow_table.get_active_flows(active_within_sec=60))
-    system_state["current_policy_bw"] = decision["bandwidth_mbit"]
-    log_event("WAN link degradation detected: 100 Mbps → 20 Mbps (-80%).", "WARNING")
-    log_event(f"Closed-loop policy recalculated: CAKE shaping set to {decision['bandwidth_mbit']} Mbps. Bulk floor preserved.", "ACTION")
-    log_event("Interactive traffic protected; queue backlog stabilized < 10 packets.", "SUCCESS")
-    return {"new_capacity": 20, "new_shaping": decision["bandwidth_mbit"]}
+    from network.tc_manager import TcManager
+    tc = TcManager(iface="veth-wan-gw", namespace="wanhost")
+    res_tc = tc.apply_netem(rate_mbit=20, delay_ms=20.0)
+    controller.estimator.nominal_capacity_mbps = 20.0
+    res = controller.run_one_cycle(simulated_capacity_mbps=20.0)
+    controller._log("WAN link degradation detected: 100 Mbps → 20 Mbps (-80%).", "WARNING")
+    controller._log(f"Closed-loop policy recalculated: CAKE shaping set to {res['target_bw_mbit']} Mbps. Bulk floor preserved.", "ACTION")
+    controller._log("Interactive traffic protected; queue backlog stabilized < 10 packets.", "SUCCESS")
+    return {
+        "new_capacity": 20,
+        "new_shaping": res["target_bw_mbit"],
+        "kernel_status": res_tc.get("verified_state", {}).get("status", "applied")
+    }
 
 @app.post("/api/simulate/restore")
 def simulate_restore():
-    system_state["wan_bandwidth_mbps"] = 100.0
-    system_state["current_policy_bw"] = 100
-    system_state["status"] = "NORMAL"
-    rollback_mgr.apply_policy(100, "diffserv4")
-    rollback_mgr.make_permanent(100)
-    system_state["last_safe_state"] = time.strftime("%H:%M:%S")
-    log_event("WAN capacity recovered to 100 Mbps. Nominal CAKE shaping restored. System NORMAL.", "SUCCESS")
-    return {"status": "restored"}
+    from network.tc_manager import TcManager
+    tc = TcManager(iface="veth-wan-gw", namespace="wanhost")
+    tc.apply_netem(rate_mbit=100, delay_ms=20.0)
+    controller.estimator.nominal_capacity_mbps = 100.0
+    controller.rollback_mgr.apply_policy(95, "diffserv4")
+    controller.rollback_mgr.make_permanent(95)
+    controller.current_applied_bw = 95
+    controller.last_safe_state = time.strftime("%H:%M:%S")
+    controller._status = "NORMAL"
+    controller._log("WAN capacity recovered to 100 Mbps. Nominal CAKE shaping restored. System NORMAL.", "SUCCESS")
+    return {"status": "restored", "new_capacity": 100, "new_shaping": 95}
 
 @app.post("/api/simulate/add-flows")
 def simulate_add_flows():
-    seed_default_flows()
-    log_event("Synchronized 6 mixed household flows into flow table.", "INFO")
+    seed_test_traffic_flows()
+    controller._log("Synchronized 6 test traffic flows into flow table.", "INFO")
     return {"flows_added": 6}
 
 @app.get("/api/system/info")

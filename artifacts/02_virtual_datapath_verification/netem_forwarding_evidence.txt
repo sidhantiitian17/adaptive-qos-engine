@@ -1,0 +1,5 @@
+=== SERVER WAN (veth-wan-gw) NETEM IMPAIRMENT EVIDENCE ===
+qdisc netem 8031: root refcnt 13 limit 1000 delay 15ms rate 20Mbit
+ Sent 1434 bytes 6 pkt (dropped 0, overlimits 0 requeues 0) 
+ backlog 0b 0p requeues 0
+

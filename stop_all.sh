@@ -13,6 +13,16 @@ echo "================================================================="
 
 STOPPED=0
 
+if [ -f ".engine.pid" ]; then
+    PID=$(cat .engine.pid 2>/dev/null || true)
+    if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then
+        echo "Stopping Unified Engine (PID $PID)..."
+        kill "$PID" 2>/dev/null || true
+        STOPPED=$((STOPPED + 1))
+    fi
+    rm -f .engine.pid
+fi
+
 if [ -f ".dashboard.pid" ]; then
     PID=$(cat .dashboard.pid 2>/dev/null || true)
     if [ -n "$PID" ] && kill -0 "$PID" 2>/dev/null; then

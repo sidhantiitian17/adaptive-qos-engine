@@ -1,0 +1,37 @@
+{
+  "engine_name": "Adaptive QoS Engine for Mixed Home Broadband Traffic",
+  "phase": "Phase 6 Final Release",
+  "verdict": "PRODUCTION READY WITH ENVIRONMENT LIMITATIONS",
+  "environment": {
+    "kernel": "6.18.40.1-microsoft-standard-WSL2+",
+    "os": "Linux (Ubuntu 24.04 LTS via WSL2)",
+    "python_version": "3.12",
+    "virtual_interfaces": [
+      "veth-lan1-gw",
+      "veth-lan2-gw",
+      "veth-gw-wan",
+      "veth-wan-host"
+    ],
+    "namespaces": [
+      "lan1",
+      "lan2",
+      "gw",
+      "wanhost"
+    ]
+  },
+  "dataset_provenance": {
+    "source": "experiments/evidence.db",
+    "sqlite_pragma_integrity": "ok",
+    "foreign_key_violations": 0,
+    "total_measurements": 744,
+    "total_experiments": 117
+  },
+  "reproducibility": {
+    "script": "scripts/run_full_demo.sh",
+    "reset_script": "scripts/reset_environment.sh",
+    "tests_passed": 39,
+    "demo_steps_passed": 24
+  },
+  "artifact_manifest_ref": "phase6_artifacts/phase6_artifact_manifest.json",
+  "timestamp": "2026-10-04T08:59:19Z"
+}

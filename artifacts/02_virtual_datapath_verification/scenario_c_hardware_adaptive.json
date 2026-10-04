@@ -1,0 +1,12 @@
+{
+  "experiment_id": "exp_scenario_c_hardware_1791055246_0f7758",
+  "mode": "ADAPTIVE",
+  "tv_throughputs": [
+    1.201,
+    1.201,
+    1.201
+  ],
+  "fairness_index": 1.0,
+  "gaming_latency_ms": 20.867,
+  "gaming_jitter_ms": 1.0308
+}

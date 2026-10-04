@@ -1,0 +1,12 @@
+{
+  "experiment_id": "exp_scenario_c_hardware_1791055241_b307ef",
+  "mode": "BASELINE",
+  "tv_throughputs": [
+    1.201,
+    1.201,
+    1.201
+  ],
+  "fairness_index": 1.0,
+  "gaming_latency_ms": 40.532,
+  "gaming_jitter_ms": 0.1072
+}

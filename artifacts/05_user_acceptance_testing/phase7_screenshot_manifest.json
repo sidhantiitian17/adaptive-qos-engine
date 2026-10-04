@@ -1,0 +1,154 @@
+{
+  "audit_phase": "PHASE 7 REAL USER UI ACCEPTANCE",
+  "generated_at": "2026-10-04T10:03:00Z",
+  "dom_snapshots": [
+    {
+      "view_id": "view-overview",
+      "tab_name": "Overview",
+      "route": "/#overview",
+      "dom_selectors_verified": [
+        "#view-overview",
+        ".telemetry-strip",
+        "#val-latency",
+        "#val-jitter",
+        "#val-loss",
+        "#val-throughput",
+        "#val-queue",
+        "#val-fairness",
+        "#why-did-aqe",
+        "#decision-trace-table"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "High-contrast dark dashboard with 6 active telemetry cards, live topology nodes, and decision justification card."
+    },
+    {
+      "view_id": "view-traffic",
+      "tab_name": "Traffic",
+      "route": "/#traffic",
+      "dom_selectors_verified": [
+        "#view-traffic",
+        "#flow-table-body",
+        ".flow-row",
+        ".btn-override",
+        ".badge-class"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "Detailed per-stream classification table displaying 6 active flows, mapped devices, DSCP badges, and override buttons."
+    },
+    {
+      "view_id": "view-policies",
+      "tab_name": "Policies",
+      "route": "/#policies",
+      "dom_selectors_verified": [
+        "#view-policies",
+        "#cake-tin-breakdown",
+        ".policy-card",
+        "#tin-voice-video",
+        "#tin-bulk"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "Active CAKE diffserv4 tin allocation diagram showing bandwidth priority distribution and anti-starvation guarantees."
+    },
+    {
+      "view_id": "view-intent",
+      "tab_name": "Intent",
+      "route": "/#intent",
+      "dom_selectors_verified": [
+        "#view-intent",
+        "#intent-text-input",
+        "#intent-duration-select",
+        "#btn-preset-video",
+        "#btn-preset-gaming",
+        "#btn-apply-intent",
+        "#btn-cancel-intent"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "Interactive natural-language QoS scheduler with preset quick-buttons, input textarea, and active intent countdown."
+    },
+    {
+      "view_id": "view-experiments",
+      "tab_name": "Experiments",
+      "route": "/#experiments",
+      "dom_selectors_verified": [
+        "#view-experiments",
+        "#scenario1-comparison-card",
+        "#scenario2-replay-container",
+        "#btn-replay-play",
+        "#btn-replay-reset"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "Scenario 1 quantitative bufferbloat comparison (171ms vs 1.0ms) and interactive Scenario 2 adaptation timeline replay."
+    },
+    {
+      "view_id": "view-events",
+      "tab_name": "Events",
+      "route": "/#events",
+      "dom_selectors_verified": [
+        "#view-events",
+        "#events-filter-all",
+        "#events-filter-action",
+        "#events-filter-warning",
+        "#events-filter-critical",
+        "#events-table-body"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "Live chronological system event stream with severity badges (CRITICAL in red, ACTION in blue, INFO in slate)."
+    },
+    {
+      "view_id": "view-reports",
+      "tab_name": "Reports",
+      "route": "/#reports",
+      "dom_selectors_verified": [
+        "#view-reports",
+        "#report-markdown-content",
+        "#btn-copy-markdown",
+        "#btn-download-md",
+        "#btn-open-fullpage"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "Embedded production acceptance documentation with instant export buttons and fullpage printable HTML link."
+    },
+    {
+      "view_id": "view-settings",
+      "tab_name": "Settings",
+      "route": "/#settings",
+      "dom_selectors_verified": [
+        "#view-settings",
+        "#sys-info-kernel",
+        "#sys-info-python",
+        "#sys-info-memory",
+        "#sys-info-interfaces"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "System hardware, kernel version, network adapter status, and memory consumption telemetry."
+    },
+    {
+      "view_id": "modal-override",
+      "tab_name": "Flow Override Modal",
+      "route": "DOM Overlay",
+      "dom_selectors_verified": [
+        "#overrideModal",
+        "#override-flow-id",
+        "#override-class-select",
+        "#btn-confirm-override",
+        "#btn-close-override"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "Centered modal dialog with flow identifier, class selection dropdown, and confirmation buttons."
+    },
+    {
+      "view_id": "modal-export",
+      "tab_name": "Export Report Modal",
+      "route": "DOM Overlay",
+      "dom_selectors_verified": [
+        "#exportModal",
+        "#export-format-markdown",
+        "#export-format-html",
+        "#btn-close-export"
+      ],
+      "status": "CAPTURED_AND_VERIFIED",
+      "visual_state": "Modal dialog providing quick download links for Markdown, HTML, and JSON verification manifests."
+    }
+  ],
+  "verification_verdict": "ALL 10 DOM VIEW AND MODAL SNAPSHOTS VERIFIED"
+}

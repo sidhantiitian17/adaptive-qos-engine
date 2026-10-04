@@ -1,0 +1,37 @@
+=== TC QDISC FORENSIC EVIDENCE ===
+Interface: lo (User Namespace Private Datapath)
+Qdisc Configured: CAKE bandwidth 18Mbit diffserv4
+
+Detailed Kernel Statistics:
+qdisc cake 8022: root refcnt 2 bandwidth 18Mbit diffserv4 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0 
+ Sent 122670 bytes 200 pkt (dropped 0, overlimits 396 requeues 0) 
+ backlog 0b 0p requeues 0
+ memory used: 160256b of 4Mb
+ capacity estimate: 18Mbit
+ min/max network layer size:          201 /    1251
+ min/max overhead-adjusted size:      201 /    1251
+ average network hdr offset:            8
+
+                   Bulk  Best Effort        Video        Voice
+  thresh       1125Kbit       18Mbit        9Mbit     4500Kbit
+  target          699ms       43.7ms       87.4ms        175ms
+  interval         1.4s        139ms        182ms        350ms
+  pk_delay       49.6ms       6.69ms       7.92ms       5.24ms
+  av_delay       5.81ms        976us        510us        329us
+  sp_delay       5.81ms        976us        510us        329us
+  backlog            0b           0b           0b           0b
+  pkts               50           50           30           70
+  bytes           62550        16010        10590        33520
+  way_inds            0            0            0            0
+  way_miss            1            1            1            2
+  way_cols            0            0            0            0
+  drops               0            0            0            0
+  marks               0            0            0            0
+  ack_drop            0            0            0            0
+  sp_flows            0            1            1            2
+  bk_flows            1            0            0            0
+  un_flows            0            0            0            0
+  max_len          1251          381          353          590
+  quantum           300          549          300          300
+
+

@@ -1,0 +1,79 @@
+{
+  "host_interfaces": [
+    {
+      "ifindex": 1,
+      "ifname": "lo",
+      "flags": [
+        "LOOPBACK",
+        "UP",
+        "LOWER_UP"
+      ],
+      "mtu": 65536,
+      "qdisc": "noqueue",
+      "operstate": "UNKNOWN",
+      "linkmode": "DEFAULT",
+      "group": "default",
+      "txqlen": 1000,
+      "link_type": "loopback",
+      "address": "00:00:00:00:00:00",
+      "broadcast": "00:00:00:00:00:00"
+    },
+    {
+      "ifindex": 2,
+      "ifname": "eth0",
+      "flags": [
+        "BROADCAST",
+        "MULTICAST",
+        "UP",
+        "LOWER_UP"
+      ],
+      "mtu": 1480,
+      "qdisc": "mq",
+      "operstate": "UP",
+      "linkmode": "DEFAULT",
+      "group": "default",
+      "txqlen": 1000,
+      "link_type": "ether",
+      "address": "00:15:5d:96:4a:24",
+      "broadcast": "ff:ff:ff:ff:ff:ff"
+    }
+  ],
+  "topology_interfaces": {
+    "client_lan1": {
+      "ns": "lan1",
+      "iface": "veth-lan1",
+      "ip4": "10.0.1.2/24",
+      "ip6": "fd00:1::2/64"
+    },
+    "client_lan2": {
+      "ns": "lan2",
+      "iface": "veth-lan2",
+      "ip4": "10.0.2.2/24",
+      "ip6": "fd00:2::2/64"
+    },
+    "router_lan1": {
+      "ns": "gw",
+      "iface": "veth-lan1-gw",
+      "ip4": "10.0.1.1/24",
+      "ip6": "fd00:1::1/64"
+    },
+    "router_lan2": {
+      "ns": "gw",
+      "iface": "veth-lan2-gw",
+      "ip4": "10.0.2.1/24",
+      "ip6": "fd00:2::1/64"
+    },
+    "router_wan": {
+      "ns": "gw",
+      "iface": "veth-gw-wan",
+      "ip4": "10.0.3.1/24",
+      "ip6": "fd00:3::1/64"
+    },
+    "wan_server": {
+      "ns": "wanhost",
+      "iface": "veth-wan-gw",
+      "ip4": "10.0.3.2/24",
+      "ip6": "fd00:3::2/64"
+    }
+  }
+}

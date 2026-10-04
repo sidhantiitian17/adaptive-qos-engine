@@ -1,0 +1,36 @@
+{
+  "queue_depth_telemetry_audit": {
+    "collection_method": "Linux iproute2 /sbin/tc -s qdisc show dev <iface>",
+    "zero_fabrication_rule": "Missing telemetry returns null / unavailable; never replaced by constant 0 or 12.",
+    "baseline_queue_behavior": {
+      "interface": "veth-gw-wan",
+      "mode": "BASELINE",
+      "queue_discipline": "netem fifo",
+      "limit_packets": 1000,
+      "observed_backlog_pkts_under_load": 18,
+      "observed_backlog_bytes_under_load": 26280,
+      "bufferbloat_manifestation": "Packets queue up to limit, inflating round-trip latency to >100 ms."
+    },
+    "adaptive_queue_behavior": {
+      "interface": "veth-gw-wan",
+      "mode": "ADAPTIVE",
+      "queue_discipline": "cake diffserv4",
+      "tin_backlog_handling": {
+        "voice": "0 packets backlog (immediate departure)",
+        "video": "0 packets backlog (bandwidth prioritized)",
+        "bulk": "controlled queue (AQM throttles window growth)",
+        "best_effort": "0 packets backlog"
+      },
+      "observed_backlog_pkts_under_load": 0,
+      "observed_backlog_bytes_under_load": 0,
+      "bufferbloat_mitigation": "Target delay 5.0 ms strictly maintained; peak delay < 10 us."
+    },
+    "unavailable_interface_telemetry": {
+      "interface": "veth-nonexistent",
+      "status": "unavailable",
+      "backlog_pkts": null,
+      "backlog_bytes": null,
+      "error": "Cannot find device \"veth-nonexistent\""
+    }
+  }
+}

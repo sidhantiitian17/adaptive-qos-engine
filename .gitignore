@@ -1,8 +1,23 @@
+# Virtual environment & configuration
 venv/
 .env
+.env.local
+
+# Python bytecode & cache
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 *.pkl.bak
-metrics_log.jsonl
+
+# Runtime logs, PIDs, and transient artifacts
 *.log
 *.pid
+logs/*.log
+!logs/.gitkeep
+metrics_log.jsonl
+
+# OS & Editor files
+.DS_Store
+.vscode/
+.idea/

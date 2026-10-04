@@ -1,0 +1,7 @@
+{
+  "action": "restart_controller_daemon",
+  "pre_restart_qdisc": "95Mbit",
+  "datapath_safety": "Kernel qdisc survives controller daemon restart without packet drop or disconnection",
+  "post_restart_reconstruction": "Controller re-attaches to existing qdisc and authoritative flow table state",
+  "status": "VERIFIED"
+}

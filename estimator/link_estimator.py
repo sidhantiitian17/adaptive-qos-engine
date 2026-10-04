@@ -1,6 +1,7 @@
 import subprocess
 import json
 import time
+import os
 from collections import deque
 
 class LinkEstimator:
@@ -12,24 +13,37 @@ class LinkEstimator:
     control variance (tau = averaging timescale).
     """
 
-    def __init__(self, target_ip, target_port=5201, window=5):
+    def __init__(self, target_ip, target_port=5201, window=5, namespace=None):
         self.target_ip = target_ip
         self.target_port = target_port
+        self.namespace = namespace
         self.history = deque(maxlen=window)  # last N estimates (fleet)
+        self.last_error = None
+        self.last_timestamp = None
 
     def _single_probe(self, duration_sec=2):
-        """Ek chhota iperf3 burst chalao aur achieved throughput return karo (Mbps)."""
-        cmd = [
+        """Execute a short active iperf3 probe against target and return achieved Mbps."""
+        base_cmd = [
             "iperf3", "-c", self.target_ip, "-p", str(self.target_port),
-            "-t", str(duration_sec),"-R", "-J"  # JSON output
+            "-t", str(duration_sec), "-R", "-J"  # JSON output
         ]
+        cmd = []
+        if self.namespace:
+            cmd = ["sudo", "-n", "ip", "netns", "exec", self.namespace] if os.geteuid() != 0 else ["ip", "netns", "exec", self.namespace]
+        cmd.extend(base_cmd)
+
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=duration_sec + 5)
+            if result.returncode != 0:
+                self.last_error = result.stderr.strip() or f"iperf3 returned code {result.returncode}"
+                return None
             data = json.loads(result.stdout)
             mbps = data["end"]["sum_received"]["bits_per_second"] / 1e6
+            self.last_error = None
+            self.last_timestamp = time.time()
             return round(mbps, 2)
         except Exception as e:
-            print(f"[ERROR] Probe failed: {e}")
+            self.last_error = str(e)
             return None
 
     def estimate(self, probe_duration=2, samples=3):

@@ -1,0 +1,10 @@
+{
+  "experiment_id": "exp_scenario_a_hardware_1791055236_7663cc",
+  "mode": "ADAPTIVE",
+  "video_throughput_mbps": 1.201,
+  "bulk_throughput_mbps": 15.924,
+  "latency_ms": 0.777,
+  "jitter_ms": 0.3538,
+  "loss_pct": 0.0,
+  "queue_depth_pkts": 0
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "class_name": "VOICE / GAMING (EF)",
+    "dscp_value": 46,
+    "client_egress_tos": "0xb8",
+    "router_ingress_tos": null,
+    "router_wan_egress_tos": "0xb8",
+    "destination_expected_tos": "0xb8",
+    "dscp_preserved_across_router": false
+  },
+  {
+    "class_name": "VIDEO (AF41)",
+    "dscp_value": 34,
+    "client_egress_tos": "0x88",
+    "router_ingress_tos": null,
+    "router_wan_egress_tos": "0x88",
+    "destination_expected_tos": "0x88",
+    "dscp_preserved_across_router": false
+  },
+  {
+    "class_name": "BULK (CS1)",
+    "dscp_value": 8,
+    "client_egress_tos": "0x20",
+    "router_ingress_tos": null,
+    "router_wan_egress_tos": "0x20",
+    "destination_expected_tos": "0x20",
+    "dscp_preserved_across_router": false
+  },
+  {
+    "class_name": "BEST EFFORT (CS0)",
+    "dscp_value": 0,
+    "client_egress_tos": "0x0",
+    "router_ingress_tos": null,
+    "router_wan_egress_tos": null,
+    "destination_expected_tos": "0x0",
+    "dscp_preserved_across_router": false
+  }
+]

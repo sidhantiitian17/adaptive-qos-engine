@@ -1,0 +1,13 @@
+=== IPv6 MULTI-NODE ROUTER FORWARDING EVIDENCE ===
+Path: CLIENT (lan1: fd00:1::2) -> ROUTER LAN (gw: fd00:1::1) -> ROUTER WAN (gw: fd00:3::1) -> SERVER (wanhost: fd00:3::2)
+
+PING fd00:3::2 (fd00:3::2) 56 data bytes
+64 bytes from fd00:3::2: icmp_seq=1 ttl=63 time=0.275 ms
+64 bytes from fd00:3::2: icmp_seq=2 ttl=63 time=0.082 ms
+64 bytes from fd00:3::2: icmp_seq=3 ttl=63 time=0.095 ms
+64 bytes from fd00:3::2: icmp_seq=4 ttl=63 time=0.062 ms
+
+--- fd00:3::2 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3400ms
+rtt min/avg/max/mdev = 0.062/0.128/0.275/0.085 ms
+

@@ -1,0 +1,4 @@
+{
+  "rfc3550_jitter_ms": 1.1072,
+  "formula": "J_i = J_{i-1} + (|D_{i-1, i}| - J_{i-1}) / 16.0 (RFC 3550 standard)"
+}

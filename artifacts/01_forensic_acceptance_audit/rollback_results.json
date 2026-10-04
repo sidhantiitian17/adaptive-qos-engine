@@ -1,0 +1,9 @@
+{
+  "last_good_config_checkpointed": 50,
+  "bad_policy_injected": 1,
+  "rollback_execution": {
+    "rollback_success": true,
+    "restored_bandwidth_mbit": 50,
+    "history_count": 2
+  }
+}

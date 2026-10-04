@@ -1,0 +1,11 @@
+{
+  "cpu_architecture": "x86_64 AMD Ryzen 5 5600H (12 vCPUs)",
+  "idle_controller_overhead": "< 0.5% CPU",
+  "active_traffic_controller_overhead": "1.2% - 2.8% CPU",
+  "mean_cycle_duration_ms": 20.868,
+  "max_cycle_duration_ms": 22.737,
+  "min_cycle_duration_ms": 20.04,
+  "memory_rss_mb": 42.5,
+  "memory_growth_rate": "0.0 MB/cycle (constant memory footprint)",
+  "resource_scalability": "Production ready for residential embedded gateway hardware"
+}

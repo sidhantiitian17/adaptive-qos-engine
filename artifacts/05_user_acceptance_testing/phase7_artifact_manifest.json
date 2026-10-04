@@ -1,0 +1,70 @@
+{
+  "phase": "PHASE 7 REAL USER UI ACCEPTANCE",
+  "timestamp": "2026-10-04T10:24:00Z",
+  "files": {
+    "phase7_dashboard_end_to_end_acceptance_report.md": {
+      "sha256": "684dabab8a84aab85a8d853b719576a0d7af43a70c2f46be54760d95bd8a1be1",
+      "size_bytes": 7006
+    },
+    "phase7_discrepancy_log.md": {
+      "sha256": "5b0723f80897f8839ae40029af428a04efcb73dfd60a42360a728ee825f5d63c",
+      "size_bytes": 2932
+    },
+    "phase7_failure_recovery_report.md": {
+      "sha256": "7cf8d0d08cbb82848bd2c3126f015dfce0980083757b82f433518654f903771c",
+      "size_bytes": 3057
+    },
+    "phase7_final_real_user_acceptance_matrix.md": {
+      "sha256": "1ab783692430cd68b005a3b72cef2ba9eeaea4ff57c7c943d9b637ee103992f8",
+      "size_bytes": 3342
+    },
+    "phase7_final_real_user_acceptance_report.md": {
+      "sha256": "5e3470c8fa0bdd6f3b438f0ea01bf8f0b2cc2261a58b8910febdd17b6b8d8ae8",
+      "size_bytes": 6107
+    },
+    "phase7_known_limitations.md": {
+      "sha256": "440f557dc1a01d41a56c3a82558246aa5ed2edbecdf0cf1c3b1d7b89969db057",
+      "size_bytes": 3512
+    },
+    "phase7_provenance_manifest.json": {
+      "sha256": "0fa3a528a4eafb46cbc09970e365de53847ec90f0eba9fe70dda2d81bd8a19c2",
+      "size_bytes": 1304
+    },
+    "phase7_real_user_journey_report.md": {
+      "sha256": "0b292bb4fce8416d3bc99810afa710a269212793679fe4904259ddf059afca38",
+      "size_bytes": 8504
+    },
+    "phase7_realtime_traceability.md": {
+      "sha256": "116e696b5fbc5ac24fa47bad0dde768d4f21b3464a075ee1944b1b111b9a3393",
+      "size_bytes": 4079
+    },
+    "phase7_scenario_results.json": {
+      "sha256": "c1f4ca3da8ab230df1cd8f31988761e8ad185a8fe5f6ce7491457787af29b6ca",
+      "size_bytes": 2359
+    },
+    "phase7_screenshot_manifest.json": {
+      "sha256": "982ad5ead09ed1012df4bed99f4ab1475a5b1e0a8e9f56d91decddafcf37190b",
+      "size_bytes": 5051
+    },
+    "phase7_ui_api_consistency_report.md": {
+      "sha256": "3c375952975ffa62e3e6ae83cc7f8249b6739177bdf55dab904877c3cbd0b306",
+      "size_bytes": 2843
+    },
+    "phase7_ui_control_acceptance_matrix.md": {
+      "sha256": "babbc515954cdea7b7d9bfd5de10021e10c1ba5aad3b8b55dbfd2642760f4025",
+      "size_bytes": 6598
+    },
+    "phase7_ui_kernel_consistency_report.md": {
+      "sha256": "740048b30bed15ce528c8bf34025b496d33979adc711abd5d08a5e6e7b01c829",
+      "size_bytes": 2513
+    },
+    "phase7_ui_test_results.json": {
+      "sha256": "86b4f7505601d16fe149062988d9c04f0a76e77834bdc4778fc06c6ce346a401",
+      "size_bytes": 15961
+    },
+    "phase7_zero_fabrication_audit.md": {
+      "sha256": "e214f3d367779e16e3b0be00c708ea53a264c1565eb06e8016fd9df90b1743ae",
+      "size_bytes": 3234
+    }
+  }
+}

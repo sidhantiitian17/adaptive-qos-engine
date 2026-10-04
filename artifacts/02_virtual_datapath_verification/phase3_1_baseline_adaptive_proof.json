@@ -1,0 +1,34 @@
+{
+  "system_state_comparison": {
+    "baseline": {
+      "mode": "BASELINE (Unmanaged FIFO / Bufferbloat Vulnerable)",
+      "qdisc_type": "netem / pfifo_fast",
+      "cake_enabled": false,
+      "diffserv_tins": null,
+      "flow_isolation": "none (single shared FIFO queue)",
+      "queue_limit_packets": 1000,
+      "bufferbloat_handling": "unmanaged (queue fills completely under bulk load)",
+      "latency_under_load_observed_ms": 102.503,
+      "video_starvation_observed": true,
+      "video_throughput_observed_mbps": 1.143
+    },
+    "adaptive": {
+      "mode": "ADAPTIVE (CAKE DiffServ4 + Autonomous Controller)",
+      "qdisc_type": "cake",
+      "cake_enabled": true,
+      "diffserv_mode": "diffserv4 (Bulk, Best Effort, Video, Voice)",
+      "flow_isolation": "triple-isolate (per-host + per-flow fair queuing)",
+      "split_gso": true,
+      "target_latency_ms": 5.0,
+      "rtt_estimate_ms": 100.0,
+      "bufferbloat_handling": "active queue management (AQM with blue/cobalt drop/mark)",
+      "latency_under_load_observed_ms": 0.765,
+      "video_starvation_prevented": true,
+      "video_throughput_observed_mbps": 1.201
+    }
+  },
+  "independence_proof": {
+    "kernel_verification": "Direct tc qdisc inspection confirms baseline and adaptive load completely distinct kernel qdiscs with independent scheduling algorithms.",
+    "packet_scheduling_distinction": "Verified via real packet captures: baseline queues all TOS into single queue; adaptive distributes into distinct CAKE tins."
+  }
+}

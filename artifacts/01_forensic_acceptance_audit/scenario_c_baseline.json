@@ -1,0 +1,14 @@
+{
+  "experiment_id": "exp_scenario_c_1791054290_2e410d",
+  "scenario": "SCENARIO_C",
+  "mode": "BASELINE",
+  "tv_throughputs": [
+    0.186,
+    0.196,
+    0.187
+  ],
+  "fairness_index": 0.999,
+  "gaming_latency_ms": 44.954,
+  "gaming_jitter_ms": 2.6305,
+  "active_flows_classified": 20
+}

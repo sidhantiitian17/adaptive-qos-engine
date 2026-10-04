@@ -1,0 +1,95 @@
+{
+  "provenance_schema_version": "1.0",
+  "timestamp_utc": "2026-10-03T20:20:00Z",
+  "git_commit": "Phase 3.2 Evidence Hardening",
+  "kpi_provenance_records": [
+    {
+      "kpi": "scenario_a_baseline_latency_mean_ms",
+      "value": 101.706,
+      "formula": "mean([r['latency_ms'] for r in sa['baseline']])",
+      "raw_artifact": "phase3_artifacts/phase3_1_scenario_a_raw.json",
+      "db_table": "measurements",
+      "db_metric_name": "latency_ms"
+    },
+    {
+      "kpi": "scenario_a_adaptive_latency_mean_ms",
+      "value": 0.7,
+      "formula": "mean([r['latency_ms'] for r in sa['adaptive']])",
+      "raw_artifact": "phase3_artifacts/phase3_1_scenario_a_raw.json",
+      "db_table": "measurements",
+      "db_metric_name": "latency_ms"
+    },
+    {
+      "kpi": "scenario_b_adaptation_latency_sec",
+      "value": 0.1042,
+      "formula": "tc_command_end - condition_changed_at",
+      "raw_artifact": "phase3_artifacts/phase3_1_scenario_b_timeline.json",
+      "db_table": "policy_changes",
+      "db_metric_name": "adaptation_latency_sec"
+    },
+    {
+      "kpi": "scenario_b_recovery_latency_sec",
+      "value": 0.042,
+      "formula": "recovery_enforced_at - recovery_condition_at",
+      "raw_artifact": "phase3_artifacts/phase3_1_scenario_b_timeline.json",
+      "db_table": "policy_changes",
+      "db_metric_name": "recovery_latency_sec"
+    },
+    {
+      "kpi": "scenario_c_baseline_gaming_latency_mean_ms",
+      "value": 134.303,
+      "formula": "mean([r['gaming_latency_ms'] for r in sc['baseline']])",
+      "raw_artifact": "phase3_artifacts/phase3_1_scenario_c_raw.json",
+      "db_table": "measurements",
+      "db_metric_name": "gaming_latency_ms"
+    },
+    {
+      "kpi": "scenario_c_adaptive_gaming_latency_mean_ms",
+      "value": 15.725,
+      "formula": "mean([r['gaming_latency_ms'] for r in sc['adaptive']])",
+      "raw_artifact": "phase3_artifacts/phase3_1_scenario_c_raw.json",
+      "db_table": "measurements",
+      "db_metric_name": "gaming_latency_ms"
+    },
+    {
+      "kpi": "scenario_c_jain_fairness_index_raw_bytes",
+      "value": 1.0,
+      "formula": "(sum(bytes))^2 / (n * sum(bytes^2))",
+      "raw_artifact": "phase3_artifacts/phase3_1_scenario_c_raw.json",
+      "db_table": "measurements",
+      "db_metric_name": "fairness_index"
+    },
+    {
+      "kpi": "long_run_duration_sec",
+      "value": 600.6,
+      "formula": "lr['actual_elapsed_sec']",
+      "raw_artifact": "phase3_artifacts/phase3_1_long_run.json",
+      "db_table": "experiment_runs",
+      "db_metric_name": "duration_sec"
+    },
+    {
+      "kpi": "long_run_total_cycles",
+      "value": 24646,
+      "formula": "lr['total_cycles_executed']",
+      "raw_artifact": "phase3_artifacts/phase3_1_long_run.json",
+      "db_table": "controller_actions",
+      "db_metric_name": "cycle_count"
+    },
+    {
+      "kpi": "long_run_rss_growth_mb",
+      "value": 1.12,
+      "formula": "final_rss_mb - initial_rss_mb",
+      "raw_artifact": "phase3_artifacts/phase3_1_resource_usage.json",
+      "db_table": "measurements",
+      "db_metric_name": "rss_growth_mb"
+    },
+    {
+      "kpi": "long_run_flapping_rate_per_min",
+      "value": 0.0,
+      "formula": "total_transitions / (duration_sec / 60)",
+      "raw_artifact": "phase3_artifacts/phase3_1_policy_oscillation.json",
+      "db_table": "policy_changes",
+      "db_metric_name": "transitions_per_minute"
+    }
+  ]
+}

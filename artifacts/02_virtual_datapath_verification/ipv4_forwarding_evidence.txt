@@ -1,0 +1,13 @@
+=== IPv4 MULTI-NODE ROUTER FORWARDING EVIDENCE ===
+Path: CLIENT (lan1: 10.0.1.2) -> ROUTER LAN (gw: 10.0.1.1) -> ROUTER WAN (gw: 10.0.3.1) -> SERVER (wanhost: 10.0.3.2)
+
+PING 10.0.3.2 (10.0.3.2) 56(84) bytes of data.
+64 bytes from 10.0.3.2: icmp_seq=1 ttl=63 time=0.303 ms
+64 bytes from 10.0.3.2: icmp_seq=2 ttl=63 time=0.055 ms
+64 bytes from 10.0.3.2: icmp_seq=3 ttl=63 time=0.124 ms
+64 bytes from 10.0.3.2: icmp_seq=4 ttl=63 time=0.070 ms
+
+--- 10.0.3.2 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3423ms
+rtt min/avg/max/mdev = 0.055/0.138/0.303/0.098 ms
+

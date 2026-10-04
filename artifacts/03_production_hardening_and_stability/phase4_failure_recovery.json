@@ -1,0 +1,98 @@
+[
+  {
+    "test_name": "SIGTERM Graceful Shutdown",
+    "failure_time": 1791096816.4934,
+    "detection_latency_sec": 3.306,
+    "recovery_latency_sec": 0.0,
+    "final_network_state": "Clean Default Qdisc Restored",
+    "final_policy": "95 Mbit (Known-Safe)",
+    "traffic_continued": true,
+    "rollback_occurred": false,
+    "state_resynchronized": true,
+    "status": "PASS"
+  },
+  {
+    "test_name": "SIGINT Operator Interrupt",
+    "failure_time": 1791096819.7995,
+    "detection_latency_sec": 0.1183,
+    "recovery_latency_sec": 0.0,
+    "final_network_state": "Sniffer Stopped, Baseline Restored",
+    "final_policy": "100 Mbit Baseline",
+    "traffic_continued": true,
+    "rollback_occurred": false,
+    "state_resynchronized": true,
+    "status": "PASS"
+  },
+  {
+    "test_name": "SIGKILL Crash & Restart Resynchronization",
+    "failure_time": 1791096819.918,
+    "detection_latency_sec": 0.0091,
+    "recovery_latency_sec": 0.5245,
+    "final_network_state": "Kernel Retained 75 Mbit Checkpoint",
+    "final_policy": "75 Mbit Resynchronized",
+    "traffic_continued": true,
+    "rollback_occurred": false,
+    "state_resynchronized": true,
+    "status": "PASS"
+  },
+  {
+    "test_name": "Unexpected Exception in Control Cycle",
+    "failure_time": 1791096820.4517,
+    "detection_latency_sec": 0.5464,
+    "recovery_latency_sec": 0.0,
+    "final_network_state": "Fault Isolated, Daemon Alive",
+    "final_policy": "95 Mbit Safe Floor",
+    "traffic_continued": true,
+    "rollback_occurred": false,
+    "state_resynchronized": true,
+    "status": "PASS"
+  },
+  {
+    "test_name": "Evidence DB Interruption Resilience",
+    "failure_time": 1791096820.9982,
+    "detection_latency_sec": 0.0011,
+    "recovery_latency_sec": 0.0,
+    "final_network_state": "Traffic Forwarding Uninterrupted",
+    "final_policy": "Active QoS Maintained",
+    "traffic_continued": true,
+    "rollback_occurred": false,
+    "state_resynchronized": true,
+    "status": "PASS"
+  },
+  {
+    "test_name": "Classifier Failure / Unknown Flow Fallback",
+    "failure_time": 1791096820.9994,
+    "detection_latency_sec": 0.0132,
+    "recovery_latency_sec": 0.0,
+    "final_network_state": "Packet steered to CS0 Best Effort Tin",
+    "final_policy": "Safe Best-Effort Delivery",
+    "traffic_continued": true,
+    "rollback_occurred": false,
+    "state_resynchronized": true,
+    "status": "PASS"
+  },
+  {
+    "test_name": "TC Failure & Atomic Rollback Guarantee",
+    "failure_time": 1791096821.0126,
+    "detection_latency_sec": 0.0001,
+    "recovery_latency_sec": 0.0,
+    "final_network_state": "Kernel Restored to 95 Mbit Known-Good",
+    "final_policy": "95 Mbit Restored",
+    "traffic_continued": true,
+    "rollback_occurred": true,
+    "state_resynchronized": true,
+    "status": "PASS"
+  },
+  {
+    "test_name": "Interface Disappearance & Suspension Guard",
+    "failure_time": 1791096821.0127,
+    "detection_latency_sec": 0.0124,
+    "recovery_latency_sec": 0.5194,
+    "final_network_state": "Policy Mutations Suspended",
+    "final_policy": "No Destructive TC Overwrites",
+    "traffic_continued": true,
+    "rollback_occurred": false,
+    "state_resynchronized": true,
+    "status": "PASS"
+  }
+]

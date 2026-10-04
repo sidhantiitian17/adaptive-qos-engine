@@ -1,0 +1,28 @@
+[Unit]
+Description=Adaptive QoS Engine for Mixed Home Broadband Traffic
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/adaptive-qos-engine
+ExecStart=/opt/adaptive-qos-engine/venv/bin/python3 -u dashboard/unified_dashboard.py --config /etc/adaptive-qos/config.json
+ExecStop=/opt/adaptive-qos-engine/venv/bin/python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/shutdown', timeout=5)"
+Restart=on-failure
+RestartSec=5s
+
+# Hardening / Capabilities
+LimitNOFILE=65536
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_ADMIN CAP_NET_RAW
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+WatchdogSec=30s
+
+[Install]
+WantedBy=multi-user.target

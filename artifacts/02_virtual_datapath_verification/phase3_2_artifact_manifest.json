@@ -1,0 +1,416 @@
+{
+  "manifest_version": "3.2",
+  "generated_at_utc": "2026-10-03 20:21:53 UTC",
+  "phase": "Phase 3.2 Evidence Hardening & Final Sign-Off",
+  "artifacts_directory": "phase3_artifacts",
+  "files": [
+    {
+      "filename": "cake_forwarding_evidence.txt",
+      "size_bytes": 1879,
+      "sha256": "935206c8e5cc12986cecc50130b27a7c2780d793c2612ba4ec4d82ca9883508b",
+      "last_modified_utc": "2026-10-03 19:18:18 UTC"
+    },
+    {
+      "filename": "collect_hardware_inventory.py",
+      "size_bytes": 2573,
+      "sha256": "427f2149c6987a4a0c57023e0f26b2642bf40bd8e9780afe42d4eec144e2a4d1",
+      "last_modified_utc": "2026-10-03 19:17:49 UTC"
+    },
+    {
+      "filename": "db_integrity_phase3.json",
+      "size_bytes": 370,
+      "sha256": "f905863126ec5693157bd1b7eb64cf60135e8f0e6007822f28a403b540945303",
+      "last_modified_utc": "2026-10-03 19:21:22 UTC"
+    },
+    {
+      "filename": "dscp_path_trace.json",
+      "size_bytes": 3431,
+      "sha256": "cd744e1111fe1ae6a02ff094c68f2c3dfab90d1e694b0169e631065e3929c807",
+      "last_modified_utc": "2026-10-03 19:18:18 UTC"
+    },
+    {
+      "filename": "hardware_failure_results.json",
+      "size_bytes": 423,
+      "sha256": "fdd1c6b0043a2fbccf1b2128741f14295ecb526545c411841a602e1bcf031a32",
+      "last_modified_utc": "2026-10-03 19:21:21 UTC"
+    },
+    {
+      "filename": "hardware_inventory.json",
+      "size_bytes": 742,
+      "sha256": "8ef20aa87fe2c6625d73d99be6334c1224c18488d35a99011fc0c01d0cdb228d",
+      "last_modified_utc": "2026-10-03 19:17:49 UTC"
+    },
+    {
+      "filename": "hardware_jitter_calculation.json",
+      "size_bytes": 601,
+      "sha256": "1f63f175ad434b08f4e9e0853f1f0fdc678d20be7015187e6dd02b43843b185a",
+      "last_modified_utc": "2026-10-03 19:18:20 UTC"
+    },
+    {
+      "filename": "hardware_restart_results.json",
+      "size_bytes": 321,
+      "sha256": "3751339ff84e4963d0957eeaa5ba1415e4a98d9c3bb64d012bf854aa6ea82939",
+      "last_modified_utc": "2026-10-03 19:21:21 UTC"
+    },
+    {
+      "filename": "hardware_rollback_results.json",
+      "size_bytes": 6434,
+      "sha256": "8eec7e3ea057ade23e6417607db08bf81428f7c237ea4a20a5fbd12d2590ca57",
+      "last_modified_utc": "2026-10-03 19:21:21 UTC"
+    },
+    {
+      "filename": "hardware_rtt_samples.json",
+      "size_bytes": 750,
+      "sha256": "64421c45c20f3d7185eade60e4b5c4826741ec645769dd09bc30f4f2d1f00414",
+      "last_modified_utc": "2026-10-03 19:18:20 UTC"
+    },
+    {
+      "filename": "ipv4_forwarding_evidence.txt",
+      "size_bytes": 589,
+      "sha256": "2c73baf14a9c4048e176384103249635f99deb64beff4602b9c09b0bb09855f2",
+      "last_modified_utc": "2026-10-03 19:18:13 UTC"
+    },
+    {
+      "filename": "ipv6_forwarding_evidence.txt",
+      "size_bytes": 592,
+      "sha256": "8d0680fa73e33125c0e8cc0ec59a663c512b291422a59633af908959cb939401",
+      "last_modified_utc": "2026-10-03 19:18:17 UTC"
+    },
+    {
+      "filename": "long_run_stability.json",
+      "size_bytes": 2178,
+      "sha256": "d84fa551bc3e1cfadd770d7d7812e76df1af0481192c8a9518d136f67f31f01b",
+      "last_modified_utc": "2026-10-03 19:21:22 UTC"
+    },
+    {
+      "filename": "netem_forwarding_evidence.txt",
+      "size_bytes": 214,
+      "sha256": "3b992754efcbb68e05b0915e50dc62cbf02ffbd89e656c4fa0a72f1405bdac00",
+      "last_modified_utc": "2026-10-03 19:18:18 UTC"
+    },
+    {
+      "filename": "network_interfaces.json",
+      "size_bytes": 1657,
+      "sha256": "548cf484f9cff73046f994b84734e099962ce184d2c088c6f035b8fe31b8a546",
+      "last_modified_utc": "2026-10-03 19:17:49 UTC"
+    },
+    {
+      "filename": "phase3_1_acceptance_matrix.md",
+      "size_bytes": 8301,
+      "sha256": "c607d156a2e08bbc1cac6a4da7a917c0b29d7faf76991b465995603fc79a6d00",
+      "last_modified_utc": "2026-10-03 19:53:43 UTC"
+    },
+    {
+      "filename": "phase3_1_artifact_manifest.json",
+      "size_bytes": 14277,
+      "sha256": "0c0d4fee24d7605fa840e627f160f360ef69f8a434046a34d8920790f4e8a506",
+      "last_modified_utc": "2026-10-03 20:07:07 UTC"
+    },
+    {
+      "filename": "phase3_1_baseline_adaptive_proof.json",
+      "size_bytes": 1515,
+      "sha256": "c422d7aa7c8e60779adad93f82e3a443f85a6474a3935f24eca77d981092591e",
+      "last_modified_utc": "2026-10-03 19:48:58 UTC"
+    },
+    {
+      "filename": "phase3_1_cake_counter_delta.json",
+      "size_bytes": 1937,
+      "sha256": "af37ccff2994936f95b8c727533c69f7526ff029be91bd92cf31223098137511",
+      "last_modified_utc": "2026-10-03 19:44:55 UTC"
+    },
+    {
+      "filename": "phase3_1_cake_live_after.txt",
+      "size_bytes": 1752,
+      "sha256": "5b3959355b08d18fd6d74ae448a9d2927e8ab962b35e5b1d76ea655cef508328",
+      "last_modified_utc": "2026-10-03 19:44:55 UTC"
+    },
+    {
+      "filename": "phase3_1_cake_live_before.txt",
+      "size_bytes": 1743,
+      "sha256": "15543822527531905cb4876f27bd7e8e3f926a18a5578a68f7e189519bdda197",
+      "last_modified_utc": "2026-10-03 19:44:53 UTC"
+    },
+    {
+      "filename": "phase3_1_classifier_lineage.json",
+      "size_bytes": 8615,
+      "sha256": "cda1592812a9f24636abea93d434bd2fbe9b26ad35826be33d190128e7b1df7a",
+      "last_modified_utc": "2026-10-03 19:54:34 UTC"
+    },
+    {
+      "filename": "phase3_1_dscp_path_trace.json",
+      "size_bytes": 1002,
+      "sha256": "971b7ed127e446fcd777cf1218b4ae6f994919008aa968d7d1b69e2ffb404ac5",
+      "last_modified_utc": "2026-10-03 19:44:53 UTC"
+    },
+    {
+      "filename": "phase3_1_initial_forensic_audit.md",
+      "size_bytes": 8376,
+      "sha256": "e6553ce43c247b0ed6582b974c1382a2f72f4386c82c2391ee5edb4b22f9595e",
+      "last_modified_utc": "2026-10-03 19:34:45 UTC"
+    },
+    {
+      "filename": "phase3_1_jitter_samples.json",
+      "size_bytes": 117,
+      "sha256": "24b64154bbaad006724cd7a04d31ab9be34270dfee2ea7a60d6b217d7729ec5b",
+      "last_modified_utc": "2026-10-03 19:44:58 UTC"
+    },
+    {
+      "filename": "phase3_1_long_run.json",
+      "size_bytes": 23587,
+      "sha256": "44992a00dd2227178a7fefcf98146faea8ab69dda3eb641f8dc94c3716b6c628",
+      "last_modified_utc": "2026-10-03 20:04:35 UTC"
+    },
+    {
+      "filename": "phase3_1_loss_samples.json",
+      "size_bytes": 88,
+      "sha256": "c913faf0a5c0d5355a8f922368f982c64ac90179f4713146a171bc6824981094",
+      "last_modified_utc": "2026-10-03 19:44:58 UTC"
+    },
+    {
+      "filename": "phase3_1_packet_path_analysis.json",
+      "size_bytes": 1377,
+      "sha256": "3741b9f01c23a07bc0ad589ba92c999212e13944ecc3c113672bcbdbeb322db0",
+      "last_modified_utc": "2026-10-03 19:44:49 UTC"
+    },
+    {
+      "filename": "phase3_1_packet_path_ipv4.pcap",
+      "size_bytes": 1848,
+      "sha256": "272a10ceb6008681fe64df292fb75335092772379a0f8efc1e8abb0f4830f26a",
+      "last_modified_utc": "2026-10-03 19:44:49 UTC"
+    },
+    {
+      "filename": "phase3_1_packet_path_ipv4_egress.pcap",
+      "size_bytes": 936,
+      "sha256": "81fbf45ce1639386d958939f935db966c2ee8126c6451d68efce549b391dc3cc",
+      "last_modified_utc": "2026-10-03 19:44:40 UTC"
+    },
+    {
+      "filename": "phase3_1_packet_path_ipv4_ingress.pcap",
+      "size_bytes": 936,
+      "sha256": "d8d9992165c61bcd09ce985b06a64c4e5ee0cbe5ec615b069c143065353c4a43",
+      "last_modified_utc": "2026-10-03 19:44:40 UTC"
+    },
+    {
+      "filename": "phase3_1_packet_path_ipv6.pcap",
+      "size_bytes": 2952,
+      "sha256": "9f7098cc9127f24a8e64b1d40c8e7840ef5d3ae4721c6cf02136a2f7d173ae0c",
+      "last_modified_utc": "2026-10-03 19:44:49 UTC"
+    },
+    {
+      "filename": "phase3_1_packet_path_ipv6_egress.pcap",
+      "size_bytes": 1590,
+      "sha256": "69f3b4450df89ea2c0c86054f9831083b7aac9d98fef23b1ffa0827179087a9f",
+      "last_modified_utc": "2026-10-03 19:44:45 UTC"
+    },
+    {
+      "filename": "phase3_1_packet_path_ipv6_ingress.pcap",
+      "size_bytes": 1386,
+      "sha256": "d242774b22002d0e1b0412f880676ad58ab85e72874b0b66e33da7914bada427",
+      "last_modified_utc": "2026-10-03 19:44:45 UTC"
+    },
+    {
+      "filename": "phase3_1_policy_oscillation.json",
+      "size_bytes": 194,
+      "sha256": "c16626f797bd397e0b1e8faeca237358c6e40ea2b71ec0066c3a091792c9aa93",
+      "last_modified_utc": "2026-10-03 20:04:35 UTC"
+    },
+    {
+      "filename": "phase3_1_queue_evidence.json",
+      "size_bytes": 1438,
+      "sha256": "94319988f2498030ad59861ce937aef25a49d0aa2cc53d0d0205e92b66290bb2",
+      "last_modified_utc": "2026-10-03 19:49:01 UTC"
+    },
+    {
+      "filename": "phase3_1_resource_usage.json",
+      "size_bytes": 171,
+      "sha256": "ba792c1d2bf08b5d69550b5a45ef8dd1fa004a5883917cc9e8ee4998b42ee636",
+      "last_modified_utc": "2026-10-03 20:04:35 UTC"
+    },
+    {
+      "filename": "phase3_1_restart_recovery.json",
+      "size_bytes": 214,
+      "sha256": "f2d011b60e0409a2e400a40dbad630b0dd47960e43998fd12105da820b8bf9d2",
+      "last_modified_utc": "2026-10-03 19:54:34 UTC"
+    },
+    {
+      "filename": "phase3_1_rollback_evidence.json",
+      "size_bytes": 166,
+      "sha256": "664f77b14f48213ec3968e93f927331cda980af44e7b099a0f03d7a9cb95dfc6",
+      "last_modified_utc": "2026-10-03 19:54:34 UTC"
+    },
+    {
+      "filename": "phase3_1_rtt_samples.json",
+      "size_bytes": 6403,
+      "sha256": "bc3e5e371efd033eb583c94c065f4bfe83fd458c4f0db41b65fe66679aeb03f4",
+      "last_modified_utc": "2026-10-03 19:44:58 UTC"
+    },
+    {
+      "filename": "phase3_1_scenario_a_analysis.json",
+      "size_bytes": 4057,
+      "sha256": "fbee1ee8c470cbc463587e7190322476964a3511b76b22496194fd25cdc69ad0",
+      "last_modified_utc": "2026-10-03 19:53:58 UTC"
+    },
+    {
+      "filename": "phase3_1_scenario_a_raw.json",
+      "size_bytes": 2301,
+      "sha256": "847c6780dcc27ebffff899d08af26b30eb8ba71d56c4737820c79017effd36e8",
+      "last_modified_utc": "2026-10-03 19:53:58 UTC"
+    },
+    {
+      "filename": "phase3_1_scenario_b_raw.json",
+      "size_bytes": 761,
+      "sha256": "01330a2601bf549a27f1ee4cb97ea2db6645b9b52c924b1ce10b5cf67c0ddf23",
+      "last_modified_utc": "2026-10-03 19:54:00 UTC"
+    },
+    {
+      "filename": "phase3_1_scenario_b_timeline.json",
+      "size_bytes": 761,
+      "sha256": "01330a2601bf549a27f1ee4cb97ea2db6645b9b52c924b1ce10b5cf67c0ddf23",
+      "last_modified_utc": "2026-10-03 19:54:00 UTC"
+    },
+    {
+      "filename": "phase3_1_scenario_c_analysis.json",
+      "size_bytes": 3636,
+      "sha256": "f847d049718cd628c3c8700958217e2e7a679bdaaf8387324fe3ad3464172f53",
+      "last_modified_utc": "2026-10-03 19:54:32 UTC"
+    },
+    {
+      "filename": "phase3_1_scenario_c_raw.json",
+      "size_bytes": 2435,
+      "sha256": "6e4f44711a9766edb3bf16322f38d0e5454ce00948e20673ad7e8d6daca60523",
+      "last_modified_utc": "2026-10-03 19:54:32 UTC"
+    },
+    {
+      "filename": "phase3_1_topology_rebuild.txt",
+      "size_bytes": 2990,
+      "sha256": "9da671947d3d67d13c7bd78a0146123744eb3f43948a9684fbc26adb87b6e61e",
+      "last_modified_utc": "2026-10-03 19:44:36 UTC"
+    },
+    {
+      "filename": "phase3_1_validation_report.md",
+      "size_bytes": 21066,
+      "sha256": "b05b50c74f52e27fc13a627ae667221d59ba95427b0879b616f6d8016230b0e6",
+      "last_modified_utc": "2026-10-03 19:54:09 UTC"
+    },
+    {
+      "filename": "phase3_2_acceptance_matrix.md",
+      "size_bytes": 9415,
+      "sha256": "2afce252895845e3375016d55c4e3b977c0da2b6e2531ed1e33edf0366693caf",
+      "last_modified_utc": "2026-10-03 20:21:42 UTC"
+    },
+    {
+      "filename": "phase3_2_discrepancy_log.md",
+      "size_bytes": 4059,
+      "sha256": "afa13a116e5a65ddc2f2647df51fa8ed91db9884bf61eb97df1b58b782494b4e",
+      "last_modified_utc": "2026-10-03 20:21:42 UTC"
+    },
+    {
+      "filename": "phase3_2_final_signoff.md",
+      "size_bytes": 3579,
+      "sha256": "23b92f9bc9db3920ea8fa5166e218f42287ed899dbc347cf24ae4196d2b9c97b",
+      "last_modified_utc": "2026-10-03 20:21:42 UTC"
+    },
+    {
+      "filename": "phase3_2_kpi_recalculation.md",
+      "size_bytes": 4685,
+      "sha256": "be84b7ef9729b269b1dc932719ee1e3c00571555f7b03931f2ad8d4c23ba8d87",
+      "last_modified_utc": "2026-10-03 20:21:42 UTC"
+    },
+    {
+      "filename": "phase3_2_provenance_manifest.json",
+      "size_bytes": 3393,
+      "sha256": "f8a88b764c51294d2bd9fe1c67e845fc4c756bee01eb1393dcc755ed23a084c1",
+      "last_modified_utc": "2026-10-03 20:21:42 UTC"
+    },
+    {
+      "filename": "phase3_acceptance_matrix.md",
+      "size_bytes": 7126,
+      "sha256": "349388037f256c4ed5c6e03408f755b58d72effb17b418e444c067798c13f926",
+      "last_modified_utc": "2026-10-03 19:22:37 UTC"
+    },
+    {
+      "filename": "phase3_hardware_matrix.md",
+      "size_bytes": 4581,
+      "sha256": "aff110e3e36c12d0dd0d7d01eb767562b1ed35cef3dabf6ac8517d5452020016",
+      "last_modified_utc": "2026-10-03 19:22:20 UTC"
+    },
+    {
+      "filename": "phase3_topology.md",
+      "size_bytes": 6993,
+      "sha256": "1e6b507415b20d93688dda00211ad22836d66c1cd9150312cb1ffdc983d1c855",
+      "last_modified_utc": "2026-10-03 19:22:28 UTC"
+    },
+    {
+      "filename": "phase3_validation_report.md",
+      "size_bytes": 25671,
+      "sha256": "08b20a8eb684fc954918029ad83bf86759f6d767195fdda5e6a896a0e74ebfdd",
+      "last_modified_utc": "2026-10-03 19:23:03 UTC"
+    },
+    {
+      "filename": "policy_oscillation.json",
+      "size_bytes": 265,
+      "sha256": "6c1b346c1c9a70bd55931cbb0e90233767e903bb87766444c4b9e0112cfd301e",
+      "last_modified_utc": "2026-10-03 19:21:22 UTC"
+    },
+    {
+      "filename": "resource_usage.json",
+      "size_bytes": 452,
+      "sha256": "9064ab6ea916a061503a39b42161344457092a13e4960797680316ec533ce8d6",
+      "last_modified_utc": "2026-10-03 19:21:22 UTC"
+    },
+    {
+      "filename": "routing_state.txt",
+      "size_bytes": 1023,
+      "sha256": "2049ee671cad154ec4cb6f51f7377556096c93ec069bacab880712e9445fb7db",
+      "last_modified_utc": "2026-10-03 19:18:10 UTC"
+    },
+    {
+      "filename": "run_datapath_validation.py",
+      "size_bytes": 7700,
+      "sha256": "8bacab7c977d74e3e5b09cc742fcf746157f376d3c68bca2150173cd0cb8c4fe",
+      "last_modified_utc": "2026-10-03 19:19:33 UTC"
+    },
+    {
+      "filename": "run_phase3_scenarios.py",
+      "size_bytes": 13393,
+      "sha256": "e5263d6ca840d8ff3179ecfe86055f60085f928fc841356b738f586a5b3f36b9",
+      "last_modified_utc": "2026-10-03 19:20:31 UTC"
+    },
+    {
+      "filename": "run_stability_failure_integrity.py",
+      "size_bytes": 6205,
+      "sha256": "5f435f3cd364e33da8f3b494759f764d42cebc8e11fc306a86e076fb9dcf0f48",
+      "last_modified_utc": "2026-10-03 19:21:20 UTC"
+    },
+    {
+      "filename": "scenario_a_hardware_adaptive.json",
+      "size_bytes": 246,
+      "sha256": "07f8352552a4b304a8e2a7ee77d6b5af2ab527d5605d33d639c733fd4bea5acb",
+      "last_modified_utc": "2026-10-03 19:20:40 UTC"
+    },
+    {
+      "filename": "scenario_a_hardware_baseline.json",
+      "size_bytes": 248,
+      "sha256": "7962e4cea3d1bf49ce04ec0437244fee0b690a5834a1951827faedc6bbba0529",
+      "last_modified_utc": "2026-10-03 19:20:36 UTC"
+    },
+    {
+      "filename": "scenario_b_hardware.json",
+      "size_bytes": 323,
+      "sha256": "0f4c952a319a97af9238a812de245c6e0f5d7ae7fbfb5a02cdcf5551bf3e2581",
+      "last_modified_utc": "2026-10-03 19:20:41 UTC"
+    },
+    {
+      "filename": "scenario_c_hardware_adaptive.json",
+      "size_bytes": 233,
+      "sha256": "66242404553024b4e43b4ab58caeb78da4854e990480d8dc77b1b1efed435c4c",
+      "last_modified_utc": "2026-10-03 19:20:50 UTC"
+    },
+    {
+      "filename": "scenario_c_hardware_baseline.json",
+      "size_bytes": 233,
+      "sha256": "9b2e8d099d80c82c7624a3f7bbae91c2c2bd4b55db729112b52238d7b6b49be9",
+      "last_modified_utc": "2026-10-03 19:20:46 UTC"
+    }
+  ]
+}

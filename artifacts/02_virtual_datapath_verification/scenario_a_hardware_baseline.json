@@ -1,0 +1,10 @@
+{
+  "experiment_id": "exp_scenario_a_hardware_1791055232_87c4dc",
+  "mode": "BASELINE",
+  "video_throughput_mbps": 1.143,
+  "bulk_throughput_mbps": 15.99,
+  "latency_ms": 100.678,
+  "jitter_ms": 13.4665,
+  "loss_pct": 0.0,
+  "queue_depth_pkts": 0
+}

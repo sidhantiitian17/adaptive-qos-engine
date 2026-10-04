@@ -1,0 +1,23 @@
+{
+  "experiment_id": "exp_scenario_b_hardware_1791057238_8af8ea",
+  "timestamps": {
+    "condition_changed_at": 1791057239.9758646,
+    "measurement_started_at": 1791057239.9961226,
+    "measurement_completed_at": 1791057240.0586588,
+    "policy_decision_at": 1791057240.0586917,
+    "tc_command_start": 1791057240.0586925,
+    "tc_command_end": 1791057240.0800679,
+    "recovery_condition_at": 1791057240.5802236,
+    "recovery_enforced_at": 1791057240.6222425
+  },
+  "latencies_sec": {
+    "detection_latency": 0.0828,
+    "decision_latency": 0.0,
+    "enforcement_latency": 0.0214,
+    "total_adaptation_latency": 0.1042,
+    "recovery_latency": 0.042
+  },
+  "nominal_capacity_mbps": 100.0,
+  "collapsed_capacity_mbps": 20.0,
+  "adapted_bandwidth_mbit": 19
+}

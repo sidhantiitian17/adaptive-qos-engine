@@ -1,0 +1,35 @@
+{
+  "provenance_phase": "PHASE 7 REAL USER UI ACCEPTANCE",
+  "generated_at": "2026-10-04T10:03:00Z",
+  "environment": {
+    "hostname": "linux-dev",
+    "operating_system": "Linux 6.18.40.1-microsoft-standard-WSL2+",
+    "architecture": "x86_64",
+    "python_runtime": "Python 3.12.3 (main, Feb 2026)",
+    "dashboard_listen_address": "http://127.0.0.1:8080",
+    "controller_daemon_pid": "active_in_process",
+    "network_namespaces": ["lan1", "gw", "wanhost"],
+    "virtual_interfaces": ["gw-lan1", "gw-wan", "wan-gw", "lan1-gw"]
+  },
+  "database": {
+    "engine": "SQLite 3",
+    "path": "/home/prashast/adaptive-qos-engine/experiments/evidence.db",
+    "integrity_check": "ok",
+    "foreign_key_violations": 0,
+    "table_counts": {
+      "experiments": 113,
+      "experiment_runs": 92,
+      "flows": 149,
+      "measurements": 559,
+      "policy_changes": 48
+    }
+  },
+  "runtime_telemetry_sources": {
+    "bandwidth_capacity": "PassiveEstimator (/proc/net/dev Netlink socket)",
+    "rtt_jitter": "ICMP/UDP socket probes to 10.0.3.2 (wanhost)",
+    "queue_depth": "Linux TC Netlink RTM_GETQDISC xstats",
+    "dscp_enforcement": "Linux iptables mangle table (POSTROUTING)",
+    "tin_scheduling": "Linux TC CAKE diffserv4 qdisc"
+  },
+  "lineage_verification": "VALIDATED / ZERO ORPHANS DETECTED"
+}

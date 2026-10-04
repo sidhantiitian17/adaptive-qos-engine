@@ -1,0 +1,303 @@
+{
+  "experiment_id": "exp_audit_classifier_7classes_1791054174_70abb0",
+  "total_flows_captured": 11,
+  "packets_sniffed": 266,
+  "trace_records": [
+    {
+      "flow_id": "127.0.0.1:59464->127.0.0.1:5201/tcp",
+      "class": "bulk_download",
+      "confidence": 0.9763,
+      "probabilities": {
+        "bulk_download": 0.9763,
+        "gaming": 0.0225,
+        "video_conference": 0.0012
+      },
+      "packet_count": 23,
+      "byte_count": 66912,
+      "sample_input_metadata": {
+        "total_length": 2972,
+        "ttl": 64,
+        "inter_arrival_ms": 38.95449638366699,
+        "timestamp": 1791054179.073163
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:5201->127.0.0.1:59464/tcp",
+      "class": "bulk_download",
+      "confidence": 0.9935,
+      "probabilities": {
+        "bulk_download": 0.9935,
+        "gaming": 0.0022,
+        "video_conference": 0.0043
+      },
+      "packet_count": 26,
+      "byte_count": 1368,
+      "sample_input_metadata": {
+        "total_length": 52,
+        "ttl": 64,
+        "inter_arrival_ms": 4.105329513549805,
+        "timestamp": 1791054179.8525653
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:38814->127.0.0.1:8081/tcp",
+      "class": "video_conference",
+      "confidence": 0.9152,
+      "probabilities": {
+        "bulk_download": 0.0182,
+        "gaming": 0.0666,
+        "video_conference": 0.9152
+      },
+      "packet_count": 21,
+      "byte_count": 52908,
+      "sample_input_metadata": {
+        "total_length": 28052,
+        "ttl": 64,
+        "inter_arrival_ms": 909.7926616668701,
+        "timestamp": 1791054179.808488
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:8081->127.0.0.1:38814/tcp",
+      "class": "bulk_download",
+      "confidence": 0.9935,
+      "probabilities": {
+        "bulk_download": 0.9935,
+        "gaming": 0.0022,
+        "video_conference": 0.0043
+      },
+      "packet_count": 22,
+      "byte_count": 1160,
+      "sample_input_metadata": {
+        "total_length": 52,
+        "ttl": 64,
+        "inter_arrival_ms": 3.0312538146972656,
+        "timestamp": 1791054179.8040242
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:58520->127.0.0.1:8082/tcp",
+      "class": "video_conference",
+      "confidence": 0.9152,
+      "probabilities": {
+        "bulk_download": 0.0182,
+        "gaming": 0.0666,
+        "video_conference": 0.9152
+      },
+      "packet_count": 20,
+      "byte_count": 79456,
+      "sample_input_metadata": {
+        "total_length": 57452,
+        "ttl": 64,
+        "inter_arrival_ms": 1107.4326038360596,
+        "timestamp": 1791054179.8344088
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:8082->127.0.0.1:58520/tcp",
+      "class": "bulk_download",
+      "confidence": 0.9935,
+      "probabilities": {
+        "bulk_download": 0.9935,
+        "gaming": 0.0022,
+        "video_conference": 0.0043
+      },
+      "packet_count": 18,
+      "byte_count": 952,
+      "sample_input_metadata": {
+        "total_length": 52,
+        "ttl": 64,
+        "inter_arrival_ms": 0.5309581756591797,
+        "timestamp": 1791054179.8335526
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:57506->127.0.0.1:9001/udp",
+      "class": "video_conference",
+      "confidence": 0.9152,
+      "probabilities": {
+        "bulk_download": 0.0182,
+        "gaming": 0.0666,
+        "video_conference": 0.9152
+      },
+      "packet_count": 51,
+      "byte_count": 4692,
+      "sample_input_metadata": {
+        "total_length": 92,
+        "ttl": 64,
+        "inter_arrival_ms": 17.372846603393555,
+        "timestamp": 1791054179.8383243
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:55857->127.0.0.1:5000/udp",
+      "class": "video_conference",
+      "confidence": 0.9152,
+      "probabilities": {
+        "bulk_download": 0.0182,
+        "gaming": 0.0666,
+        "video_conference": 0.9152
+      },
+      "packet_count": 62,
+      "byte_count": 14136,
+      "sample_input_metadata": {
+        "total_length": 228,
+        "ttl": 64,
+        "inter_arrival_ms": 14.388084411621094,
+        "timestamp": 1791054179.8438509
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:53058->127.0.0.1:5060/udp",
+      "class": "video_conference",
+      "confidence": 0.9152,
+      "probabilities": {
+        "bulk_download": 0.0182,
+        "gaming": 0.0666,
+        "video_conference": 0.9152
+      },
+      "packet_count": 4,
+      "byte_count": 752,
+      "sample_input_metadata": {
+        "total_length": 188,
+        "ttl": 64,
+        "inter_arrival_ms": 3.740072250366211,
+        "timestamp": 1791054179.7673998
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:8083->127.0.0.1:48114/tcp",
+      "class": "bulk_download",
+      "confidence": 0.9935,
+      "probabilities": {
+        "bulk_download": 0.9935,
+        "gaming": 0.0022,
+        "video_conference": 0.0043
+      },
+      "packet_count": 12,
+      "byte_count": 624,
+      "sample_input_metadata": {
+        "total_length": 52,
+        "ttl": 64,
+        "inter_arrival_ms": 4.120111465454102,
+        "timestamp": 1791054179.8519204
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    },
+    {
+      "flow_id": "127.0.0.1:48114->127.0.0.1:8083/tcp",
+      "class": "bulk_download",
+      "confidence": 0.9763,
+      "probabilities": {
+        "bulk_download": 0.9763,
+        "gaming": 0.0225,
+        "video_conference": 0.0012
+      },
+      "packet_count": 7,
+      "byte_count": 150124,
+      "sample_input_metadata": {
+        "total_length": 51892,
+        "ttl": 64,
+        "inter_arrival_ms": 209.09810066223145,
+        "timestamp": 1791054179.8575969
+      },
+      "controller_target_bw": 48,
+      "controller_reasons": [
+        "Guaranteed bulk progress floor set to 10 Mbps (minimum 20% share)"
+      ],
+      "constraint_c1_payload_inspected": false
+    }
+  ],
+  "confidence_correction_audit": {
+    "high_confidence_sample": {
+      "class": "video_conference",
+      "confidence": 0.9767,
+      "probabilities": {
+        "bulk_download": 0.022873276844620705,
+        "gaming": 0.00046559952897951007,
+        "video_conference": 0.9766611456871033
+      },
+      "needs_confirmation": false
+    },
+    "low_confidence_sample": {
+      "class": "video_conference",
+      "confidence": 0.9316,
+      "probabilities": {
+        "bulk_download": 0.0006291312165558338,
+        "gaming": 0.06780435889959335,
+        "video_conference": 0.9315664768218994
+      },
+      "needs_confirmation": false
+    },
+    "initial_flow_prediction": {
+      "class": "video_conference",
+      "confidence": 0.9845,
+      "probabilities": {
+        "bulk_download": 0.015135017223656178,
+        "gaming": 0.000352377537637949,
+        "video_conference": 0.9845126271247864
+      },
+      "needs_confirmation": false
+    },
+    "updated_flow_prediction": {
+      "class": "video_conference",
+      "confidence": 0.9152,
+      "probabilities": {
+        "bulk_download": 0.018175633624196053,
+        "gaming": 0.06661388278007507,
+        "video_conference": 0.915210485458374
+      },
+      "needs_confirmation": false
+    },
+    "classification_updated_successfully": true
+  }
+}

@@ -9,6 +9,25 @@ IFACE="veth-gw-wan"
 LOG_DIR="experiments"
 mkdir -p "$LOG_DIR"
 
+if ! sudo -n true 2>/dev/null; then
+    echo "Notice: Unprivileged environment detected. Executing Scenario A via ScenarioRunner..."
+    python3 -c "
+from experiments.scenario_runner import ScenarioRunner
+runner = ScenarioRunner()
+res_b = runner.run_scenario_a(mode='BASELINE', duration_sec=1.5)
+res_a = runner.run_scenario_a(mode='ADAPTIVE', duration_sec=1.5)
+print('=' * 65)
+print('Scenario 1 (Bulk vs Video) Comparison:')
+print(f'Video Throughput: Baseline {res_b[\"video_throughput_mbps\"]} Mbps | Adaptive {res_a[\"video_throughput_mbps\"]} Mbps')
+print(f'Bulk Throughput:  Baseline {res_b[\"bulk_throughput_mbps\"]} Mbps | Adaptive {res_a[\"bulk_throughput_mbps\"]} Mbps')
+print(f'Video Latency:    Baseline {res_b[\"latency_ms\"]} ms | Adaptive {res_a[\"latency_ms\"]} ms')
+print(f'Video Jitter:     Baseline {res_b[\"jitter_ms\"]} ms | Adaptive {res_a[\"jitter_ms\"]} ms')
+print('=' * 65)
+print('Scenario 1 Test Complete! Evidence recorded to experiments/evidence.db.')
+"
+    exit 0
+fi
+
 # 1. Baseline Test (Unmanaged FIFO Queue)
 echo -e "\n[1/4] Running Baseline (Unmanaged FIFO with Bufferbloat)..."
 sudo ip netns exec gw tc qdisc del dev $IFACE root 2>/dev/null || true
@@ -64,42 +83,55 @@ echo "Optimized completed."
 # 3. Parse and Compare Results
 echo -e "\n[3/4] Parsing Scenario 1 Comparison..."
 python3 -c "
-import re
+import os, sys, re
 
 def parse_ping(fpath):
+    if not os.path.exists(fpath):
+        return None, None, None
     try:
         with open(fpath) as f:
             c = f.read()
         m = re.search(r'rtt min/avg/max/mdev = [\d.]+/([\d.]+)/[\d.]+/([\d.]+)', c)
         l = re.search(r'(\d+)% packet loss', c)
+        if not m:
+            return None, None, None
         return float(m.group(1)), float(m.group(2)), float(l.group(1)) if l else 0.0
-    except Exception:
-        return 950.0, 420.0, 15.0
+    except Exception as e:
+        print(f'Error reading ping log {fpath}: {e}', file=sys.stderr)
+        return None, None, None
 
 def parse_iperf(fpath):
+    if not os.path.exists(fpath):
+        return None
     try:
         with open(fpath) as f:
             c = f.read()
         m = re.search(r'([\d.]+) Mbits/sec\s+receiver', c)
-        return float(m.group(1)) if m else 16.5
-    except Exception:
-        return 16.5
+        return float(m.group(1)) if m else None
+    except Exception as e:
+        print(f'Error reading iperf log {fpath}: {e}', file=sys.stderr)
+        return None
 
 b_lat, b_jit, b_loss = parse_ping('experiments/s1_baseline_ping.log')
 o_lat, o_jit, o_loss = parse_ping('experiments/s1_optimized_ping.log')
 b_bulk = parse_iperf('experiments/s1_baseline_bulk.log')
 o_bulk = parse_iperf('experiments/s1_optimized_bulk.log')
 
-lat_impr = round((b_lat - o_lat) / max(b_lat, 0.1) * 100, 1)
-jit_impr = round((b_jit - o_jit) / max(b_jit, 0.1) * 100, 1)
+def fmt(v, unit=''):
+    return f'{v:.2f} {unit}'.strip() if v is not None else 'UNAVAILABLE'
+
+def calc_impr(b, o):
+    if b is not None and o is not None and b > 0:
+        return f'{round((b - o) / b * 100, 1)}% reduction'
+    return 'N/A'
 
 print('=' * 65)
 print(f'Metric                      Baseline (FIFO)   Optimized (CAKE)   Improvement')
 print('-' * 65)
-print(f'Video Latency (ms)          {b_lat:<17} {o_lat:<18} {lat_impr}% reduction')
-print(f'Video Jitter (ms)           {b_jit:<17} {o_jit:<18} {jit_impr}% reduction')
-print(f'Packet Loss (%)             {b_loss:<17} {o_loss:<18} {(b_loss-o_loss):.1f}% drop')
-print(f'Bulk Throughput (Mbps)      {b_bulk:<17} {o_bulk:<18} Sustained progress')
+print(f'Video Latency (ms)          {fmt(b_lat, \"ms\"):<17} {fmt(o_lat, \"ms\"):<18} {calc_impr(b_lat, o_lat)}')
+print(f'Video Jitter (ms)           {fmt(b_jit, \"ms\"):<17} {fmt(o_jit, \"ms\"):<18} {calc_impr(b_jit, o_jit)}')
+print(f'Packet Loss (%)             {fmt(b_loss, \"%\"):<17} {fmt(o_loss, \"%\"):<18}')
+print(f'Bulk Throughput (Mbps)      {fmt(b_bulk, \"Mbps\"):<17} {fmt(o_bulk, \"Mbps\"):<18}')
 print('=' * 65)
 "
 
