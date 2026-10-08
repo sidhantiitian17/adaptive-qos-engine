@@ -1,89 +1,146 @@
-import subprocess
-import json
+"""
+Unified Link Capacity Estimator Frontend (M2)
+
+Integrates the SLoPS-style active probing engine (SlopsLinkEstimator)
+while preserving full backward compatibility with existing callers.
+
+Research Basis:
+  1. Manish Jain & Constantine Dovrolis:
+     "End-to-End Available Bandwidth: Measurement Methodology, Dynamics,
+      and Relation with TCP Throughput" (IEEE/ACM Trans. Networking, 2003).
+  2. Manish Jain & Constantine Dovrolis:
+     "Ten Fallacies and Pitfalls on End-to-End Available Bandwidth Estimation" (ACM IMC 2004).
+"""
+
 import time
 import os
+import sys
 from collections import deque
+from typing import Optional, List, Dict, Any
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+try:
+    from estimator.slops_estimator import (
+        SlopsLinkEstimator,
+        SlopsConfig,
+        CapacityEstimate,
+        EstimatorState
+    )
+except ImportError:
+    from slops_estimator import (
+        SlopsLinkEstimator,
+        SlopsConfig,
+        CapacityEstimate,
+        EstimatorState
+    )
+
 
 class LinkEstimator:
     """
-    Direct-probing based available bandwidth estimator, inspired by
-    Jain & Dovrolis SLoPS/Pathload methodology (IMC'04 fallacies paper,
-    TNET'03 pathload paper). We use short iperf3 bursts as our 'probe
-    stream' (K packets analog), and average over 'fleet' of samples to
-    control variance (tau = averaging timescale).
+    SLoPS-Style Available Bandwidth Estimator.
+    Measures available bandwidth via iterative periodic packet streams,
+    detecting queue buildup through Pairwise Comparison Test (PCT) and
+    Pairwise Difference Test (PDT).
     """
 
-    def __init__(self, target_ip, target_port=5201, window=5, namespace=None):
+    def __init__(
+        self,
+        target_ip: str = "10.0.3.2",
+        target_port: int = 54321,
+        window: int = 5,
+        namespace: Optional[str] = None,
+        receiver_namespace: Optional[str] = None,
+        config: Optional[SlopsConfig] = None
+    ):
         self.target_ip = target_ip
         self.target_port = target_port
-        self.namespace = namespace
-        self.history = deque(maxlen=window)  # last N estimates (fleet)
+        is_testbed = (target_ip in ["10.0.3.2", "fd00:3::2"])
+        self.sender_namespace = namespace or ("lan1" if os.path.exists("/var/run/netns/lan1") and is_testbed else None)
+        self.receiver_namespace = receiver_namespace or ("wanhost" if os.path.exists("/var/run/netns/wanhost") and is_testbed else None)
+
+        self.config = config or SlopsConfig(target_port=target_port)
+        self.slops = SlopsLinkEstimator(
+            target_ip=self.target_ip,
+            sender_namespace=self.sender_namespace,
+            receiver_namespace=self.receiver_namespace,
+            config=self.config
+        )
+
+        self.history = deque(maxlen=window)
+        self.last_estimate: Optional[CapacityEstimate] = None
         self.last_error = None
         self.last_timestamp = None
 
-    def _single_probe(self, duration_sec=2):
-        """Execute a short active iperf3 probe against target and return achieved Mbps."""
-        base_cmd = [
-            "iperf3", "-c", self.target_ip, "-p", str(self.target_port),
-            "-t", str(duration_sec), "-R", "-J"  # JSON output
-        ]
-        cmd = []
-        if self.namespace:
-            cmd = ["sudo", "-n", "ip", "netns", "exec", self.namespace] if os.geteuid() != 0 else ["ip", "netns", "exec", self.namespace]
-        cmd.extend(base_cmd)
+    def estimate_slops(self) -> CapacityEstimate:
+        """
+        Runs the full iterative SLoPS search and returns the structured
+        CapacityEstimate dataclass including available bandwidth range,
+        confidence, PCT, PDT, and state transitions.
+        """
+        estimate = self.slops.estimate_capacity()
+        self.last_estimate = estimate
+        self.last_timestamp = estimate.timestamp
+        self.last_error = estimate.error
+        self.history.append(estimate.effective_capacity_mbps)
+        return estimate
 
+    def estimate(self, probe_duration: float = 2.0, samples: int = 3) -> Optional[float]:
+        """
+        Backward-compatible estimate method.
+        Executes SLoPS active probing and returns the effective capacity in Mbps.
+        """
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=duration_sec + 5)
-            if result.returncode != 0:
-                self.last_error = result.stderr.strip() or f"iperf3 returned code {result.returncode}"
-                return None
-            data = json.loads(result.stdout)
-            mbps = data["end"]["sum_received"]["bits_per_second"] / 1e6
-            self.last_error = None
-            self.last_timestamp = time.time()
-            return round(mbps, 2)
+            est = self.estimate_slops()
+            if est and est.effective_capacity_mbps > 0:
+                return round(est.effective_capacity_mbps, 2)
+            return None
         except Exception as e:
             self.last_error = str(e)
             return None
 
-    def estimate(self, probe_duration=2, samples=3):
+    def get_details(self) -> Optional[Dict[str, Any]]:
+        """Returns structured metadata of the latest estimate."""
+        if self.last_estimate:
+            return self.last_estimate.to_dict()
+        return None
+
+    def get_state(self) -> str:
+        """Returns the current state machine state."""
+        return self.slops.state.value
+
+    def detect_change(self, threshold_pct: float = 15.0) -> bool:
         """
-        'Fleet' of samples leke average nikaalo (variance kam karne ke liye,
-        jaisa Jain&Dovrolis paper mein Eq.11 discuss hua tha).
+        Hysteresis change detection: returns True if latest estimate
+        differs from preceding estimate by more than threshold_pct.
         """
-        readings = []
-        for i in range(samples):
-            mbps = self._single_probe(probe_duration)
-            if mbps is not None:
-                readings.append(mbps)
-                print(f"  [probe {i+1}/{samples}] {mbps} Mbps")
-
-        if not readings:
-            return None
-
-        avg = round(sum(readings) / len(readings), 2)
-        self.history.append(avg)
-        return avg
-
-    def detect_change(self, threshold_pct=20):
-        """Agar last do estimates ke beech >threshold% ka farak ho, 'change detected' bolo."""
         if len(self.history) < 2:
             return False
         prev, curr = self.history[-2], self.history[-1]
-        if prev == 0:
+        if prev <= 0:
             return False
-        change_pct = abs(curr - prev) / prev * 100
+        change_pct = abs(curr - prev) / prev * 100.0
         return change_pct > threshold_pct
 
-    def get_history(self):
+    def get_history(self) -> List[float]:
+        """Returns history of effective capacity estimates."""
         return list(self.history)
+
+    def close(self):
+        """Clean up background receivers."""
+        if hasattr(self.slops, "stop_receiver"):
+            self.slops.stop_receiver()
 
 
 if __name__ == "__main__":
-    import sys
     target = sys.argv[1] if len(sys.argv) > 1 else "10.0.3.2"
-
+    print(f"=== Estimating link capacity to {target} using SLoPS ===")
     est = LinkEstimator(target)
-    print(f"=== Estimating link capacity to {target} ===")
-    result = est.estimate()
-    print(f"\nEstimated available bandwidth: {result} Mbps")
+    try:
+        details = est.estimate_slops()
+        print("\nSLoPS Detailed Result:")
+        import json
+        print(json.dumps(details.to_dict(), indent=2))
+        print(f"\nEstimated available bandwidth range: [{details.estimated_bandwidth_min_mbps}, {details.estimated_bandwidth_max_mbps}] Mbps")
+        print(f"Midpoint: {details.estimated_bandwidth_mid_mbps} Mbps | Confidence: {details.confidence}")
+    finally:
+        est.close()

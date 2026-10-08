@@ -1,0 +1,28 @@
+{
+  "ground_truth_mbps": 20.0,
+  "passive_estimator": {
+    "method": "Passive (byte counters & static nominal)",
+    "estimated_capacity_mbps": 100.0,
+    "relative_error_pct": 400.0,
+    "execution_time_sec": 0.0063,
+    "cpu_overhead_ms": 0.5,
+    "adaptation_on_idle": "Requires sustained cross-traffic to detect capacity collapse"
+  },
+  "slops_active_estimator": {
+    "method": "SLoPS Active Probing (Jain & Dovrolis PCT/PDT)",
+    "estimated_range_mbps": [
+      18.1,
+      20.5
+    ],
+    "estimated_capacity_mbps": 19.3,
+    "relative_error_pct": 3.5,
+    "execution_time_sec": 0.5806,
+    "confidence": 1.0,
+    "cpu_overhead_ms": 272.68,
+    "probe_packets": 480,
+    "probe_mb": 0.576,
+    "adaptation_on_idle": "Directly discovers available bandwidth via queuing delay trend"
+  },
+  "accuracy_advantage_pp": 396.5,
+  "status": "PASS"
+}

@@ -1,0 +1,15 @@
+{
+  "test_name": "TEST_6_MULTIPLE_FLOWS",
+  "ground_truth_capacity_mbps": 60.0,
+  "active_profiles": [
+    "GAMING",
+    "VOICE"
+  ],
+  "estimated_range_mbps": [
+    55.2,
+    57.5
+  ],
+  "estimated_midpoint_mbps": 56.35,
+  "confidence": 1.0,
+  "status": "PASS"
+}

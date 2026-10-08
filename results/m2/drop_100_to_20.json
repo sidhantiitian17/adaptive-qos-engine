@@ -1,0 +1,22 @@
+{
+  "test_name": "TEST_3_DROP_100_TO_20",
+  "T0_capacity_changed": 1791468833.068,
+  "T1_estimator_detected": 1791468833.774,
+  "T2_estimate_stabilized": 1791468833.774,
+  "T3_policy_decided": 1791468833.774,
+  "T4_enforcement_applied": 1791468833.793,
+  "T5_verifier_confirmed": 1791468835.84,
+  "detection_time_sec": 0.705,
+  "enforcement_time_sec": 0.019,
+  "adaptation_time_sec": 0.725,
+  "verification_time_sec": 2.772,
+  "initial_estimate_mbps": 74.85,
+  "new_estimate_range_mbps": [
+    20.5,
+    22.8
+  ],
+  "new_estimate_midpoint_mbps": 21.65,
+  "enforced_shaping_mbps": 21,
+  "health_verified": true,
+  "status": "PASS"
+}

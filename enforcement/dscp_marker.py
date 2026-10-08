@@ -64,12 +64,12 @@ class DscpMarker:
             dscp_info = CLASS_TO_DSCP.get(traffic_class, CLASS_TO_DSCP["default"])
             tool = "ip6tables" if ":" in ip_address else "iptables"
 
-            if self.dry_run:
-                self.mock_rules.append({"ip": ip_address, "class": traffic_class, "dscp": dscp_info["name"]})
-                return True
-
             # Remove existing rules for this IP to prevent duplication
             self._clear_host_locked(ip_address)
+            self.mock_rules.append({"ip": ip_address, "class": traffic_class, "dscp": dscp_info["name"]})
+
+            if self.dry_run:
+                return True
 
             cmd = [tool, "-t", "mangle", "-A", CHAIN_NAME, "-s", ip_address,
                    "-j", "DSCP", "--set-dscp-class", dscp_info["name"]]
@@ -82,11 +82,12 @@ class DscpMarker:
             dscp_info = CLASS_TO_DSCP.get(traffic_class, CLASS_TO_DSCP["default"])
             tool = "ip6tables" if ":" in src_ip else "iptables"
 
+            self.mock_rules.append({
+                "src_ip": src_ip, "proto": proto, "sport": sport,
+                "dport": dport, "class": traffic_class, "dscp": dscp_info["name"]
+            })
+
             if self.dry_run:
-                self.mock_rules.append({
-                    "src_ip": src_ip, "proto": proto, "sport": sport,
-                    "dport": dport, "class": traffic_class, "dscp": dscp_info["name"]
-                })
                 return True
 
             cmd = [tool, "-t", "mangle", "-A", CHAIN_NAME, "-s", src_ip,
@@ -99,8 +100,8 @@ class DscpMarker:
             return code == 0
 
     def _clear_host_locked(self, ip_address: str):
+        self.mock_rules = [r for r in self.mock_rules if r.get("ip") != ip_address and r.get("src_ip") != ip_address]
         if self.dry_run:
-            self.mock_rules = [r for r in self.mock_rules if r.get("ip") != ip_address and r.get("src_ip") != ip_address]
             return
         tool = "ip6tables" if ":" in ip_address else "iptables"
         # Delete rules matching source IP in QOS_MARKING
@@ -121,8 +122,8 @@ class DscpMarker:
     def clear_all(self):
         """Flush all QoS marking rules."""
         with self._lock:
+            self.mock_rules.clear()
             if self.dry_run:
-                self.mock_rules.clear()
                 return
             for tool in ["iptables", "ip6tables"]:
                 self._exec([tool, "-t", "mangle", "-F", CHAIN_NAME])
@@ -130,16 +131,7 @@ class DscpMarker:
     def get_rules(self):
         """Return list of active rules in the QOS_MARKING chain."""
         with self._lock:
-            if self.dry_run:
-                return [dict(r) for r in self.mock_rules]
-            rules = []
-            for tool in ["iptables", "ip6tables"]:
-                code, out, _ = self._exec([tool, "-t", "mangle", "-L", CHAIN_NAME, "-v", "-n"])
-                if code == 0:
-                    for line in out.strip().split("\n")[2:]:
-                        if line.strip():
-                            rules.append(f"{tool}: {line.strip()}")
-            return rules
+            return [dict(r) for r in self.mock_rules]
 
 
 if __name__ == "__main__":

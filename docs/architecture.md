@@ -60,21 +60,23 @@ The architecture is structured across six coordinated layers:
 ---
 
 ### Module 2: Link Capacity Estimator (`estimator/`)
-* **Purpose:** Determines available WAN capacity dynamically and non-intrusively to prevent router queue buildup.
+* **Purpose:** Determines available end-to-end WAN capacity and available bandwidth dynamic range using active Self-Loading Periodic Streams (SLoPS) probing per Jain & Dovrolis (2002/2003, 2004). Prevents bufferbloat by determining true link bottleneck without relying on saturating TCP cross-traffic or flawed passive counter heuristics. Detailed in [m2_link_estimator.md](m2_link_estimator.md).
 * **Inputs:**
-  - Interface byte counters from `/proc/net/dev` on `veth-gw-wan`.
-  - Nominal link capacity baseline (default 100 Mbps).
+  - Microsecond-paced periodic UDP probe streams at rate $R$ (K packets of size P).
+  - One-way delay timestamps recorded at receiver socket (`wanhost`).
+  - Hysteresis configuration (default: 15% delta threshold) and convergence tolerance (3 Mbps).
 * **Outputs:**
-  - `current_throughput_mbps` (float)
-  - `effective_capacity_mbps` (float)
-  - `capacity_drop_detected` (bool)
+  - `CapacityEstimate`: `estimated_bandwidth_min_mbps`, `estimated_bandwidth_max_mbps`, `estimated_bandwidth_mid_mbps`, `effective_capacity_mbps`.
+  - Confidence metric $[0.0, 1.0]$, PCT, PDT, convergence flag, stability flag.
 * **State Transitions:**
-  $$\text{Baseline (100M)} \xrightarrow{\text{Throughput Collapse}} \text{Degraded Alert} \xrightarrow{\text{Controller Reshapes}} \text{Stabilized New Rate}$$
+  $$\text{IDLE} \to \text{PROBING} \to \text{MEASURING} \to \text{TREND\_ANALYSIS} \to \text{BOUND\_UPDATE} \to \text{CONVERGING} \to \text{STABLE} \ (\text{or } \text{DEGRADED})$$
 * **Failure Handling:**
-  - Missing sysfs/proc entry: Fallbacks to nominal capacity (100 Mbps) with conservative floor.
-  - Flapping/noisy readings: Median smoothing filter over rolling 5-sample window.
+  - Receiver unreachable / socket timeout: Safe fallback to last-known-good capacity with state `DEGRADED`.
+  - Transient delay noise: Median filtering across $G=10$ groups; dual Pairwise Comparison Test (PCT $> 0.55$) and Pairwise Difference Test (PDT $> 0.40$).
 * **Success Conditions:**
-  - Detects WAN capacity drop within 5 seconds without saturating user traffic.
+  - Available bandwidth range $[R_{\min}, R_{\max}]$ resolved in $\le 8$ iterations ($< 0.5$s total probing duration).
+  - Static estimation error $\le 20\%$ against controlled Linux `netem` bottleneck ground truth.
+  - Hysteresis protection suppresses policy oscillations when capacity variations are $< 15\%$.
 
 ---
 

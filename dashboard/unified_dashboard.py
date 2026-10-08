@@ -388,6 +388,41 @@ def submit_override(req: OverrideRequest):
     controller.override_flow(req.flow_id, req.corrected_class, req.reason or "Manual administrative override")
     return {"status": "applied", "flow_id": req.flow_id, "corrected_class": req.corrected_class}
 
+@app.get("/api/estimator/status")
+def get_estimator_status():
+    last_est = controller.active_estimator.last_estimate
+    return {
+        "status": "active" if last_est else "idle",
+        "state": controller.active_estimator.state.value,
+        "method": "SLOPS_ACTIVE",
+        "config": {
+            "probe_packet_size": controller.active_estimator.config.probe_packet_size,
+            "packets_per_probe": controller.active_estimator.config.packets_per_probe,
+            "minimum_probe_rate_mbps": controller.active_estimator.config.minimum_probe_rate_mbps,
+            "maximum_probe_rate_mbps": controller.active_estimator.config.maximum_probe_rate_mbps,
+            "maximum_iterations": controller.active_estimator.config.maximum_iterations,
+            "pct_threshold": controller.active_estimator.config.pct_threshold,
+            "pdt_threshold": controller.active_estimator.config.pdt_threshold,
+            "hysteresis_percentage": controller.active_estimator.config.hysteresis_percentage,
+            "convergence_tolerance_mbps": controller.active_estimator.config.convergence_tolerance_mbps,
+        },
+        "latest_estimate": last_est.to_dict() if last_est else None,
+        "last_known_good_capacity_mbps": controller.active_estimator.last_known_good_capacity,
+        "last_error": controller.active_estimator.last_error
+    }
+
+@app.post("/api/estimator/probe")
+def trigger_estimator_probe():
+    try:
+        est = controller.run_active_probing()
+        controller.run_one_cycle()
+        return {
+            "status": "success",
+            "estimate": est.to_dict()
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/events")
 def get_events():
     return list(event_log)
@@ -1465,6 +1500,7 @@ body {
         <span class="sim-label">⚡ Live Scenario Controls:</span>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-secondary btn-sm" onclick="callApi('/api/simulate/add-flows','POST')">＋ Refresh Flows</button>
+          <button class="btn btn-secondary btn-sm" onclick="callApi('/api/estimator/probe','POST')">📡 Run SLoPS Probe</button>
           <button class="btn btn-amber btn-sm" onclick="callApi('/api/simulate/bandwidth-drop','POST')">⚡ Simulate WAN Drop (100→20)</button>
           <button class="btn btn-secondary btn-sm" onclick="callApi('/api/simulate/restore','POST')">↻ Restore Nominal 100M</button>
           <button class="btn btn-danger btn-sm" onclick="callApi('/api/simulate/inject-failure','POST')">💀 Inject Bad Policy (Test Rollback)</button>
@@ -2340,7 +2376,13 @@ async function refreshTelemetry() {
       const expWan = document.getElementById('explainWan');
       if (expWan) expWan.textContent = wan;
       const trWan = document.getElementById('traceWan');
-      if (trWan) trWan.textContent = wan + ' Mbps';
+      if (trWan) {
+        if (s.capacity_range_mbps && s.capacity_range_mbps.length === 2) {
+          trWan.textContent = `${wan} Mbps (Range: [${s.capacity_range_mbps[0]}, ${s.capacity_range_mbps[1]}] Mbps)`;
+        } else {
+          trWan.textContent = wan + ' Mbps';
+        }
+      }
       const trShp = document.getElementById('traceShape');
       if (trShp) trShp.textContent = (s.current_policy_bw || 95) + ' Mbps';
 

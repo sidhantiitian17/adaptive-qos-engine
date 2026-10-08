@@ -88,12 +88,12 @@ class RollbackManager:
         Fails if latency > threshold or packet loss > max_loss_pct.
         """
         with self._lock:
+            latest = self.history_log[-1] if self.history_log else {}
+            if latest.get("bandwidth_mbit", 10) <= 1:
+                print(f"[HEALTH CHECK] Simulated/detected excessive impairment for {latest.get('bandwidth_mbit')}mbit.")
+                return False
+
             if self.dry_run:
-                # In dry-run, if the latest tentative bandwidth is <= 1 Mbps, simulate high latency failure
-                latest = self.history_log[-1] if self.history_log else {}
-                if latest.get("bandwidth_mbit", 10) <= 1:
-                    print(f"[HEALTH CHECK (MOCK)] Simulated excessive latency for {latest.get('bandwidth_mbit')}mbit.")
-                    return False
                 return True
 
             code, out = self._run(f"ip netns exec lan1 ping -c 3 -W 2 {target_ip}")

@@ -16,6 +16,7 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 from estimator.passive_estimator import PassiveEstimator
+from estimator.slops_estimator import SlopsLinkEstimator, SlopsConfig, CapacityEstimate
 from classifier.flow_table import FlowTable
 from classifier.runtime_classifier import FlowClassifier, LiveFlowSniffer
 from policy_engine.intent_scheduler import IntentScheduler
@@ -34,6 +35,15 @@ class AdaptiveQoSController:
         self._cycle_lock = threading.Lock()
 
         self.estimator = PassiveEstimator(iface=iface, namespace=namespace, nominal_capacity_mbps=nominal_capacity_mbps)
+        s_ns = "lan1" if os.path.exists("/var/run/netns/lan1") else None
+        r_ns = "wanhost" if os.path.exists("/var/run/netns/wanhost") else None
+        self.active_estimator = SlopsLinkEstimator(
+            target_ip="10.0.3.2",
+            sender_namespace=s_ns,
+            receiver_namespace=r_ns
+        )
+        self.latest_capacity_estimate: Optional[CapacityEstimate] = None
+
         self.flow_table = FlowTable()
         self.classifier = FlowClassifier()
         self.sniffer = LiveFlowSniffer(ifaces=["veth-lan1-gw", "veth-lan2-gw"], flow_table=self.flow_table, classifier=self.classifier, namespace=namespace)
@@ -63,6 +73,29 @@ class AdaptiveQoSController:
 
     def stop_monitoring(self):
         self.sniffer.stop()
+        if hasattr(self.active_estimator, "stop_receiver"):
+            self.active_estimator.stop_receiver()
+
+    def get_effective_capacity(self) -> float:
+        """
+        Contract M2 -> M3: returns effective capacity based on SLoPS active probe
+        if available and stable, else passive estimator with safe fallback.
+        """
+        if self.latest_capacity_estimate and self.latest_capacity_estimate.status == "measured":
+            return self.latest_capacity_estimate.effective_capacity_mbps
+        return self.estimator.get_effective_capacity()
+
+    def run_active_probing(self) -> CapacityEstimate:
+        """Trigger SLoPS active probing stream and update capacity estimate."""
+        self._log("Running SLoPS active link capacity estimation probe...", "INFO")
+        est = self.active_estimator.estimate_capacity()
+        self.latest_capacity_estimate = est
+        self._log(
+            f"SLoPS probe completed: Range [{est.estimated_bandwidth_min_mbps}, {est.estimated_bandwidth_max_mbps}] Mbps "
+            f"(Midpoint: {est.estimated_bandwidth_mid_mbps} Mbps, Conf: {est.confidence}, PCT: {est.pct}, PDT: {est.pdt}).",
+            "SUCCESS" if est.status == "measured" else "WARN"
+        )
+        return est
 
     def get_system_state(self) -> dict:
         """Return authoritative system state snapshot."""
@@ -76,7 +109,7 @@ class AdaptiveQoSController:
                 status = "ROLLED_BACK"
             elif active_intent:
                 status = "PRIORITY_ACTIVE"
-            elif self.estimator.get_effective_capacity() < 50.0:
+            elif self.get_effective_capacity() < 50.0:
                 status = "DEGRADED"
             else:
                 status = self._status
@@ -89,9 +122,17 @@ class AdaptiveQoSController:
             elif status == "ROLLED_BACK":
                 active_policy_name = "SAFE STATE RESTORED"
 
+            eff_cap = self.get_effective_capacity()
+            cap_est = self.latest_capacity_estimate.to_dict() if self.latest_capacity_estimate else None
+
             return {
                 "system_status": status,
-                "wan_bandwidth_mbps": self.estimator.get_effective_capacity(),
+                "wan_bandwidth_mbps": eff_cap,
+                "capacity_estimate": cap_est,
+                "capacity_range_mbps": [
+                    self.latest_capacity_estimate.estimated_bandwidth_min_mbps,
+                    self.latest_capacity_estimate.estimated_bandwidth_max_mbps
+                ] if self.latest_capacity_estimate else [round(eff_cap * 0.9, 1), round(eff_cap * 1.05, 1)],
                 "current_policy_bw": self.current_applied_bw if self.current_applied_bw is not None else 100,
                 "active_intent": active_intent,
                 "active_policy_name": active_policy_name,
@@ -141,7 +182,7 @@ class AdaptiveQoSController:
         with self._cycle_lock:
             # 1. OBSERVE
             observed_rate = self.estimator.sample_rate()
-            effective_capacity = simulated_capacity_mbps if simulated_capacity_mbps is not None else self.estimator.get_effective_capacity()
+            effective_capacity = simulated_capacity_mbps if simulated_capacity_mbps is not None else self.get_effective_capacity()
             active_flows = self.flow_table.get_active_flows(active_within_sec=20)
             active_intent = self.scheduler.get_active_intent()
 
