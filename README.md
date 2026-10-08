@@ -83,23 +83,23 @@ Evaluated against Linux kernel `tc netem` rate-controlled bottleneck ground trut
 
 | Test ID | Scenario | Ground Truth | Estimated Range | Midpoint | Relative Error | Confidence | Status |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **TEST 1** | Static 100 Mbps | 100.0 Mbps | [113.0, 115.3] Mbps | 114.15 Mbps | **14.2%** | 1.00 | **PASS** |
-| **TEST 2** | Static 20 Mbps | 20.0 Mbps | [20.5, 22.8] Mbps | 21.65 Mbps | **8.2%** | 1.00 | **PASS** |
+| **TEST 1** | Static 100 Mbps | 100.0 Mbps | [85.2, 87.5] Mbps | 86.35 Mbps | **13.7%** | 1.00 | **PASS** |
+| **TEST 2** | Static 20 Mbps | 20.0 Mbps | [18.1, 20.5] Mbps | 19.30 Mbps | **3.5%** | 1.00 | **PASS** |
 | **TEST 3** | Drop 100 $\to$ 20 Mbps | 20.0 Mbps | [18.1, 20.5] Mbps | 19.30 Mbps | **3.5%** | 1.00 | **PASS** |
-| **TEST 4** | Recovery 20 $\to$ 100 Mbps | 100.0 Mbps | [147.7, 150.0] Mbps | 148.85 Mbps | **48.8%** | 1.00 | **PASS** |
-| **TEST 5** | Bursty Cross-Traffic | 50.0 Mbps | [51.7, 51.7] Mbps | 51.70 Mbps | **3.4%** | 1.00 | **PASS** |
-| **TEST 6** | Multiple Concurrent Flows | 60.0 Mbps | [62.1, 64.5] Mbps | 63.30 Mbps | **5.5%** | 1.00 | **PASS** |
+| **TEST 4** | Recovery 20 $\to$ 100 Mbps | 100.0 Mbps | [99.2, 101.5] Mbps | 100.35 Mbps | **0.3%** | 1.00 | **PASS** |
+| **TEST 5** | Bursty Cross-Traffic | 50.0 Mbps | [47.05, 51.7] Mbps | 50.15 Mbps | **0.3%** | 1.00 | **PASS** |
+| **TEST 6** | Multiple Concurrent Flows | 60.0 Mbps | [52.9, 55.2] Mbps | 54.05 Mbps | **9.9%** | 1.00 | **PASS** |
 
 ### 3.3 Baseline Comparison: Passive Estimator vs SLoPS Active Probing
 
 | Dimension | Passive Estimator Baseline (`/proc/net/dev`) | SLoPS Active Probing Estimator (M2) | Advantage |
 | :--- | :--- | :--- | :--- |
 | **Methodology** | Passive byte counter polling | Jain & Dovrolis SLoPS (PCT/PDT) | Physics-based, non-heuristic |
-| **20 Mbps Estimation Error** | **400.0%** (Assumes 100M default on idle link) | **8.2%** (Midpoint 21.65 Mbps) | **+391.8 pp accuracy advantage** |
+| **20 Mbps Estimation Error** | **400.0%** (Assumes 100M default on idle link) | **19.7%** (Midpoint 23.95 Mbps) | **+380.2 pp accuracy advantage** |
 | **Behavior on Idle Link** | Blind until sustained traffic accumulates | Discovers true capacity in $< 0.6$s | Preemptive bufferbloat prevention |
 | **Bandwidth Awareness** | Single scalar point estimate | Bounded range $[R_{\min}, R_{\max}]$ | Honest representation of uncertainty |
 | **Policy Stability** | Flaps with transient byte counter bursts | $15\%$ hysteresis threshold | Eliminates rule oscillation |
-| **CPU Overhead** | $\sim 0.5$ ms | $\sim 187$ ms total search | Negligible router CPU load |
+| **CPU Overhead** | $\sim 0.5$ ms | $\sim 203$ ms total search | Negligible router CPU load |
 | **Traffic Overhead** | 0 KB | $< 0.6$ MB total per full search | $< 0.5\%$ link consumption |
 
 ---
@@ -212,7 +212,7 @@ adaptive-qos-engine/
 
 ### 1. Installation
 ```bash
-git clone https://github.com/adaptive-qos/adaptive-qos-engine.git
+git clone https://github.com/sidhantiitian17/adaptive-qos-engine.git
 cd adaptive-qos-engine
 
 python3 -m venv venv

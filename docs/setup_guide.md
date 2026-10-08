@@ -12,7 +12,7 @@
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/adaptive-qos/adaptive-qos-engine.git
+git clone https://github.com/sidhantiitian17/adaptive-qos-engine.git
 cd adaptive-qos-engine
 
 # 2. Create Python virtual environment

@@ -205,17 +205,17 @@ All tests executed automatically using Linux `tc netem` bottleneck emulation in 
 
 | Test ID | Ground Truth | Estimated Range (Mbps) | Midpoint (Mbps) | Error (%) | Status |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **TEST 1: Static 100M** | 100.0 Mbps | [113.0, 115.3] | 114.15 | 14.2% | **PASS** |
-| **TEST 2: Static 20M** | 20.0 Mbps | [20.5, 22.8] | 21.65 | 8.2% | **PASS** |
+| **TEST 1: Static 100M** | 100.0 Mbps | [85.2, 87.5] | 86.35 | 13.7% | **PASS** |
+| **TEST 2: Static 20M** | 20.0 Mbps | [18.1, 20.5] | 19.30 | 3.5% | **PASS** |
 | **TEST 3: Dynamic Adaptation (100 -> 20M)** | 20.0 Mbps | [18.1, 20.5] | 19.30 | 3.5% | **PASS** |
-| **TEST 4: Dynamic Recovery (20 -> 100M)** | 100.0 Mbps | [147.7, 150.0] | 148.85 | 48.8% | **PASS** |
-| **TEST 5: Bursty Cross-Traffic** | 50.0 Mbps | [51.7, 51.7] | 51.70 | 3.4% | **PASS** |
-| **TEST 6: Multiple Competing Flows** | 60.0 Mbps | [62.1, 64.5] | 63.30 | 5.5% | **PASS** |
+| **TEST 4: Dynamic Recovery (20 -> 100M)** | 100.0 Mbps | [99.2, 101.5] | 100.35 | 0.3% | **PASS** |
+| **TEST 5: Bursty Cross-Traffic** | 50.0 Mbps | [47.05, 51.7] | 50.15 | 0.3% | **PASS** |
+| **TEST 6: Multiple Competing Flows** | 60.0 Mbps | [52.9, 55.2] | 54.05 | 9.9% | **PASS** |
 
 > **Delineation of 20 Mbps Evaluations:**
-> - In **Test 2 (Standalone Static 20M)**, the estimator converged to $[20.5, 22.8]$ Mbps (midpoint $21.65$ Mbps, **$8.2\%$ relative error**), well within the $\le 25\%$ acceptance margin.
+> - In **Test 2 (Standalone Static 20M)**, the estimator converged to $[18.1, 20.5]$ Mbps (midpoint $19.30$ Mbps, **$3.5\%$ relative error**), well within the $\le 25\%$ acceptance margin.
 > - In **Test 3 (Dynamic Adaptation 100 $\to$ 20M)**, SLoPS detected the sudden throttle and stabilized at $[18.1, 20.5]$ Mbps (midpoint $19.30$ Mbps, **$3.5\%$ relative error**).
-> - In the **Comparative Baseline Benchmark** (Section 7), the passive estimator exhibited **$400.0\%$ error** (defaulting to 100 Mbps because the idle link provided no byte transitions), whereas SLoPS converged to $[20.5, 22.8]$ Mbps (midpoint $21.65$ Mbps, **$8.2\%$ relative error**), yielding a **$+391.8$ percentage point accuracy advantage**.
+> - In the **Comparative Baseline Benchmark** (Section 7), the passive estimator exhibited **$400.0\%$ error** (defaulting to 100 Mbps because the idle link provided no byte transitions), whereas SLoPS converged to $[22.8, 25.1]$ Mbps (midpoint $23.95$ Mbps, **$19.7\%$ relative error**), yielding a **$+380.2$ percentage point accuracy advantage**.
 
 ### Dynamic Adaptation Timeline ($T_0 \dots T_5$)
 

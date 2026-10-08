@@ -95,6 +95,7 @@ class StreamMeasurement:
     duration_sec: float
     group_delays_ms: List[float]
     loss_pct: float
+    recv_rate_mbps: float = 0.0
 
 
 @dataclass
@@ -160,6 +161,8 @@ class TrendAnalyzer:
         cumulative_abs_diff = sum(abs(group_delays[i] - group_delays[i - 1]) for i in range(1, G))
         pdt = overall_diff / max(1e-12, cumulative_abs_diff)
         diff_ms = overall_diff * 1000.0
+
+        max_buildup_ms = (max(group_delays) - group_delays[0]) * 1000.0
 
         # 4. Determine trend
         # Per Jain & Dovrolis (2002/2003):
@@ -237,16 +240,17 @@ class SlopsReceiver:
             except Exception:
                 break
 
-    def get_stream_delays(self, stream_id: int, clear: bool = True) -> List[float]:
+    def get_stream_samples(self, stream_id: int, clear: bool = True) -> List[Tuple[int, float, float]]:
         with self._lock:
             samples = self._streams.pop(stream_id, []) if clear else self._streams.get(stream_id, [])
         if not samples:
             return []
-        # Sort by sequence number
         samples.sort(key=lambda s: s[0])
-        # Compute relative transit delays (t_recv - t_send)
-        delays = [s[2] - s[1] for s in samples]
-        return delays
+        return samples
+
+    def get_stream_delays(self, stream_id: int, clear: bool = True) -> List[float]:
+        samples = self.get_stream_samples(stream_id, clear=clear)
+        return [s[2] - s[1] for s in samples]
 
     def stop(self):
         self.running = False
@@ -395,8 +399,14 @@ class SlopsLinkEstimator:
         self._set_state(EstimatorState.MEASURING)
         # Allow brief propagation window for trailing packets
         time.sleep(0.05)
-        delays = self._receiver.get_stream_delays(stream_id, clear=True)
-        packets_recv = len(delays)
+        delays = []
+        recv_rate_mbps = 0.0
+        samples = self._receiver.get_stream_samples(stream_id, clear=True)
+        packets_recv = len(samples)
+        if samples:
+            delays = [s[2] - s[1] for s in samples]
+            if len(samples) > 1 and (samples[-1][2] - samples[0][2]) > 0:
+                recv_rate_mbps = round(((len(samples) - 1) * self.config.probe_packet_size * 8) / ((samples[-1][2] - samples[0][2]) * 1e6), 2)
         loss_pct = round(((packets_sent - packets_recv) / max(1, packets_sent)) * 100.0, 1)
 
         self._set_state(EstimatorState.TREND_ANALYSIS)
@@ -408,7 +418,7 @@ class SlopsLinkEstimator:
         )
 
         # High packet loss (> 20%) is also a direct indicator of link congestion/exceeded capacity
-        if loss_pct > 20.0 and decision != TrendDecision.CONGESTED:
+        if (loss_pct > 20.0 or (recv_rate_mbps > 5.0 and rate_mbps > recv_rate_mbps * 1.35 and pct > 0.55)) and decision != TrendDecision.CONGESTED:
             decision = TrendDecision.CONGESTED
 
         return StreamMeasurement(
@@ -420,7 +430,8 @@ class SlopsLinkEstimator:
             decision=decision,
             duration_sec=duration,
             group_delays_ms=group_delays,
-            loss_pct=loss_pct
+            loss_pct=loss_pct,
+            recv_rate_mbps=recv_rate_mbps
         )
 
     def estimate_capacity(self) -> CapacityEstimate:
@@ -461,8 +472,9 @@ class SlopsLinkEstimator:
                         # R > A -> upper bound contracts
                         r_high = current_rate
                     else:  # UNCERTAIN
-                        # Gray region: if PDT is low, delay is stationary (advance lower bound); else contract upper bound
-                        if measurement.pdt < 0.30:
+                        # Gray region per SLoPS: check if stationary vs upward drift
+                        diff = (measurement.group_delays_ms[-1] - measurement.group_delays_ms[0]) if measurement.group_delays_ms else 0.0
+                        if measurement.pdt < 0.25 and measurement.pct <= 0.55 and diff <= 0.25:
                             r_low = current_rate
                         else:
                             r_high = current_rate

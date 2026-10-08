@@ -6,11 +6,11 @@
     "VOICE"
   ],
   "estimated_range_mbps": [
-    62.1,
-    64.5
+    52.9,
+    55.2
   ],
-  "estimated_midpoint_mbps": 63.3,
-  "relative_error_pct": 5.5,
+  "estimated_midpoint_mbps": 54.05,
+  "relative_error_pct": 9.9,
   "confidence": 1.0,
   "converged": true,
   "status": "PASS"

@@ -4,25 +4,25 @@
     "method": "Passive (byte counters & static nominal)",
     "estimated_capacity_mbps": 100.0,
     "relative_error_pct": 400.0,
-    "execution_time_sec": 0.0071,
+    "execution_time_sec": 0.0061,
     "cpu_overhead_ms": 0.5,
     "adaptation_on_idle": "Requires sustained cross-traffic to detect capacity collapse"
   },
   "slops_active_estimator": {
     "method": "SLoPS Active Probing (Jain & Dovrolis PCT/PDT)",
     "estimated_range_mbps": [
-      20.5,
-      22.8
+      22.8,
+      25.1
     ],
-    "estimated_capacity_mbps": 21.65,
-    "relative_error_pct": 8.2,
-    "execution_time_sec": 0.5119,
+    "estimated_capacity_mbps": 23.95,
+    "relative_error_pct": 19.7,
+    "execution_time_sec": 0.5126,
     "confidence": 1.0,
-    "cpu_overhead_ms": 187.21,
+    "cpu_overhead_ms": 203.0,
     "probe_packets": 480,
     "probe_mb": 0.576,
     "adaptation_on_idle": "Directly discovers available bandwidth via queuing delay trend"
   },
-  "accuracy_advantage_pp": 391.8,
+  "accuracy_advantage_pp": 380.2,
   "status": "PASS"
 }
