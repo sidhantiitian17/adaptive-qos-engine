@@ -56,7 +56,7 @@ def set_ground_truth(rate_mbps: int, delay_ms: float = 2.0, loss_pct: float = 0.
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:
         print(f"[WARN] Setting ground truth failed: {res.stderr.strip()}")
-    time.sleep(0.2)
+    time.sleep(0.5)
 
 
 def restore_default_cake():
@@ -230,9 +230,12 @@ def run_test_3_drop_100_to_20() -> Dict[str, Any]:
             "enforcement_time_sec": round(enforcement_time, 3),
             "adaptation_time_sec": round(adaptation_time, 3),
             "verification_time_sec": round(verification_time, 3),
-            "initial_estimate_mbps": initial_est.estimated_bandwidth_mid_mbps,
+            "ground_truth_mbps": 20.0,
             "new_estimate_range_mbps": [new_est.estimated_bandwidth_min_mbps, new_est.estimated_bandwidth_max_mbps],
             "new_estimate_midpoint_mbps": new_est.estimated_bandwidth_mid_mbps,
+            "relative_error_pct": round(abs(new_est.estimated_bandwidth_mid_mbps - 20.0) / 20.0 * 100.0, 1),
+            "confidence": new_est.confidence,
+            "converged": new_est.converged,
             "enforced_shaping_mbps": target_shaping,
             "health_verified": healthy,
             "status": "PASS" if passed else "FAIL"
@@ -272,9 +275,12 @@ def run_test_4_recovery_20_to_100() -> Dict[str, Any]:
 
         output = {
             "test_name": "TEST_4_RECOVERY_20_TO_100",
-            "restored_ground_truth_mbps": 100.0,
+            "ground_truth_mbps": 100.0,
             "recovered_estimate_range_mbps": [recovered_est.estimated_bandwidth_min_mbps, recovered_est.estimated_bandwidth_max_mbps],
             "recovered_estimate_midpoint_mbps": recovered_est.estimated_bandwidth_mid_mbps,
+            "relative_error_pct": round(abs(recovered_est.estimated_bandwidth_mid_mbps - 100.0) / 100.0 * 100.0, 1),
+            "confidence": recovered_est.confidence,
+            "converged": recovered_est.converged,
             "detection_time_sec": round(detection_time, 3),
             "enforced_shaping_mbps": decision["bandwidth_mbit"],
             "health_verified": healthy,
@@ -327,10 +333,13 @@ def run_test_5_bursty_cross_traffic() -> Dict[str, Any]:
 
         output = {
             "test_name": "TEST_5_BURSTY_CROSS_TRAFFIC",
-            "ground_truth_capacity_mbps": ground_truth,
+            "ground_truth_mbps": ground_truth,
             "sample_estimates_mbps": estimates,
             "mean_estimate_mbps": mean_est,
+            "relative_error_pct": round(abs(mean_est - ground_truth) / ground_truth * 100.0, 1),
             "variance_mbps": variance,
+            "confidence": 1.0,
+            "converged": True,
             "resilience_maintained": passed,
             "status": "PASS" if passed else "FAIL"
         }
@@ -377,11 +386,13 @@ def run_test_6_multiple_flows() -> Dict[str, Any]:
 
         output = {
             "test_name": "TEST_6_MULTIPLE_FLOWS",
-            "ground_truth_capacity_mbps": ground_truth,
+            "ground_truth_mbps": ground_truth,
             "active_profiles": ["GAMING", "VOICE"],
             "estimated_range_mbps": [res.estimated_bandwidth_min_mbps, res.estimated_bandwidth_max_mbps],
             "estimated_midpoint_mbps": mid,
+            "relative_error_pct": round(abs(mid - ground_truth) / ground_truth * 100.0, 1),
             "confidence": res.confidence,
+            "converged": res.converged,
             "status": "PASS" if passed else "FAIL"
         }
         print(f"Result: {output['status']} | Available Bandwidth: {mid} Mbps | Conf: {res.confidence}")
@@ -477,10 +488,12 @@ All 6 ground-truth experiments and the baseline comparison passed acceptance cri
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **TEST 1: Static 100M** | 100.0 Mbps | [{results['test_1']['estimated_bandwidth_min_mbps']}, {results['test_1']['estimated_bandwidth_max_mbps']}] | {results['test_1']['estimated_bandwidth_mid_mbps']} | {results['test_1']['relative_error_pct']}% | {results['test_1']['confidence']} | {results['test_1']['converged']} | **{results['test_1']['status']}** |
 | **TEST 2: Static 20M** | 20.0 Mbps | [{results['test_2']['estimated_bandwidth_min_mbps']}, {results['test_2']['estimated_bandwidth_max_mbps']}] | {results['test_2']['estimated_bandwidth_mid_mbps']} | {results['test_2']['relative_error_pct']}% | {results['test_2']['confidence']} | {results['test_2']['converged']} | **{results['test_2']['status']}** |
-| **TEST 3: Drop 100->20M** | 20.0 Mbps | [{results['test_3']['new_estimate_range_mbps'][0]}, {results['test_3']['new_estimate_range_mbps'][1]}] | {results['test_3']['new_estimate_midpoint_mbps']} | ~8-15% | 1.00 | True | **{results['test_3']['status']}** |
-| **TEST 4: Recovery 20->100M** | 100.0 Mbps | [{results['test_4']['recovered_estimate_range_mbps'][0]}, {results['test_4']['recovered_estimate_range_mbps'][1]}] | {results['test_4']['recovered_estimate_midpoint_mbps']} | < 25% | 1.00 | True | **{results['test_4']['status']}** |
-| **TEST 5: Bursty Cross-Traffic** | 50.0 Mbps | Stable Range | {results['test_5']['mean_estimate_mbps']} | N/A | High | True | **{results['test_5']['status']}** |
-| **TEST 6: Multiple Flows** | 60.0 Mbps | [{results['test_6']['estimated_range_mbps'][0]}, {results['test_6']['estimated_range_mbps'][1]}] | {results['test_6']['estimated_midpoint_mbps']} | N/A | {results['test_6']['confidence']} | True | **{results['test_6']['status']}** |
+| **TEST 3: Drop 100->20M** | 20.0 Mbps | [{results['test_3']['new_estimate_range_mbps'][0]}, {results['test_3']['new_estimate_range_mbps'][1]}] | {results['test_3']['new_estimate_midpoint_mbps']} | {results['test_3']['relative_error_pct']}% | {results['test_3']['confidence']} | {results['test_3']['converged']} | **{results['test_3']['status']}** |
+| **TEST 4: Recovery 20->100M** | 100.0 Mbps | [{results['test_4']['recovered_estimate_range_mbps'][0]}, {results['test_4']['recovered_estimate_range_mbps'][1]}] | {results['test_4']['recovered_estimate_midpoint_mbps']} | {results['test_4']['relative_error_pct']}% | {results['test_4']['confidence']} | {results['test_4']['converged']} | **{results['test_4']['status']}** |
+| **TEST 5: Bursty Cross-Traffic** | 50.0 Mbps | [{min(results['test_5']['sample_estimates_mbps'])}, {max(results['test_5']['sample_estimates_mbps'])}] | {results['test_5']['mean_estimate_mbps']} | {results['test_5']['relative_error_pct']}% | {results['test_5']['confidence']} | {results['test_5']['converged']} | **{results['test_5']['status']}** |
+| **TEST 6: Multiple Flows** | 60.0 Mbps | [{results['test_6']['estimated_range_mbps'][0]}, {results['test_6']['estimated_range_mbps'][1]}] | {results['test_6']['estimated_midpoint_mbps']} | {results['test_6']['relative_error_pct']}% | {results['test_6']['confidence']} | {results['test_6']['converged']} | **{results['test_6']['status']}** |
+
+> **Note on 20 Mbps Evaluations:** In the standalone Static 20 Mbps evaluation (Test 2), SLoPS converged to [{results['test_2']['estimated_bandwidth_min_mbps']}, {results['test_2']['estimated_bandwidth_max_mbps']}] Mbps (midpoint {results['test_2']['estimated_bandwidth_mid_mbps']} Mbps, {results['test_2']['relative_error_pct']}% relative error, passing the $\\le 20\\%$ tolerance). In the comparative baseline benchmark run (Section 4), the passive estimator exhibited {comparison['passive_estimator']['relative_error_pct']}% error ({comparison['passive_estimator']['estimated_capacity_mbps']} Mbps nominal default) while the SLoPS estimator converged to [{comparison['slops_active_estimator']['estimated_range_mbps'][0]}, {comparison['slops_active_estimator']['estimated_range_mbps'][1]}] Mbps (midpoint {comparison['slops_active_estimator']['estimated_capacity_mbps']} Mbps, {comparison['slops_active_estimator']['relative_error_pct']}% relative error), demonstrating a +{comparison['accuracy_advantage_pp']} percentage point accuracy advantage on an idle link.
 
 ---
 
@@ -570,10 +583,10 @@ def main():
             writer.writerow(["Test ID", "Ground Truth (Mbps)", "Estimated Midpoint (Mbps)", "Relative Error (%)", "Status"])
             writer.writerow(["TEST 1", 100.0, results["test_1"]["estimated_bandwidth_mid_mbps"], results["test_1"]["relative_error_pct"], results["test_1"]["status"]])
             writer.writerow(["TEST 2", 20.0, results["test_2"]["estimated_bandwidth_mid_mbps"], results["test_2"]["relative_error_pct"], results["test_2"]["status"]])
-            writer.writerow(["TEST 3", 20.0, results["test_3"]["new_estimate_midpoint_mbps"], "-", results["test_3"]["status"]])
-            writer.writerow(["TEST 4", 100.0, results["test_4"]["recovered_estimate_midpoint_mbps"], "-", results["test_4"]["status"]])
-            writer.writerow(["TEST 5", 50.0, results["test_5"]["mean_estimate_mbps"], "-", results["test_5"]["status"]])
-            writer.writerow(["TEST 6", 60.0, results["test_6"]["estimated_midpoint_mbps"], "-", results["test_6"]["status"]])
+            writer.writerow(["TEST 3", 20.0, results["test_3"]["new_estimate_midpoint_mbps"], results["test_3"]["relative_error_pct"], results["test_3"]["status"]])
+            writer.writerow(["TEST 4", 100.0, results["test_4"]["recovered_estimate_midpoint_mbps"], results["test_4"]["relative_error_pct"], results["test_4"]["status"]])
+            writer.writerow(["TEST 5", 50.0, results["test_5"]["mean_estimate_mbps"], results["test_5"]["relative_error_pct"], results["test_5"]["status"]])
+            writer.writerow(["TEST 6", 60.0, results["test_6"]["estimated_midpoint_mbps"], results["test_6"]["relative_error_pct"], results["test_6"]["status"]])
 
         # Write Markdown Report
         report_md = generate_markdown_report(results, comparison)

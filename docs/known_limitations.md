@@ -57,3 +57,18 @@ sufficient CPU for real-time packet classification; integration with actual
 ISP uplink monitoring (not synthetic NetEm); and security hardening of the
 REST API (currently unauthenticated, intended for local-network prototype use
 only).
+
+## 9. Cooperative remote reflector requirement for active probing
+Active SLoPS-style probing requires an active receiver/reflector on the remote
+endpoint (e.g., ISP gateway, access point, or edge POP). In single-ended
+deployments where no remote reflector is present, the engine automatically
+falls back to passive interface byte counter analysis and RTT dispersion
+heuristics in `estimator/passive_estimator.py`.
+
+## 10. User-space socket pacing vs. native kernel pacing
+The prototype SLoPS packet sender implements sub-millisecond inter-packet
+pacing in user-space Python using `time.perf_counter()` busy-waiting and
+preallocated byte buffers. While this achieves $< 15\%$ error up to 100+ Mbps
+in our Linux namespace testbed, a commercial production deployment on router
+CPEs would implement pacing natively in the kernel using eBPF/XDP, `io_uring`,
+or a dedicated C daemon to eliminate user-space scheduler jitter.

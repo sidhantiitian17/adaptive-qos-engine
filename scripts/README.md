@@ -43,6 +43,7 @@ This directory contains automation, verification, orchestration, and benchmarkin
 | `run_scenario_a.sh` | Runs Scenario A: Baseline vs Adaptive bufferbloat | `sudo ./scripts/run_scenario_a.sh` |
 | `run_scenario_b.sh` | Runs Scenario B: Dynamic WAN capacity drop & recovery | `sudo ./scripts/run_scenario_b.sh` |
 | `run_scenario_c.sh` | Runs Scenario C: 3 TV streams + Gaming contention & fairness | `sudo ./scripts/run_scenario_c.sh` |
+| `run_m2_experiments.sh` | Runs Module M2 SLoPS link capacity estimator ground-truth suite | `sudo ./scripts/run_m2_experiments.sh` |
 
 ---
 

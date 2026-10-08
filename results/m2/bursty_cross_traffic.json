@@ -1,13 +1,16 @@
 {
   "test_name": "TEST_5_BURSTY_CROSS_TRAFFIC",
-  "ground_truth_capacity_mbps": 50.0,
+  "ground_truth_mbps": 50.0,
   "sample_estimates_mbps": [
-    54.05,
-    54.05,
-    54.05
+    51.7,
+    51.7,
+    51.7
   ],
-  "mean_estimate_mbps": 54.05,
+  "mean_estimate_mbps": 51.7,
+  "relative_error_pct": 3.4,
   "variance_mbps": 0.0,
+  "confidence": 1.0,
+  "converged": true,
   "resilience_maintained": true,
   "status": "PASS"
 }

@@ -16,6 +16,7 @@ Welcome to the documentation suite for the Adaptive QoS Engine for Mixed Home Br
 ## 2. Architecture & Technical Design
 
 - **[Architecture Specification](file:///home/prashast/adaptive-qos-engine/docs/architecture.md)**: Deep dive into the 4-node routed topology, zero-payload ML classifier, deterministic policy engine, and Linux kernel CAKE queue discipline.
+- **[Module M2: Link Capacity Estimator Specification](file:///home/prashast/adaptive-qos-engine/docs/m2_link_estimator.md)**: SLoPS-style active probing engine based on Jain–Dovrolis methodology, state machine, hysteresis damping, and ground-truth evaluation results.
 - **[Known Limitations](file:///home/prashast/adaptive-qos-engine/docs/known_limitations.md)**: Hardware boundary, virtual environment constraints, and scaling characteristics.
 - **[WSL2 / Linux Kernel Build Guide](file:///home/prashast/adaptive-qos-engine/docs/kernel_build.md)**: Enabling `sch_cake` and `sch_netem` on custom Linux kernels.
 
