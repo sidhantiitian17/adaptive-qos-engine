@@ -35,7 +35,7 @@ The architecture is structured across seven modular, independently testable comp
 [ M2: Link Capacity Estimator ] ── (SLoPS Active Probing Range [R_min, R_max])
             │
             ▼
-[ M3: Policy Engine ] ──────────── (0.95 * Capacity Shaping, 20% Bulk Floor)
+[ M3: Policy Engine ] ──────────── (0.95 * Capacity Shaping, Anti-Starvation Planning)
             │                           ▲
             │                           │
             │                  [ M7: Intent API / Laya ]
@@ -53,7 +53,7 @@ The architecture is structured across seven modular, independently testable comp
 | :--- | :--- | :--- | :--- |
 | **M1** | **Traffic Classifier** | [`classifier/runtime_classifier.py`](classifier/runtime_classifier.py) | Inspects packet lengths, TTLs, and inter-arrival intervals (no payload decryption); infers class via XGBoost ($99.1\%$ accuracy); populates authoritative `FlowTable`. |
 | **M2** | **Link Capacity Estimator** | [`estimator/slops_estimator.py`](estimator/slops_estimator.py), [`estimator/link_estimator.py`](estimator/link_estimator.py) | Employs SLoPS active probing (Jain–Dovrolis PCT/PDT trend tests) to discover available bandwidth range $[R_{\min}, R_{\max}]$; provides hysteresis-damped effective capacity to M3. |
-| **M3** | **Policy Engine** | [`policy_engine/policy_rules.py`](policy_engine/policy_rules.py) | Calculates optimal CAKE bandwidth ($95\%$ rule) and guaranteed bulk floor ($20\%$ share); enforces anti-starvation invariant. |
+| **M3** | **Policy Engine** | [`policy_engine/policy_rules.py`](policy_engine/policy_rules.py) | Calculates optimal CAKE bandwidth ($95\%$ rule) and analytical bulk non-starvation target (Option B: $20\%$ planning target; datapath anti-starvation progress enforced via CAKE DRR quantum allocation without rigid kernel rate reservation); enforces anti-starvation invariant. |
 | **M4** | **Kernel Enforcement** | [`enforcement/dscp_marker.py`](enforcement/dscp_marker.py), [`enforcement/apply_cake.sh`](enforcement/apply_cake.sh) | Sets DiffServ DSCP marks (Voice EF, Video AF41, Bulk CS1) via iptables; configures Linux root CAKE qdisc with DiffServ4 tins. |
 | **M5** | **Closed-Loop Verifier** | [`controller_daemon.py`](controller_daemon.py) (`_verify_policy`) | Measures live ICMP/UDP RTT and packet loss; validates that latency remains below 60 ms and packet loss is zero. |
 | **M6** | **Rollback Manager** | [`policy_engine/rollback_manager.py`](policy_engine/rollback_manager.py) | Implements Koo & Toueg two-phase checkpointing; tests tentative configurations and automatically reverts to last-known-good state upon impairment. |
@@ -75,7 +75,7 @@ All figures represent authentic, empirical measurements from the Linux kernel da
 | **Scenario B: Dynamic WAN Recovery (20M $\to$ 100M)** | Manual intervention | **0.0346 s recovery** | **Target $\le 1.0$s (28x faster)** |
 | **Scenario C: Multi-Stream TV Contention** | Unfair starvation | **Jain Index = 0.9999998** | **Near-Perfect Fairness** |
 | **Scenario C: Gaming RTT under WAN Delay** | Severe queuing spike | **15.489 ms RTT, 0.029 ms jitter** | **DiffServ EF Tin Protected** |
-| **Bulk Progress Anti-Starvation Floor** | Unprotected | **4 Mbps guaranteed floor** | **20% Min Bandwidth Preserved** |
+| **Bulk Progress Anti-Starvation Floor** | Unprotected | **Sustained Non-Starvation Progress** | **Option B: CAKE DRR Servicing (Quantum 300 vs 1514, ~4 Mbps observed under 19 Mbps shaping)** |
 
 ### 3.2 Module M2 Ground-Truth Evaluation Matrix
 

@@ -142,6 +142,23 @@ class RollbackManager:
             if not applied_ok:
                 err_msg = apply_res.get("error") or "TcManager apply_cake failed"
                 print(f"[ROLLBACK_MGR] Apply/verification error applying {bw_str} ({diffserv}): {err_msg}")
+
+                # Auto-restore pre-apply snapshot to maintain kernel state integrity
+                auto_restore_ok = False
+                restore_bw = prev_snapshot.get("bandwidth_mbit") if prev_snapshot else None
+                restore_ds = (prev_snapshot.get("diffserv_mode") or prev_snapshot.get("diffserv", "diffserv4")) if prev_snapshot else "diffserv4"
+                if restore_bw is None and self.last_known_good_snapshot:
+                    restore_bw = self.last_known_good_snapshot.get("bandwidth_mbit")
+                    restore_ds = self.last_known_good_snapshot.get("diffserv_mode") or self.last_known_good_snapshot.get("diffserv", "diffserv4")
+                elif restore_bw is None and self.last_good_config is not None:
+                    restore_bw = self.last_good_config
+                    restore_ds = "diffserv4"
+
+                if restore_bw is not None and isinstance(restore_bw, (int, float)):
+                    res_restore = self.tc_manager.apply_cake(int(round(restore_bw)), diffserv=restore_ds)
+                    auto_restore_ok = res_restore.get("success", False)
+                    print(f"[ROLLBACK_MGR] Immediate restoration to {restore_bw}mbit ({restore_ds}): success={auto_restore_ok}")
+
                 entry = {
                     "timestamp": time.time(),
                     "bandwidth_mbit": bandwidth_mbit,
@@ -149,6 +166,7 @@ class RollbackManager:
                     "status": "apply_failed" if "execution" in err_msg.lower() else "verification_failed",
                     "applied_successfully": False,
                     "kernel_verified": False,
+                    "auto_restored": auto_restore_ok,
                     "error": err_msg,
                     "verified_state": verified_state
                 }
@@ -232,26 +250,47 @@ class RollbackManager:
         with self._lock:
             # 1. Determine target rollback parameters from saved snapshot
             has_snapshot = False
-            if self.last_known_good_snapshot and self.last_known_good_snapshot.get("bandwidth_mbit"):
+            target_snapshot = self.current_tentative_snapshot or self.last_known_good_snapshot
+            target_bw = None
+            target_diffserv = "diffserv4"
+
+            if target_snapshot and target_snapshot.get("bandwidth_mbit"):
+                target_bw = target_snapshot["bandwidth_mbit"]
+                target_diffserv = target_snapshot.get("diffserv_mode") or target_snapshot.get("diffserv", "diffserv4")
+                has_snapshot = True
+            elif self.last_known_good_snapshot and self.last_known_good_snapshot.get("bandwidth_mbit"):
                 target_bw = self.last_known_good_snapshot["bandwidth_mbit"]
-                target_diffserv = self.last_known_good_snapshot.get("diffserv", "diffserv4")
+                target_diffserv = self.last_known_good_snapshot.get("diffserv_mode") or self.last_known_good_snapshot.get("diffserv", "diffserv4")
                 has_snapshot = True
             elif self.last_good_config is not None:
                 target_bw = self.last_good_config
                 target_diffserv = "diffserv4"
                 has_snapshot = True
-            else:
-                # Documented safe fallback state (50 Mbps safe default under broadband contention)
-                target_bw = 50
-                target_diffserv = "diffserv4"
-                has_snapshot = False
+
+            if not has_snapshot or target_bw is None:
+                err = "No verified checkpoint/snapshot available for rollback (fail-closed)"
+                print(f"[ROLLBACK_MGR] ❌ Rollback failed: {err}")
+                rollback_entry = {
+                    "timestamp": time.time(),
+                    "status": "rollback_failed",
+                    "rollback_bandwidth": None,
+                    "rollback_diffserv": None,
+                    "rollback_success": False,
+                    "had_prior_snapshot": False,
+                    "error": err
+                }
+                if self.history_log:
+                    self.history_log[-1].update(rollback_entry)
+                else:
+                    self.history_log.append(rollback_entry)
+                return False
 
             # 2. Execute restoration and verify actual kernel state
-            res = self.tc_manager.apply_cake(target_bw, diffserv=target_diffserv)
+            res = self.tc_manager.apply_cake(int(round(target_bw)), diffserv=target_diffserv)
             rollback_ok = res.get("success", False)
 
             if rollback_ok:
-                print(f"[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: {target_bw}mbit (Success: True)")
+                print(f"[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: {target_bw}mbit ({target_diffserv}) (Success: True)")
             else:
                 err = res.get("error") or "Restoration verification failed"
                 print(f"[ROLLBACK_MGR] ❌ Rollback failed: {err}")

@@ -324,23 +324,20 @@ VALID_TRAFFIC_CLASSES = {"video_conference", "gaming", "bulk_download", "web_bro
 
 def check_auth(request: Request):
     """
-    Validates API authentication for state-changing operations.
-    When AQE_API_TOKEN is set in the environment, verifies X-API-Token or Bearer token using constant-time comparison.
-    If not set, permits loopback requests (127.0.0.1, ::1, testclient) while rejecting unauthorized remote callers.
+    Validates mandatory API authentication for state-changing operations.
+    Requires AQE_API_TOKEN configuration and valid X-API-Token or Bearer token on every mutating request.
+    Loopback bypass is strictly disabled; unauthenticated requests are rejected.
     """
     import hmac
     token = os.environ.get("AQE_API_TOKEN")
-    client_host = request.client.host if request.client else "unknown"
-    is_loopback = client_host in ("127.0.0.1", "::1", "testclient", "localhost")
+    if not token:
+        raise HTTPException(status_code=403, detail="Forbidden: state mutations require AQE_API_TOKEN configuration.")
 
-    if token:
-        auth_hdr = request.headers.get("X-API-Token") or request.headers.get("Authorization", "")
-        if auth_hdr.startswith("Bearer "):
-            auth_hdr = auth_hdr[7:].strip()
-        if not auth_hdr or not hmac.compare_digest(auth_hdr, token):
-            raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing API token.")
-    elif not is_loopback and not os.environ.get("AQE_ALLOW_UNAUTHENTICATED_REMOTE"):
-        raise HTTPException(status_code=403, detail="Forbidden: remote management requires AQE_API_TOKEN configuration.")
+    auth_hdr = request.headers.get("X-API-Token") or request.headers.get("Authorization", "")
+    if auth_hdr.startswith("Bearer "):
+        auth_hdr = auth_hdr[7:].strip()
+    if not auth_hdr or not hmac.compare_digest(auth_hdr, token):
+        raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing API token.")
 
 @app.post("/api/intent")
 def submit_intent(req: IntentRequest, request: Request):

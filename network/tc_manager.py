@@ -38,15 +38,9 @@ class TcManager:
         if self.dry_run:
             return 0, f"mock_tc_output for {' '.join(cmd_args)}", ""
 
-        # Try with namespace first if requested
+        # Execute strictly within requested namespace without falling back to host network
         if self.namespace:
-            code, stdout, stderr = self.backend.exec_cmd(cmd_args, namespace=self.namespace)
-            if code == 0:
-                return code, stdout, stderr
-            # If namespace doesn't exist or failed due to missing netns, fallback to direct exec
-            if "Cannot open network namespace" in stderr or "No such file or directory" in stderr or "Cannot assign requested address" in stderr:
-                return self.backend.exec_cmd(cmd_args, namespace=None)
-            return code, stdout, stderr
+            return self.backend.exec_cmd(cmd_args, namespace=self.namespace)
 
         return self.backend.exec_cmd(cmd_args, namespace=None)
 
@@ -148,17 +142,6 @@ class TcManager:
     def get_qdisc_state(self) -> Dict[str, Any]:
         """Query kernel for active qdisc and packet counters on configured interface."""
         code, stdout, stderr = self._exec(["tc", "-s", "qdisc", "show", "dev", self.iface])
-        if code != 0 or not stdout.strip():
-            # If netns failed, check local interface
-            if not self.dry_run and self.namespace:
-                try:
-                    res_loc = subprocess.run(["tc", "-s", "qdisc", "show", "dev", self.iface], capture_output=True, text=True, timeout=2)
-                    if res_loc.returncode == 0 and res_loc.stdout.strip():
-                        stdout = res_loc.stdout
-                        code = 0
-                except Exception:
-                    pass
-
         if code != 0 or not stdout.strip():
             return {
                 "status": "unavailable",

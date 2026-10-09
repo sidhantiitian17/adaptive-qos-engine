@@ -326,10 +326,11 @@ class TestPhase4FailClosedAndRollback(unittest.TestCase):
         rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
         rb.make_permanent(80, "diffserv4")
 
-        # Now apply a bad policy that fails
+        # Now apply a bad policy that fails (triggers immediate auto-restoration of snapshot)
         mock_tc.apply_cake.side_effect = [
             {"success": False, "error": "Execution error"},  # Initial bad apply
-            {"success": True, "verified_state": {"status": "verified", "qdisc_type": "cake", "bandwidth_mbit": 80.0, "diffserv_mode": "diffserv4"}}  # Rollback
+            {"success": True, "verified_state": {"status": "verified", "qdisc_type": "cake", "bandwidth_mbit": 80.0, "diffserv_mode": "diffserv4"}},  # Auto-restoration on apply failure
+            {"success": True, "verified_state": {"status": "verified", "qdisc_type": "cake", "bandwidth_mbit": 80.0, "diffserv_mode": "diffserv4"}}   # Explicit rollback call
         ]
         success = rb.apply_policy(1, "diffserv4")
         self.assertFalse(success)
@@ -376,20 +377,18 @@ class TestPhase4FailClosedAndRollback(unittest.TestCase):
         self.assertEqual(rb.history_log[-1]["status"], "rollback_failed")
 
     def test_08_missing_snapshot_handled_explicitly(self):
-        """8. A missing snapshot falls back safely to documented conservative baseline (50 Mbps)."""
+        """8. A missing snapshot fails closed safely without applying unverified fallback."""
         mock_tc = MagicMock()
         mock_tc.get_qdisc_state.return_value = {"status": "unavailable", "qdisc_type": "unknown"}
-        mock_tc.apply_cake.return_value = {
-            "success": True,
-            "verified_state": {"status": "verified", "qdisc_type": "cake", "bandwidth_mbit": 50.0, "diffserv_mode": "diffserv4"}
-        }
         rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
         rb.last_known_good_snapshot = None
+        rb.current_tentative_snapshot = None
         rb.last_good_config = None
 
         success = rb.rollback()
-        self.assertTrue(success)
-        mock_tc.apply_cake.assert_called_with(50, diffserv="diffserv4")
+        self.assertFalse(success)
+        mock_tc.apply_cake.assert_not_called()
+        self.assertEqual(rb.history_log[-1]["status"], "rollback_failed")
         self.assertFalse(rb.history_log[-1]["had_prior_snapshot"])
 
     def test_09_dry_run_results_distinguishable_from_live_verified_results(self):
@@ -435,9 +434,10 @@ class TestPhase6ApiSecurity(unittest.TestCase):
         controller.last_probe_time = time.time()
         controller.probe_cooldown_sec = 10.0
 
-        resp = self.client.post("/api/estimator/probe")
-        self.assertEqual(resp.status_code, 429)
-        self.assertIn("cooldown active", resp.json()["detail"])
+        with patch.dict(os.environ, {"AQE_API_TOKEN": "secret_test_token_123"}):
+            resp = self.client.post("/api/estimator/probe", headers={"X-API-Token": "secret_test_token_123"})
+            self.assertEqual(resp.status_code, 429)
+            self.assertIn("cooldown active", resp.json()["detail"])
 
         # Reset cooldown
         controller.last_probe_time = None

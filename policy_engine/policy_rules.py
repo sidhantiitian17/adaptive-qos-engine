@@ -52,11 +52,11 @@ def decide_policy(available_bandwidth_mbps: float, active_flows: list, user_inte
         decision["starvation_floor_active"] = True
         decision["reasoning"].append("Applied absolute link safety floor of 5 Mbps to prevent broadband collapse")
 
-    # Minimum bulk non-starvation objective (analytical 20% planning target, non-starvation enforced via CAKE DRR)
+    # Bulk non-starvation planning objective (Option B: analytical 20% target; datapath anti-starvation progress enforced via CAKE DRR quantum allocation without rigid kernel rate reservation)
     bulk_floor_mbit = max(2, round(decision["bandwidth_mbit"] * 0.20))
     decision["min_bulk_bandwidth_mbit"] = bulk_floor_mbit
     decision["reasoning"].append(
-        f"Guaranteed bulk progress floor: AQE is shaping the link to {decision['bandwidth_mbit']} Mbps and reserving a minimum {bulk_floor_mbit} Mbps policy floor for bulk traffic (20% of the shaped rate)"
+        f"Bulk non-starvation objective (Option B): AQE targets analytical {bulk_floor_mbit} Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation."
     )
 
     # Flow balancing analysis

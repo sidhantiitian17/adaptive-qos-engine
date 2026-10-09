@@ -24,9 +24,14 @@ class TestStateUnification(unittest.TestCase):
             controller.rollback_mgr.history_log.clear()
         with controller.dscp_marker._lock:
             controller.dscp_marker.mock_rules.clear()
+            controller.dscp_marker._flow_rules.clear()
+        controller.dry_run = True
+        controller.dscp_marker.dry_run = True
+        controller.rollback_mgr.dry_run = True
         controller.current_applied_bw = None
         controller._status = "NORMAL"
-        self.client = TestClient(app)
+        os.environ["AQE_API_TOKEN"] = "dev-secret-token-123"
+        self.client = TestClient(app, headers={"X-API-Token": "dev-secret-token-123"})
 
     def test_01_intent_state_unification(self):
         """

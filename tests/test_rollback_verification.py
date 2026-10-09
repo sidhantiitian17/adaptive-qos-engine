@@ -207,12 +207,11 @@ class TestPhase5BulkCalculation(unittest.TestCase):
         self.assertEqual(dec5["min_bulk_bandwidth_mbit"], 2)
 
     def test_reasoning_string_describes_non_starvation_semantics(self):
-        """Policy decision reasoning explicitly documents the guaranteed bulk floor."""
+        """Policy decision reasoning explicitly documents the bulk non-starvation planning objective."""
         dec = decide_policy(available_bandwidth_mbps=80.0, active_flows=[])
         reasoning_joined = " ".join(dec["reasoning"])
-        self.assertIn("Guaranteed bulk progress floor", reasoning_joined)
-        self.assertIn("reserving a minimum", reasoning_joined)
-        self.assertIn("20% of the shaped rate", reasoning_joined)
+        self.assertIn("Bulk non-starvation objective (Option B)", reasoning_joined)
+        self.assertIn("CAKE DRR quantum allocation", reasoning_joined)
 
 
 class TestOptInKernelIntegration(unittest.TestCase):

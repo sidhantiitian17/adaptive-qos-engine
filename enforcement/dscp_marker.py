@@ -144,6 +144,7 @@ class DscpMarker:
                 "rule_type": "flow",
                 "flow_id": flow_key,
                 "flow_tuple": flow,
+                "ip": flow.src_ip,
                 "src_ip": flow.src_ip,
                 "dst_ip": flow.dst_ip,
                 "proto": flow.proto,
@@ -156,16 +157,18 @@ class DscpMarker:
                 "cmd": cmd
             }
 
-            self._flow_rules[flow_key] = rule_entry
-            self._sync_mock_rules_locked()
-
             if self.dry_run:
+                self._flow_rules[flow_key] = rule_entry
+                self._sync_mock_rules_locked()
                 return True
 
             code, out, err = self._exec(cmd)
             if code != 0:
                 print(f"[DSCP_MARKER] Failed to install flow rule for {flow_key}: {err.strip()}")
                 return False
+
+            self._flow_rules[flow_key] = rule_entry
+            self._sync_mock_rules_locked()
             return True
 
     def clear_flow(self, flow_or_id: Union[FlowTuple, str]) -> bool:
@@ -220,14 +223,18 @@ class DscpMarker:
                 "cmd": cmd
             }
 
-            self._host_rules[ip_address] = rule_entry
-            self._sync_mock_rules_locked()
-
             if self.dry_run:
+                self._host_rules[ip_address] = rule_entry
+                self._sync_mock_rules_locked()
                 return True
 
             code, out, err = self._exec(cmd)
-            return code == 0
+            if code != 0:
+                return False
+
+            self._host_rules[ip_address] = rule_entry
+            self._sync_mock_rules_locked()
+            return True
 
     def _clear_host_rule_locked(self, ip_address: str):
         if ip_address in self._host_rules:

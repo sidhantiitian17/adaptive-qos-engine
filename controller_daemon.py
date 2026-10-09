@@ -10,6 +10,7 @@ import sys
 import time
 import argparse
 import threading
+import concurrent.futures
 from typing import Optional, Dict, Any, List
 
 # Ensure local imports work cleanly
@@ -140,7 +141,19 @@ class AdaptiveQoSController:
         t0 = time.time()
         self._log("Running SLoPS active link capacity estimation probe...", "INFO")
         try:
-            est = self.active_estimator.estimate_capacity()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(self.active_estimator.estimate_capacity)
+                try:
+                    est = future.result(timeout=self.probe_timeout_sec)
+                except concurrent.futures.TimeoutError:
+                    duration = time.time() - t0
+                    self.last_probe_time = time.time()
+                    self.last_probe_duration_sec = round(duration, 3)
+                    self.last_probe_status = "timeout"
+                    self.last_probe_error = f"Active probe timed out after {self.probe_timeout_sec:.1f}s"
+                    self._log(f"Active probe timed out after {self.probe_timeout_sec:.1f}s.", "WARN")
+                    return self.latest_capacity_estimate
+
             duration = time.time() - t0
             self.last_probe_time = time.time()
             self.last_probe_duration_sec = round(duration, 3)
@@ -313,26 +326,7 @@ class AdaptiveQoSController:
                     self._status = "ROLLED_BACK"
                     action_taken = "apply_failed"
                 else:
-                    # 4. MARK FLOWS (Genuine per-flow 5-tuple DSCP marking)
-                    for f in active_flows:
-                        flow_id = f.get("flow_id", "")
-                        fclass = f.get("class", "unclassified")
-                        effective_class = fclass
-
-                        # If priority intent matches, retain canonical priority class
-                        if active_intent and active_intent.get("action") == "prioritize":
-                            intent_target = active_intent.get("traffic_class")
-                            if intent_target and normalize_class_name(intent_target) == normalize_class_name(fclass):
-                                effective_class = normalize_class_name(intent_target)
-
-                        flow_tuple = FlowTuple.parse_or_none(flow_id)
-                        if flow_tuple:
-                            self.dscp_marker.mark_flow(flow_tuple, effective_class)
-                        elif ":" in flow_id:
-                            src_ip = flow_id.split(":")[0]
-                            self.dscp_marker.mark_host(src_ip, effective_class)
-
-                    # 5. VERIFY (Closed-Loop QoE Health Check)
+                    # VERIFY (Closed-Loop QoE Health Check)
                     time.sleep(0.5)
                     healthy = self.rollback_mgr.health_check()
                     if healthy:
@@ -354,6 +348,26 @@ class AdaptiveQoSController:
                         action_taken = "rolled_back"
                         print(f"[VERIFY] ⚠️ Health check failed! Policy rolled back to safe state.")
                         self._log(f"Health check failed! Automatically rolled back to safe state.", "CRITICAL")
+
+            # 4. RECONCILE FLOW MARKINGS (Every cycle ensures new or reclassified flows are marked in kernel)
+            if self._status != "ROLLED_BACK":
+                for f in active_flows:
+                    flow_id = f.get("flow_id", "")
+                    fclass = f.get("class", "unclassified")
+                    effective_class = fclass
+
+                    # If priority intent matches, retain canonical priority class
+                    if active_intent and active_intent.get("action") == "prioritize":
+                        intent_target = active_intent.get("traffic_class")
+                        if intent_target and normalize_class_name(intent_target) == normalize_class_name(fclass):
+                            effective_class = normalize_class_name(intent_target)
+
+                    flow_tuple = FlowTuple.parse_or_none(flow_id)
+                    if flow_tuple:
+                        self.dscp_marker.mark_flow(flow_tuple, effective_class)
+                    elif ":" in flow_id:
+                        src_ip = flow_id.split(":")[0]
+                        self.dscp_marker.mark_host(src_ip, effective_class)
 
             return {
                 "effective_capacity_mbps": effective_capacity,

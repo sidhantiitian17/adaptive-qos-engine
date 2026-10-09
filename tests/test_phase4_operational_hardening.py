@@ -27,7 +27,8 @@ from policy_engine.policy_rules import decide_policy
 class TestPhase4OperationalHardening(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        os.environ["AQE_API_TOKEN"] = "dev-secret-token-123"
+        cls.client = TestClient(app, headers={"X-API-Token": "dev-secret-token-123"})
 
     def test_01_interface_discovery_non_loopback(self):
         """Verify interface discovery rejects loopback and discovers real network device."""
@@ -147,7 +148,7 @@ class TestPhase4OperationalHardening(unittest.TestCase):
         )
         self.assertIn("reasoning", decision)
         # Verify bulk floor statement is present and accurate
-        found_floor = any("Guaranteed bulk progress floor" in r for r in decision["reasoning"])
+        found_floor = any("Bulk non-starvation objective" in r for r in decision["reasoning"])
         self.assertTrue(found_floor, "Bulk progress floor missing from policy decision")
 
         # 20 Mbps capacity
@@ -156,7 +157,7 @@ class TestPhase4OperationalHardening(unittest.TestCase):
             active_flows=[{"flow_id": "1", "class": "video_conference"}, {"flow_id": "2", "class": "bulk_download"}],
             user_intent=None
         )
-        found_floor_collapsed = any("Guaranteed bulk progress floor" in r for r in decision_collapsed["reasoning"])
+        found_floor_collapsed = any("Bulk non-starvation objective" in r for r in decision_collapsed["reasoning"])
         self.assertTrue(found_floor_collapsed)
 
 if __name__ == "__main__":
