@@ -3,6 +3,7 @@ NetMatrix-inspired feature set + XGBoost classifier.
 Train/test split karke accuracy measure karte hain, 
 baseline heuristic se compare karne ke liye.
 """
+import os
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -10,7 +11,11 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 import xgboost as xgb
 import pickle
 
-def train_and_evaluate(csv_path="training_data.csv", model_out="xgb_model.pkl"):
+def train_and_evaluate(csv_path=None, model_out=None):
+    if csv_path is None:
+        csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "training_data.csv")
+    if model_out is None:
+        model_out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "xgb_model.pkl")
     df = pd.read_csv(csv_path)
 
     # Features: total_length, ttl, inter_arrival_ms (NetMatrix style — payload kabhi nahi)

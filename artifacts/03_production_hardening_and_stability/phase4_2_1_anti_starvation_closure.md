@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-This closure audit independently verified the exact anti-starvation mathematical formulas in [`policy_engine/policy_rules.py`](file:///home/prashast/adaptive-qos-engine/policy_engine/policy_rules.py) and traced the origin of the previously reported `3.8 Mbps` observation.
+This closure audit independently verified the exact anti-starvation mathematical formulas in [`policy_engine/policy_rules.py`](../../policy_engine/policy_rules.py) and traced the origin of the previously reported `3.8 Mbps` observation.
 
 ### Direct Answers to Audit Questions
 1. **Exact Configured Shaping Rate:** **19 Mbps** (derived from $\text{round}(20.0 \times 0.95)$).
@@ -23,13 +23,13 @@ This closure audit independently verified the exact anti-starvation mathematical
    - **Scenario A:** **15.957 Mbps** adaptive bulk throughput (under 18 Mbps total shaping while concurrent video stream actively consumed 1.201 Mbps).
    - **Scenario C:** **16.50 Mbps aggregate** across 3 concurrent TV bulk streams (2.304 MB, 2.304 MB, 2.306 MB in ~2.5s) under a 19 Mbit bottleneck.
 5. **Origin of the 3.8 Mbps Observation:**
-   The `3.8 Mbps` value was **Option (b): The 20% mathematical target**. In [`scripts/run_phase4_scenarios_and_long_run.py`](file:///home/prashast/adaptive-qos-engine/scripts/run_phase4_scenarios_and_long_run.py) line 239, the benchmark script computed `bulk_floor_mbps = pol["bandwidth_mbit"] * 0.20` ($19 \times 0.20 = 3.8\text{ Mbps}$), directly recording the floating-point product rather than querying the policy engine's integer floor `pol["min_bulk_bandwidth_mbit"]` (which was `4 Mbps`).
+   The `3.8 Mbps` value was **Option (b): The 20% mathematical target**. In [`scripts/run_phase4_scenarios_and_long_run.py`](../../scripts/run_phase4_scenarios_and_long_run.py) line 239, the benchmark script computed `bulk_floor_mbps = pol["bandwidth_mbit"] * 0.20` ($19 \times 0.20 = 3.8\text{ Mbps}$), directly recording the floating-point product rather than querying the policy engine's integer floor `pol["min_bulk_bandwidth_mbit"]` (which was `4 Mbps`).
 
 ---
 
 ## 2. Independent Verification of Policy Rules
 
-### A. Code Implementation ([`policy_engine/policy_rules.py`](file:///home/prashast/adaptive-qos-engine/policy_engine/policy_rules.py) lines 38–49)
+### A. Code Implementation ([`policy_engine/policy_rules.py`](../../policy_engine/policy_rules.py) lines 38–49)
 ```python
 # Anti-Starvation Guard: Total shaping rate cannot drop below 5 Mbps
 if decision["bandwidth_mbit"] < 5:

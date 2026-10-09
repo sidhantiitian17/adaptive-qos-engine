@@ -1,10 +1,10 @@
 # Phase 4.1 Independent Long-Run Memory & Stability Analysis
 
-**Project:** Case Study 3 — Adaptive QoS Engine for Mixed Home Broadband Traffic  
-**Dataset:** [`phase4_artifacts/phase4_long_run.json`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_long_run.json)  
-**Execution Window:** 600.02 seconds (10.00 minutes continuous autonomous control)  
-**Total Autonomous Cycles:** 20,003 cycles  
-**Auditor:** Independent Senior SRE / Systems Acceptance Auditor  
+**Project:** Case Study 3 — Adaptive QoS Engine for Mixed Home Broadband Traffic
+**Dataset:** [`phase4_artifacts/phase4_long_run.json`](../../phase4_artifacts/phase4_long_run.json)
+**Execution Window:** 600.02 seconds (10.00 minutes continuous autonomous control)
+**Total Autonomous Cycles:** 20,003 cycles
+**Auditor:** Independent Senior SRE / Systems Acceptance Auditor
 
 ---
 

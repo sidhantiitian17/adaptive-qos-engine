@@ -2,15 +2,15 @@
   "test_name": "TEST_4_RECOVERY_20_TO_100",
   "ground_truth_mbps": 100.0,
   "recovered_estimate_range_mbps": [
-    99.2,
-    101.5
+    94.5,
+    96.8
   ],
-  "recovered_estimate_midpoint_mbps": 100.35,
-  "relative_error_pct": 0.3,
+  "recovered_estimate_midpoint_mbps": 95.65,
+  "relative_error_pct": 4.3,
   "confidence": 1.0,
   "converged": true,
-  "detection_time_sec": 0.874,
-  "enforced_shaping_mbps": 95,
+  "detection_time_sec": 0.884,
+  "enforced_shaping_mbps": 91,
   "health_verified": true,
   "status": "PASS"
 }

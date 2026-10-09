@@ -1,7 +1,10 @@
-"""
-Final comparison: Heuristic baseline vs XGBoost AI model.
-Ye output seedha report/slide mein use hoga.
-"""
+import os
+import sys
+
+CLASSIFIER_DIR = os.path.dirname(os.path.abspath(__file__))
+if CLASSIFIER_DIR not in sys.path:
+    sys.path.insert(0, CLASSIFIER_DIR)
+
 from baseline_heuristic import evaluate_heuristic
 from train_xgboost import train_and_evaluate
 

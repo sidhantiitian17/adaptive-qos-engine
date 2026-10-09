@@ -3,6 +3,7 @@ Simple rule-based classifier — PDF ka 'deterministic baseline' requirement.
 Sirf packet-size aur inter-arrival-time ke thresholds use karta hai, 
 koi training/learning nahi.
 """
+import os
 import pandas as pd
 
 def classify_heuristic(total_length, inter_arrival_ms):
@@ -19,7 +20,9 @@ def classify_heuristic(total_length, inter_arrival_ms):
     else:
         return "bulk_download"
 
-def evaluate_heuristic(csv_path="training_data.csv"):
+def evaluate_heuristic(csv_path=None):
+    if csv_path is None:
+        csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "training_data.csv")
     df = pd.read_csv(csv_path)
     df["predicted"] = df.apply(
         lambda row: classify_heuristic(row["total_length"], row["inter_arrival_ms"]), axis=1

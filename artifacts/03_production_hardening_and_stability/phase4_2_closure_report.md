@@ -33,12 +33,12 @@ Phase 4.2 has successfully resolved the three bounded findings identified during
 
 ## 3. Code Modifications Applied in Phase 4.2
 
-1. **[`scripts/run_phase4_2_closure.py`](file:///home/prashast/adaptive-qos-engine/scripts/run_phase4_2_closure.py):**
+1. **[`scripts/run_phase4_2_closure.py`](../../scripts/run_phase4_2_closure.py):**
    - Corrected receiver telemetry extraction to use `stats["video"].get("achieved_mbps")`.
    - Eliminated fallback substitutions (`1.14` / `0.95`); missing metrics strictly return `None`.
    - Added preflight kernel verification for Scenario C: asserts `q_gw["qdisc_type"] == "cake"` and `q_wan["qdisc_type"] == "netem"` before dispatching echo servers and probe trains.
    - Executed 3 independent Scenario C trials and deterministic post-test qdisc cleanup.
-2. **[`systemd/adaptive-qos.service`](file:///home/prashast/adaptive-qos-engine/systemd/adaptive-qos.service):**
+2. **[`systemd/adaptive-qos.service`](../../systemd/adaptive-qos.service):**
    - Hardened with `NoNewPrivileges=true`, `ProtectSystem=strict`, `ProtectKernelTunables=true`, `ProtectControlGroups=true`, and `WatchdogSec=30s`.
 3. **Historical Preservation:**
    - All Phase 4 and Phase 4.1 artifacts are preserved intact without modification or overwriting.

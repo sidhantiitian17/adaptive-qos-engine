@@ -27,13 +27,13 @@ The Adaptive QoS Engine has undergone a comprehensive production security audit.
 ### Threat 1: Shell Command Injection via Network Interface or TC Parameters
 - **Attack Vector:** An attacker supplies malicious interface names (e.g. `eth0; rm -rf /`) or traffic control parameters via the API or environment variables.
 - **Mitigation Implemented:**
-  1. All calls to `tc`, `ip`, and `sysctl` in [`network/tc_manager.py`](file:///home/prashast/adaptive-qos-engine/network/tc_manager.py) and [`network/execution_backend.py`](file:///home/prashast/adaptive-qos-engine/network/execution_backend.py) use structured argument lists (`subprocess.run(["tc", "qdisc", ...], shell=False)`).
-  2. Interface names are strictly validated against existing kernel devices discovered via [`network/interface_discovery.py`](file:///home/prashast/adaptive-qos-engine/network/interface_discovery.py).
+  1. All calls to `tc`, `ip`, and `sysctl` in [`network/tc_manager.py`](../../network/tc_manager.py) and [`network/execution_backend.py`](../../network/execution_backend.py) use structured argument lists (`subprocess.run(["tc", "qdisc", ...], shell=False)`).
+  2. Interface names are strictly validated against existing kernel devices discovered via [`network/interface_discovery.py`](../../network/interface_discovery.py).
 
 ### Threat 2: Policy Escalation or Denial-of-Service via Intent API
 - **Attack Vector:** A compromised home device sends high-frequency or infinite-duration intent requests to monopolize bandwidth or crash the scheduler.
 - **Mitigation Implemented:**
-  1. Input sanitization in [`dashboard/unified_dashboard.py`](file:///home/prashast/adaptive-qos-engine/dashboard/unified_dashboard.py) rejects text exceeding 256 characters or containing unprintable control characters.
+  1. Input sanitization in [`dashboard/unified_dashboard.py`](../../dashboard/unified_dashboard.py) rejects text exceeding 256 characters or containing unprintable control characters.
   2. Duration is strictly bounded between $10\text{ seconds}$ and $86,400\text{ seconds}$ ($24\text{ hours}$).
   3. Traffic classes are whitelisted to valid classes: `video_conference`, `gaming`, `bulk_download`, `web_browsing`.
   4. Anti-starvation policy engine guarantees that background bulk flows always retain a minimum 20% bandwidth floor, preventing intent requests from starving other users.
@@ -47,7 +47,7 @@ The Adaptive QoS Engine has undergone a comprehensive production security audit.
 ### Threat 4: Privilege Escalation & Host Compromise
 - **Attack Vector:** Engine daemon compromised through memory corruption or dependency vulnerability.
 - **Mitigation Implemented:**
-  1. Systemd unit [`systemd/adaptive-qos.service`](file:///home/prashast/adaptive-qos-engine/systemd/adaptive-qos.service) confines process execution:
+  1. Systemd unit [`systemd/adaptive-qos.service`](../../systemd/adaptive-qos.service) confines process execution:
      - `CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW CAP_NET_BIND_SERVICE`
      - `ProtectHome=true`
      - `ProtectSystem=full`

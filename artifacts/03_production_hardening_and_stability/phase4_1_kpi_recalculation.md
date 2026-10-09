@@ -9,8 +9,8 @@
 ## 1. Scenario A — Bulk Download vs Interactive Video
 
 ### Raw Evidence Artifacts
-- Latency / Probe Source: [`phase4_artifacts/phase4_scenario_results.json`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_scenario_results.json)
-- Traffic Generator Profile: [`experiments/traffic_generator.py`](file:///home/prashast/adaptive-qos-engine/experiments/traffic_generator.py)
+- Latency / Probe Source: [`phase4_artifacts/phase4_scenario_results.json`](../../phase4_artifacts/phase4_scenario_results.json)
+- Traffic Generator Profile: [`experiments/traffic_generator.py`](../../experiments/traffic_generator.py)
 
 ### Recalculated Metrics
 | Metric | Baseline Mode | Adaptive Mode | Impact / Delta | Verification Method |
@@ -30,7 +30,7 @@ Adaptive QoS completely eliminates bufferbloat delay (cutting queuing delay from
 ## 2. Scenario B — Dynamic WAN Collapse & Recovery Timeline
 
 ### Raw Evidence Artifacts
-- Timeline Data: [`phase4_artifacts/phase4_scenario_results.json`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_scenario_results.json) (under `scenario_b.timestamps`)
+- Timeline Data: [`phase4_artifacts/phase4_scenario_results.json`](../../phase4_artifacts/phase4_scenario_results.json) (under `scenario_b.timestamps`)
 
 ### Raw Event Timestamps (Monotonic Seconds)
 - $T_{\text{cond\_collapse}}$ = `1791098376.015560`

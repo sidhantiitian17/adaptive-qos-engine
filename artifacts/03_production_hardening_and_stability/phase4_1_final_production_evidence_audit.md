@@ -89,7 +89,7 @@ An exhaustive, read-only forensic audit has been conducted on the Phase 4 produc
 
 ## 5. Security & Operational Hardening Audit
 
-1. **Systemd Confinement ([`systemd/adaptive-qos.service`](file:///home/prashast/adaptive-qos-engine/systemd/adaptive-qos.service)):**
+1. **Systemd Confinement ([`systemd/adaptive-qos.service`](../../systemd/adaptive-qos.service)):**
    - Confined strictly to `CAP_NET_ADMIN`, `CAP_NET_RAW`, and `CAP_NET_BIND_SERVICE`.
    - Enforces `NoNewPrivileges=true`, `ProtectSystem=strict`, `ProtectHome=true`, `PrivateTmp=true`, `ProtectKernelTunables=true`, and `ProtectControlGroups=true`.
    - Watchdog heartbeat (`WatchdogSec=30s`) and automatic failure recovery restart policies (`Restart=on-failure`, `RestartSec=5s`).
@@ -104,7 +104,7 @@ An exhaustive, read-only forensic audit has been conducted on the Phase 4 produc
 
 ## 6. Database Integrity & Zero-Fabrication Audit
 
-1. **Evidence DB Forensics ([`experiments/evidence.db`](file:///home/prashast/adaptive-qos-engine/experiments/evidence.db)):**
+1. **Evidence DB Forensics ([`experiments/evidence.db`](../../experiments/evidence.db)):**
    - Tables: `experiments` (117), `experiment_runs` (96), `flows` (149), `measurements` (744), `network_conditions` (36), `controller_actions` (6), `policy_changes` (18), `errors` (0).
    - `PRAGMA foreign_key_check`: **0 violations**.
    - Orphan records: **0 orphan runs, 0 orphan measurements, 0 orphan flows**.
@@ -118,13 +118,13 @@ An exhaustive, read-only forensic audit has been conducted on the Phase 4 produc
 
 | Filename | Description | SHA-256 Digest |
 |:---|:---|:---|
-| [`phase4_1_final_production_evidence_audit.md`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_1_final_production_evidence_audit.md) | Comprehensive forensic audit report | `Generated` |
-| [`phase4_1_acceptance_matrix.md`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_1_acceptance_matrix.md) | 37-criteria independent audit matrix | `Generated` |
-| [`phase4_1_kpi_recalculation.md`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_1_kpi_recalculation.md) | Raw telemetry recalculation report | `Generated` |
-| [`phase4_1_discrepancy_log.md`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_1_discrepancy_log.md) | Forensic discrepancy & root-cause log | `Generated` |
-| [`phase4_1_memory_analysis.md`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_1_memory_analysis.md) | 118-sample time-series RSS breakdown | `Generated` |
-| [`phase4_1_provenance_manifest.json`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_1_provenance_manifest.json) | End-to-end evidence lineage manifest | `Generated` |
-| [`phase4_1_artifact_manifest.json`](file:///home/prashast/adaptive-qos-engine/phase4_artifacts/phase4_1_artifact_manifest.json) | Cryptographic SHA-256 hashes of all audit artifacts | `Generated` |
+| [`phase4_1_final_production_evidence_audit.md`](../../phase4_artifacts/phase4_1_final_production_evidence_audit.md) | Comprehensive forensic audit report | `Generated` |
+| [`phase4_1_acceptance_matrix.md`](../../phase4_artifacts/phase4_1_acceptance_matrix.md) | 37-criteria independent audit matrix | `Generated` |
+| [`phase4_1_kpi_recalculation.md`](../../phase4_artifacts/phase4_1_kpi_recalculation.md) | Raw telemetry recalculation report | `Generated` |
+| [`phase4_1_discrepancy_log.md`](../../phase4_artifacts/phase4_1_discrepancy_log.md) | Forensic discrepancy & root-cause log | `Generated` |
+| [`phase4_1_memory_analysis.md`](../../phase4_artifacts/phase4_1_memory_analysis.md) | 118-sample time-series RSS breakdown | `Generated` |
+| [`phase4_1_provenance_manifest.json`](../../phase4_artifacts/phase4_1_provenance_manifest.json) | End-to-end evidence lineage manifest | `Generated` |
+| [`phase4_1_artifact_manifest.json`](../../phase4_artifacts/phase4_1_artifact_manifest.json) | Cryptographic SHA-256 hashes of all audit artifacts | `Generated` |
 
 ---
 

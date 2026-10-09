@@ -116,13 +116,19 @@ class TestM2ArtifactsIntegrity(unittest.TestCase):
             reader = csv.DictReader(f)
             rows = list(reader)
         self.assertEqual(len(rows), 6)
-        # Check Test 2 row
+
+        # Load static_20.json and verify summary.csv row matches JSON artifact
+        s20_path = os.path.join(RESULTS_M2_DIR, "static_20.json")
+        with open(s20_path, "r") as f:
+            s20_data = json.load(f)
+
         t2_row = next(r for r in rows if r["Test ID"] == "TEST 2")
-        self.assertEqual(t2_row["Ground Truth (Mbps)"], "20.0")
-        self.assertEqual(t2_row["Estimated Range (Mbps)"], "[18.1, 20.5]")
-        self.assertEqual(t2_row["Point Estimate (Mbps)"], "19.3")
-        self.assertEqual(t2_row["Relative Error (%)"], "3.5")
-        self.assertEqual(t2_row["Status"], "PASS")
+        self.assertEqual(float(t2_row["Ground Truth (Mbps)"]), float(s20_data["ground_truth_mbps"]))
+        expected_range = f"[{s20_data['estimated_bandwidth_min_mbps']}, {s20_data['estimated_bandwidth_max_mbps']}]"
+        self.assertEqual(t2_row["Estimated Range (Mbps)"], expected_range)
+        self.assertEqual(float(t2_row["Point Estimate (Mbps)"]), float(s20_data["estimated_bandwidth_mid_mbps"]))
+        self.assertEqual(float(t2_row["Relative Error (%)"]), float(s20_data["relative_error_pct"]))
+        self.assertEqual(t2_row["Status"], s20_data["status"])
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 # CONTEXT (1).md vs Codebase — Gap Analysis
 
 **Date:** 2026-10-02  
-**Source:** [CONTEXT (1).md](file:///home/prashast/adaptive-qos-engine/CONTEXT%20%281%29.md) — a planning/advisory document with recommendations for building the prototype.
+**Source:** [CONTEXT (1).md](../../CONTEXT%20%281%29.md) — a planning/advisory document with recommendations for building the prototype.
 
 ---
 

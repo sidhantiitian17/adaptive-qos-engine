@@ -26,14 +26,14 @@ The Adaptive QoS Engine software stack, control plane, autonomous decision loop,
 ## 2. Hardening & Engineering Accomplishments
 
 ### A. Production Deployment & Confinement
-- **Systemd Service Unit:** Created confined unit file at [`systemd/adaptive-qos.service`](file:///home/prashast/adaptive-qos-engine/systemd/adaptive-qos.service) enforcing least privilege:
+- **Systemd Service Unit:** Created confined unit file at [`systemd/adaptive-qos.service`](../../systemd/adaptive-qos.service) enforcing least privilege:
   - Grants strictly `CAP_NET_ADMIN` and `CAP_NET_RAW`.
   - Enforces `NoNewPrivileges=true`, `ProtectSystem=strict`, `ProtectHome=true`, `PrivateTmp=true`, `ProtectKernelTunables=true`, and `ProtectControlGroups=true`.
   - Configures watchdog monitoring (`WatchdogSec=30s`) and automatic failure recovery restart policies (`Restart=on-failure`, `RestartSec=5s`).
 - **Standardized Management Scripts:**
-  - [`scripts/install_production.sh`](file:///home/prashast/adaptive-qos-engine/scripts/install_production.sh): Automates user creation (`adaptiveqos`), directory permission hardening (`/etc/adaptive-qos`, `/var/log/adaptive-qos`, `/var/lib/adaptive-qos`), virtualenv validation, and systemd unit installation.
-  - [`scripts/uninstall_production.sh`](file:///home/prashast/adaptive-qos-engine/scripts/uninstall_production.sh): Safely cleans up services, qdiscs, and transient configurations.
-  - [`scripts/verify_production.sh`](file:///home/prashast/adaptive-qos-engine/scripts/verify_production.sh): End-to-end verification script testing binaries, configuration parsing, socket bindings, and service readiness. Exits `0` cleanly.
+  - [`scripts/install_production.sh`](../../scripts/install_production.sh): Automates user creation (`adaptiveqos`), directory permission hardening (`/etc/adaptive-qos`, `/var/log/adaptive-qos`, `/var/lib/adaptive-qos`), virtualenv validation, and systemd unit installation.
+  - [`scripts/uninstall_production.sh`](../../scripts/uninstall_production.sh): Safely cleans up services, qdiscs, and transient configurations.
+  - [`scripts/verify_production.sh`](../../scripts/verify_production.sh): End-to-end verification script testing binaries, configuration parsing, socket bindings, and service readiness. Exits `0` cleanly.
 
 ### B. Hardware & Interface Discovery
 - **Hardware Audit (`scripts/verify_hardware_or_environment.py`):**
