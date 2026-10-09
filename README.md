@@ -178,7 +178,8 @@ adaptive-qos-engine/
 │       ├── multiple_flows.json# Test 6 multi-flow contention
 │       └── baseline_comparison.json # Passive vs SLoPS baseline comparison benchmark
 │
-├── tests/                     # Unit, Integration & Hardening Test Suite (48 Tests)
+├── tests/                     # Unit, Integration & Hardening Test Suite (57 Tests)
+│   ├── test_m2_consistency.py                # 9 mathematical formula & interval containment tests
 │   ├── test_m2_slops_estimator.py            # 9 unit tests for SLoPS active estimator
 │   ├── test_phase4_operational_hardening.py # 13 operational hardening & safety tests
 │   ├── test_phase2_datapath.py               # 12 virtual datapath & CAKE verification tests
@@ -226,7 +227,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Run All Unit & Regression Tests (48 / 48 Passing)
+### 2. Run All Unit & Regression Tests (57 / 57 Passing)
 ```bash
 ./venv/bin/python3 -m unittest discover tests/
 ```

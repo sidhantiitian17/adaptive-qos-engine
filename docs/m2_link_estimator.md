@@ -243,8 +243,8 @@ During Test 3 (abrupt bottleneck throttling from 100 Mbps to 20 Mbps):
 3. **Asymmetric Links:**
    SLoPS one-way delay measurement specifically isolates the path under test (forward path). Probe return traffic requires minimal ACK bandwidth ($< 1$ KB).
 
-4. **SQLite Evidence Database Scope Limitation:**
-   The SQLite relational database (`experiments/evidence.db`) persists experiment runs and key summary scalar evaluation metrics (`static_100_error_pct`, `static_20_error_pct`, `adaptation_time_sec`). Detailed per-stream probe packet traces, arrival timestamps, and intermediate binary search interval iterations are stored in dedicated JSON artifacts (`results/m2/*.json`) and CSV summaries (`results/m2/summary.csv`) rather than fully normalized database tables.
+4. **SQLite Evidence Database & Result Artifact Scope Limitation:**
+   The SQLite relational database (`experiments/evidence.db`) persists experiment runs and key summary scalar evaluation metrics (`static_100_error_pct`, `static_20_error_pct`, `adaptation_time_sec`). Evaluation artifacts in `results/m2/*.json` and `results/m2/summary.csv` store structured experiment summaries, per-scenario validation metrics, and sampled capacity estimates (including convergence status, iteration counts, aggregate PCT/PDT trend scores, resource overhead, and sample ranges). Microsecond-level packet arrival timestamps are analyzed in-memory during SLoPS execution and are not persisted to disk in either SQLite or the summary files.
 
 ---
 

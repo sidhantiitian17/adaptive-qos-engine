@@ -73,12 +73,15 @@ in our Linux namespace testbed, a commercial production deployment on router
 CPEs would implement pacing natively in the kernel using eBPF/XDP, `io_uring`,
 or a dedicated C daemon to eliminate user-space scheduler jitter.
 
-## 11. SQLite Evidence Database Scope Limitation
+## 11. SQLite Evidence Database & Result Artifact Scope Limitation
 The SQLite WAL database (`experiments/evidence.db`) persists experiment metadata,
 active flows, policy state transitions, and canonical evaluation summary scalar metrics
 (e.g., `static_100_error_pct`, `static_20_error_pct`, and `adaptation_time_sec` for M2).
-It is intentionally designed not to store high-frequency, packet-level raw probe trains,
-arrival timestamp series, or intermediate binary search iterations to avoid write
-amplification and lock contention. Full high-resolution raw probe traces are preserved in
-machine-readable JSON artifacts (`results/m2/*.json`) and CSV summaries
-(`results/m2/summary.csv`).
+It is intentionally designed not to store high-frequency, packet-level raw probe trains
+or microsecond arrival timestamp series to avoid write amplification and lock contention.
+Similarly, evaluation artifacts in `results/m2/*.json` and `results/m2/summary.csv` store
+structured experiment summaries, per-scenario validation metrics, and sampled capacity
+estimates (including convergence status, iteration counts, aggregate PCT/PDT trend scores,
+resource overhead, and sample ranges). Microsecond-level packet arrival timestamps are
+analyzed in-memory during SLoPS execution and are not persisted to disk in either SQLite or
+the summary files to minimize disk I/O and artifact footprint.

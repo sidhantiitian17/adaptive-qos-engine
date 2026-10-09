@@ -119,6 +119,8 @@ class CapacityEstimate:
     status: str
     error: Optional[str] = None
     overhead: Optional[Dict[str, Any]] = None
+    # In-memory diagnostic field capturing per-iteration probing details; not persisted to disk in summary artifacts
+    stream_measurements: Optional[List[Dict[str, Any]]] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -538,6 +540,23 @@ class SlopsLinkEstimator:
                     "avg_probe_bandwidth_mbps": round((total_bytes_sent * 8.0) / (elapsed * 1e6), 2)
                 }
 
+                stream_records = [
+                    {
+                        "iteration": idx + 1,
+                        "rate_mbps": m.rate_mbps,
+                        "packets_sent": m.packets_sent,
+                        "packets_received": m.packets_received,
+                        "pct": m.pct,
+                        "pdt": m.pdt,
+                        "decision": m.decision.value if hasattr(m.decision, "value") else str(m.decision),
+                        "duration_sec": m.duration_sec,
+                        "group_delays_ms": m.group_delays_ms,
+                        "loss_pct": m.loss_pct,
+                        "recv_rate_mbps": m.recv_rate_mbps
+                    }
+                    for idx, m in enumerate(history_measurements)
+                ]
+
                 result = CapacityEstimate(
                     estimated_bandwidth_min_mbps=r_low,
                     estimated_bandwidth_max_mbps=r_high,
@@ -557,7 +576,8 @@ class SlopsLinkEstimator:
                     state=self.state.value,
                     status=status_str,
                     error=error_str,
-                    overhead=overhead
+                    overhead=overhead,
+                    stream_measurements=stream_records
                 )
 
                 self.last_estimate = result

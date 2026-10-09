@@ -186,6 +186,12 @@ class TestM2ExecutionAndFallback(unittest.TestCase):
             self.assertEqual(res.method, "SLOPS_ACTIVE")
             self.assertIsNotNone(res.overhead)
             self.assertGreater(res.overhead["total_probe_packets"], 0)
+            self.assertIsNotNone(res.stream_measurements)
+            self.assertGreater(len(res.stream_measurements), 0)
+            first_m = res.stream_measurements[0]
+            self.assertIn("iteration", first_m)
+            self.assertIn("rate_mbps", first_m)
+            self.assertIn("decision", first_m)
         finally:
             est.stop_receiver()
 
