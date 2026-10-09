@@ -242,33 +242,163 @@ class TestPhase3AutonomousActiveEstimator(unittest.TestCase):
 class TestPhase4FailClosedAndRollback(unittest.TestCase):
     """Phase 4: Fail-Closed Enforcement and Verified Rollback Tests."""
 
-    def test_apply_policy_failure_aborts_commit(self):
-        """When apply_policy fails at kernel level, controller aborts commit and does not update current_applied_bw."""
-        c = AdaptiveQoSController(dry_run=True)
-        c.rollback_mgr.apply_policy = MagicMock(return_value=False)
+    def test_01_valid_policy_applied_and_queried_state_matches(self):
+        """1. A valid policy is applied and the queried state matches."""
+        mock_tc = MagicMock()
+        mock_tc.apply_cake.return_value = {
+            "success": True,
+            "verified_state": {
+                "status": "verified",
+                "qdisc_type": "cake",
+                "bandwidth_mbit": 75.0,
+                "diffserv_mode": "diffserv4"
+            }
+        }
+        rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
+        success = rb.apply_policy(75, "diffserv4")
+        self.assertTrue(success)
+        self.assertEqual(rb.history_log[-1]["status"], "tentative")
+        self.assertTrue(rb.history_log[-1]["kernel_verified"])
 
-        res = c.run_one_cycle(simulated_capacity_mbps=20.0)
-        self.assertEqual(res["action_taken"], "apply_failed")
-        self.assertIsNone(c.current_applied_bw)
-        self.assertEqual(c._status, "ROLLED_BACK")
+    def test_02_successful_command_with_mismatched_bandwidth_rejected(self):
+        """2. A successful command with mismatched actual bandwidth is rejected."""
+        mock_tc = MagicMock()
+        mock_tc.apply_cake.return_value = {
+            "success": False,
+            "error": "Kernel state verification failed: bandwidth mismatch (expected 50 Mbit, got 20.0)",
+            "verified_state": {
+                "status": "verified",
+                "qdisc_type": "cake",
+                "bandwidth_mbit": 20.0,
+                "diffserv_mode": "diffserv4"
+            }
+        }
+        rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
+        success = rb.apply_policy(50, "diffserv4")
+        self.assertFalse(success)
+        self.assertEqual(rb.history_log[-1]["status"], "verification_failed")
 
-    def test_health_check_failure_triggers_atomic_rollback(self):
-        """Failed health check rolls back to previous safe configuration."""
-        rb = RollbackManager(dry_run=True)
-        rb.apply_policy(80, "diffserv4")
+    def test_03_successful_command_with_mismatched_diffserv_rejected(self):
+        """3. A successful command with mismatched diffserv mode is rejected."""
+        mock_tc = MagicMock()
+        mock_tc.apply_cake.return_value = {
+            "success": False,
+            "error": "Kernel state verification failed: diffserv mismatch (expected 'diffserv4', got 'diffserv3')",
+            "verified_state": {
+                "status": "verified",
+                "qdisc_type": "cake",
+                "bandwidth_mbit": 50.0,
+                "diffserv_mode": "diffserv3"
+            }
+        }
+        rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
+        success = rb.apply_policy(50, "diffserv4")
+        self.assertFalse(success)
+        self.assertEqual(rb.history_log[-1]["status"], "verification_failed")
+
+    def test_04_malformed_or_unavailable_state_query_cannot_yield_verified_success(self):
+        """4. A malformed or unavailable state query cannot yield verified success."""
+        mock_tc = MagicMock()
+        mock_tc.apply_cake.return_value = {
+            "success": False,
+            "error": "Kernel state verification failed: qdisc_type mismatch",
+            "verified_state": {
+                "status": "unavailable",
+                "qdisc_type": "unknown",
+                "bandwidth_mbit": None,
+                "diffserv_mode": None
+            }
+        }
+        rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
+        success = rb.apply_policy(50, "diffserv4")
+        self.assertFalse(success)
+
+    def test_05_failed_policy_change_restores_exact_supported_previous_bandwidth_and_mode(self):
+        """5. A failed policy change restores the exact supported previous bandwidth and mode."""
+        mock_tc = MagicMock()
+        # Seed initial state 80mbit diffserv4
+        mock_tc.get_qdisc_state.return_value = {
+            "status": "verified",
+            "qdisc_type": "cake",
+            "bandwidth_mbit": 80.0,
+            "diffserv_mode": "diffserv4"
+        }
+        rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
         rb.make_permanent(80, "diffserv4")
-        self.assertEqual(rb.last_good_config, 80)
 
-        # Apply bad state
-        rb.apply_policy(1, "diffserv4")
-        # In mock, 1 mbit triggers health check failure
-        self.assertFalse(rb.health_check())
+        # Now apply a bad policy that fails
+        mock_tc.apply_cake.side_effect = [
+            {"success": False, "error": "Execution error"},  # Initial bad apply
+            {"success": True, "verified_state": {"status": "verified", "qdisc_type": "cake", "bandwidth_mbit": 80.0, "diffserv_mode": "diffserv4"}}  # Rollback
+        ]
+        success = rb.apply_policy(1, "diffserv4")
+        self.assertFalse(success)
 
-        # Rollback
+        # Trigger rollback
+        rollback_ok = rb.rollback()
+        self.assertTrue(rollback_ok)
+        mock_tc.apply_cake.assert_called_with(80, diffserv="diffserv4")
+        self.assertEqual(rb.history_log[-1]["rollback_bandwidth"], 80)
+        self.assertEqual(rb.history_log[-1]["rollback_diffserv"], "diffserv4")
+
+    def test_06_rollback_reported_successful_only_after_matching_restored_state(self):
+        """6. Rollback is reported successful only after querying and matching restored state."""
+        mock_tc = MagicMock()
+        mock_tc.apply_cake.return_value = {
+            "success": True,
+            "verified_state": {
+                "status": "verified",
+                "qdisc_type": "cake",
+                "bandwidth_mbit": 95.0,
+                "diffserv_mode": "diffserv4"
+            }
+        }
+        rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
+        rb.make_permanent(95, "diffserv4")
+        self.assertTrue(rb.rollback())
+
+    def test_07_rollback_command_returning_zero_but_leaving_incorrect_state_reported_as_failure(self):
+        """7. A rollback command that executes but leaves incorrect kernel state is reported as failure."""
+        mock_tc = MagicMock()
+        mock_tc.apply_cake.return_value = {
+            "success": False,
+            "error": "Kernel state verification failed: bandwidth mismatch",
+            "verified_state": {
+                "status": "verified",
+                "qdisc_type": "cake",
+                "bandwidth_mbit": 10.0,
+                "diffserv_mode": "diffserv4"
+            }
+        }
+        rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
+        rb.make_permanent(95, "diffserv4")
+        self.assertFalse(rb.rollback())
+        self.assertEqual(rb.history_log[-1]["status"], "rollback_failed")
+
+    def test_08_missing_snapshot_handled_explicitly(self):
+        """8. A missing snapshot falls back safely to documented conservative baseline (50 Mbps)."""
+        mock_tc = MagicMock()
+        mock_tc.get_qdisc_state.return_value = {"status": "unavailable", "qdisc_type": "unknown"}
+        mock_tc.apply_cake.return_value = {
+            "success": True,
+            "verified_state": {"status": "verified", "qdisc_type": "cake", "bandwidth_mbit": 50.0, "diffserv_mode": "diffserv4"}
+        }
+        rb = RollbackManager(dry_run=False, tc_manager=mock_tc)
+        rb.last_known_good_snapshot = None
+        rb.last_good_config = None
+
         success = rb.rollback()
         self.assertTrue(success)
-        self.assertEqual(rb.history_log[-1]["status"], "rolled_back")
-        self.assertEqual(rb.history_log[-1]["rollback_bandwidth"], 80)
+        mock_tc.apply_cake.assert_called_with(50, diffserv="diffserv4")
+        self.assertFalse(rb.history_log[-1]["had_prior_snapshot"])
+
+    def test_09_dry_run_results_distinguishable_from_live_verified_results(self):
+        """9. Dry-run results are distinguishable from live verified results."""
+        rb_dry = RollbackManager(dry_run=True)
+        res_dry = rb_dry.apply_policy(60, "diffserv4")
+        self.assertTrue(res_dry)
+        self.assertTrue(rb_dry.history_log[-1]["is_dry_run"])
+        self.assertFalse(rb_dry.history_log[-1]["kernel_verified"])
 
 
 class TestPhase5BulkStarvationPrevention(unittest.TestCase):
@@ -312,21 +442,69 @@ class TestPhase6ApiSecurity(unittest.TestCase):
         # Reset cooldown
         controller.last_probe_time = None
 
-    def test_token_auth_enforcement_when_configured(self):
-        """When AQE_API_TOKEN is set in environment, unauthorized requests receive HTTP 401."""
+    def test_all_state_changing_endpoints_reject_missing_token_when_configured(self):
+        """Every state-changing endpoint rejects requests without credentials when AQE_API_TOKEN is set."""
+        state_mutating_requests = [
+            ("POST", "/api/intent", {"text": "prioritize gaming"}),
+            ("DELETE", "/api/intent", None),
+            ("POST", "/api/override", {"flow_id": "10.0.1.2:5000->10.0.3.2:80/tcp", "corrected_class": "gaming"}),
+            ("POST", "/api/estimator/probe", None),
+            ("POST", "/api/network/impairment", {"rate_mbps": 20, "delay_ms": 20.0}),
+            ("POST", "/api/simulate/inject-failure", None),
+            ("POST", "/api/simulate/bandwidth-drop", None),
+            ("POST", "/api/simulate/restore", None),
+            ("POST", "/api/simulate/add-flows", None),
+        ]
         with patch.dict(os.environ, {"AQE_API_TOKEN": "secret_test_token_123"}):
-            # Unauthorized call without header
-            resp_no_token = self.client.post("/api/intent", json={"text": "prioritize gaming"})
-            self.assertEqual(resp_no_token.status_code, 401)
+            for method, endpoint, payload in state_mutating_requests:
+                with self.subTest(endpoint=endpoint, method=method):
+                    if method == "POST":
+                        resp = self.client.post(endpoint, json=payload if payload else {})
+                    elif method == "DELETE":
+                        resp = self.client.delete(endpoint)
+                    self.assertEqual(resp.status_code, 401, f"{method} {endpoint} must require authentication")
 
-            # Authorized call with header
-            resp_auth = self.client.post(
-                "/api/intent",
-                json={"text": "prioritize gaming"},
-                headers={"X-API-Token": "secret_test_token_123"}
-            )
-            self.assertEqual(resp_auth.status_code, 200)
-            self.assertEqual(resp_auth.json()["traffic_class"], "gaming")
+    def test_all_state_changing_endpoints_reject_invalid_token(self):
+        """Every state-changing endpoint rejects requests with invalid credentials."""
+        state_mutating_requests = [
+            ("POST", "/api/intent", {"text": "prioritize gaming"}),
+            ("DELETE", "/api/intent", None),
+            ("POST", "/api/override", {"flow_id": "10.0.1.2:5000->10.0.3.2:80/tcp", "corrected_class": "gaming"}),
+            ("POST", "/api/network/impairment", {"rate_mbps": 20, "delay_ms": 20.0}),
+            ("POST", "/api/simulate/inject-failure", None),
+            ("POST", "/api/simulate/bandwidth-drop", None),
+            ("POST", "/api/simulate/restore", None),
+            ("POST", "/api/simulate/add-flows", None),
+        ]
+        with patch.dict(os.environ, {"AQE_API_TOKEN": "secret_test_token_123"}):
+            for method, endpoint, payload in state_mutating_requests:
+                with self.subTest(endpoint=endpoint, method=method):
+                    headers = {"X-API-Token": "wrong_invalid_token"}
+                    if method == "POST":
+                        resp = self.client.post(endpoint, json=payload if payload else {}, headers=headers)
+                    elif method == "DELETE":
+                        resp = self.client.delete(endpoint, headers=headers)
+                    self.assertEqual(resp.status_code, 401, f"{method} {endpoint} must reject invalid token")
+
+    def test_valid_token_authorizes_and_preserves_input_validation(self):
+        """Valid token reaches handler; invalid inputs still return HTTP 400."""
+        with patch.dict(os.environ, {"AQE_API_TOKEN": "secret_test_token_123"}):
+            headers = {"Authorization": "Bearer secret_test_token_123"}
+            # Bad input with valid token -> 400 Bad Request
+            resp_bad = self.client.post("/api/intent", json={"text": ""}, headers=headers)
+            self.assertEqual(resp_bad.status_code, 400)
+
+            # Valid input with valid token -> 200 OK
+            resp_good = self.client.post("/api/intent", json={"text": "prioritize gaming"}, headers=headers)
+            self.assertEqual(resp_good.status_code, 200)
+
+    def test_remote_binding_without_token_rejected_at_endpoint(self):
+        """Remote unauthenticated client without token configuration is rejected with HTTP 403."""
+        with patch.dict(os.environ, {}, clear=True):
+            # Client from remote IP (192.168.1.50) without token configured
+            remote_client = TestClient(app, client=("192.168.1.50", 45000))
+            resp = remote_client.post("/api/simulate/restore")
+            self.assertEqual(resp.status_code, 403)
 
 
 class TestPhase7ClosedLoopIntegration(unittest.TestCase):

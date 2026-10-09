@@ -30,5 +30,13 @@ from dashboard.unified_dashboard import app
 if __name__ == "__main__":
     import uvicorn
     host = os.environ.get("AQE_API_HOST", "127.0.0.1")
+    is_loopback = host in ("127.0.0.1", "::1", "localhost")
+    token = os.environ.get("AQE_API_TOKEN")
+
+    if not is_loopback and not token and not os.environ.get("AQE_ALLOW_UNAUTHENTICATED_REMOTE"):
+        print("[FATAL SECURITY ERROR] Remote binding requested without AQE_API_TOKEN configured.")
+        print("Set AQE_API_TOKEN in environment to securely enable remote access.")
+        sys.exit(1)
+
     print(f"[AQE] Starting authoritative unified dashboard from api/server wrapper on http://{host}:8080...")
     uvicorn.run(app, host=host, port=8080)

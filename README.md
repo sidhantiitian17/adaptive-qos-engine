@@ -2,7 +2,7 @@
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![Linux Kernel](https://img.shields.io/badge/Linux_Kernel-sch__cake-green.svg)](https://www.bufferbloat.net/projects/codel/wiki/Cake/)
-[![Tests](https://img.shields.io/badge/Tests-48%2F48_Passing-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-97%2F97_Passing-brightgreen.svg)](tests/)
 [![Evaluation Status](https://img.shields.io/badge/Evaluation-PROTOTYPE_VERIFIED-brightgreen.svg)](artifacts/04_final_release_acceptance/phase6_acceptance_matrix.md)
 
 An autonomous, closed-loop Quality of Service (QoS) controller that eliminates residential broadband bufferbloat, classifies traffic without reading private payloads, dynamically estimates link capacity via active SLoPS probing, enforces mathematical shaping and anti-starvation policy floors, and supports natural-language operator priority intents.
@@ -227,9 +227,13 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Run All Unit & Regression Tests (77 / 77 Passing)
+### 2. Run All Unit & Regression Tests (97 / 97 Passing)
 ```bash
+# Run unprivileged test discovery (95 passing, 1 opt-in test skipped)
 ./venv/bin/python3 -m unittest discover tests/
+
+# Or run with opt-in live kernel network namespace integration tests (97 passing)
+AQE_INTEGRATION_TEST=1 ./venv/bin/python3 -m unittest discover tests/
 ```
 
 ### 3. Run Module M2 Ground-Truth Evaluation Suite

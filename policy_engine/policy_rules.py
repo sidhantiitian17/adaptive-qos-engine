@@ -45,14 +45,14 @@ def decide_policy(available_bandwidth_mbps: float, active_flows: list, user_inte
         }
     }
 
-    # Anti-Starvation Guard (Constraint C4 & Acceptance Criteria)
+    # Anti-Starvation Objective & Planning Floor (Constraint C4 & Acceptance Criteria)
     # Total shaping rate cannot drop below 5 Mbps under any circumstance
     if decision["bandwidth_mbit"] < 5:
         decision["bandwidth_mbit"] = 5
         decision["starvation_floor_active"] = True
         decision["reasoning"].append("Applied absolute link safety floor of 5 Mbps to prevent broadband collapse")
 
-    # Minimum guaranteed allocation for bulk traffic
+    # Minimum bulk non-starvation objective (analytical 20% planning target, non-starvation enforced via CAKE DRR)
     bulk_floor_mbit = max(2, round(decision["bandwidth_mbit"] * 0.20))
     decision["min_bulk_bandwidth_mbit"] = bulk_floor_mbit
     decision["reasoning"].append(

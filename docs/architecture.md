@@ -135,12 +135,39 @@ The architecture is structured across six coordinated layers:
 ---
 
 ### Module 6: Telemetry Dashboard & Intent API (`dashboard/`, `api/`)
-* **Purpose:** Ingests user intents and provides live 6-metric telemetry visualization.
+* **Purpose:** Ingests user intents, supports administrative flow overrides, triggers capacity probes, and provides live 6-metric telemetry visualization.
 * **Inputs:**
-  - REST requests (`POST /intent`, `POST /override`, `GET /status`).
+  - HTTP REST requests authenticated via `X-API-Token` or `Authorization: Bearer <token>` headers.
   - Polled telemetry from `metrics_collector.py`.
 * **Outputs:**
-  - JSON API responses.
+  - JSON API responses with strict HTTP status codes (`200 OK`, `400 Bad Request`, `401 Unauthorized`, `403 Forbidden`, `429 Too Many Requests`).
   - Responsive web dashboard displaying Latency, Jitter, Loss, Throughput, Queue Depth, and Fairness.
-* **Success Conditions:**
-  - Dashboard auto-refreshes every 2 seconds with sub-second chart rendering.
+* **Security & Authentication Boundary:**
+  - **Loopback Default:** Binds to `127.0.0.1` by default to prevent unauthorized network exposure.
+  - **Fail-Closed Remote Binding:** Refuses to start on external or wildcard addresses (`0.0.0.0`) unless `AQE_API_TOKEN` is configured.
+  - **Constant-Time Token Verification:** Validates tokens using `hmac.compare_digest` to eliminate timing side-channel attacks.
+  - **Active Probe Rate Limiting:** Enforces cooldown limits on `POST /api/estimator/probe` returning HTTP 429 upon rapid re-triggering.
+
+#### Authoritative API Route Inventory
+
+| HTTP Method | Route | Access Level | Description |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/` | Public | Commercial edge-network management telemetry dashboard UI (HTML) |
+| `GET` | `/api/status` | Public | Authoritative controller state, link shaping rate, and queue health |
+| `GET` | `/api/metrics` | Public | Real-time network telemetry snapshot (RTT, jitter, throughput, drops) |
+| `GET` | `/api/flows` | Public | Active flow table with 5-tuples, inferred classes, and DSCP marks |
+| `GET` | `/api/measurements` | Public | Sliding window historical time series of telemetry metrics |
+| `GET` | `/api/policies` | Public | Active and historical policy decisions and reasoning log |
+| `GET` | `/api/history` | Public | Structured rollback snapshot log with kernel verification status |
+| `GET` | `/api/events` | Public | System and operational event audit trail |
+| `GET` | `/api/report/markdown` | Public | Comprehensive diagnostic audit report in Markdown format |
+| `GET` | `/api/report/html` | Public | Diagnostic audit report in HTML format |
+| `POST` | `/api/intent` | **Authenticated** | Submits natural-language priority intent (Laya NLP parsing) |
+| `DELETE` | `/api/intent` | **Authenticated** | Clears active priority intent and restores baseline policy |
+| `POST` | `/api/override` | **Authenticated** | Sets manual administrative classification override for a flow |
+| `POST` | `/api/estimator/probe` | **Authenticated** | Triggers on-demand SLoPS active capacity measurement (rate-limited) |
+| `POST` | `/api/network/impairment` | **Authenticated** | Injects NetEm WAN link impairments (rate, delay, loss) |
+| `POST` | `/api/simulate/inject-failure` | **Authenticated** | Simulates bad policy deployment to test automated rollback |
+| `POST` | `/api/simulate/bandwidth-drop` | **Authenticated** | Simulates dynamic WAN collapse from 100 Mbps to 20 Mbps |
+| `POST` | `/api/simulate/restore` | **Authenticated** | Restores WAN bottleneck to 100 Mbps baseline |
+| `POST` | `/api/simulate/add-flows` | **Authenticated** | Injects synthetic test flows for demonstration |

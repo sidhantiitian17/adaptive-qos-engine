@@ -69,18 +69,28 @@ class RollbackManager:
         """Capture initial verified baseline snapshot on boot."""
         try:
             state = self.tc_manager.get_qdisc_state()
-            if state and state.get("qdisc_type") == "cake" and state.get("bandwidth"):
-                bw_str = state["bandwidth"]
-                bw_match = re.search(r"(\d+)", bw_str)
-                if bw_match:
-                    bw_val = int(bw_match.group(1))
-                    self.last_good_config = bw_val
+            if state and state.get("qdisc_type") == "cake":
+                bw_val = state.get("bandwidth_mbit")
+                if bw_val is None and state.get("bandwidth"):
+                    bw_match = re.search(r"(\d+)", state["bandwidth"])
+                    if bw_match:
+                        bw_val = int(bw_match.group(1))
+
+                if bw_val is not None and bw_val > 0:
+                    bw_int = int(round(bw_val))
+                    ds_mode = state.get("diffserv_mode") or "diffserv4"
+                    self.last_good_config = bw_int
                     self.last_known_good_snapshot = {
-                        "bandwidth_mbit": bw_val,
-                        "diffserv": "diffserv4",
+                        "interface": self.iface,
+                        "namespace": self.namespace,
+                        "bandwidth_mbit": bw_int,
+                        "diffserv": ds_mode,
+                        "diffserv_mode": ds_mode,
                         "qdisc_type": "cake",
+                        "handle": state.get("handle"),
+                        "parent": state.get("parent", "root"),
                         "timestamp": time.time(),
-                        "verified": True
+                        "verified": (state.get("status") == "verified")
                     }
         except Exception:
             pass
@@ -88,12 +98,25 @@ class RollbackManager:
     def checkpoint(self) -> Dict[str, Any]:
         """Capture structured snapshot of current verified configuration before mutations."""
         state = self.tc_manager.get_qdisc_state()
+        bw_mbit = state.get("bandwidth_mbit")
+        if bw_mbit is None and state.get("bandwidth"):
+            bw_match = re.search(r"(\d+)", state["bandwidth"])
+            if bw_match:
+                bw_mbit = float(bw_match.group(1))
+
         snapshot = {
             "timestamp": time.time(),
-            "qdisc_type": state.get("qdisc_type", "unknown"),
-            "bandwidth": state.get("bandwidth"),
             "interface": self.iface,
             "namespace": self.namespace,
+            "qdisc_type": state.get("qdisc_type", "unknown"),
+            "bandwidth": state.get("bandwidth"),
+            "bandwidth_mbit": int(round(bw_mbit)) if bw_mbit is not None else None,
+            "diffserv": state.get("diffserv_mode") or "diffserv4",
+            "diffserv_mode": state.get("diffserv_mode") or "diffserv4",
+            "handle": state.get("handle"),
+            "parent": state.get("parent", "root"),
+            "verified": (state.get("status") == "verified"),
+            "kernel_verified": (state.get("status") == "verified"),
             "raw_state": state
         }
         return snapshot
@@ -111,40 +134,23 @@ class RollbackManager:
             bandwidth_mbit = max(1, int(bandwidth_mbit))
             bw_str = f"{bandwidth_mbit}mbit"
 
-            # 2. Execute Linux tc replace command
-            cmd = [
-                "ip", "netns", "exec", self.namespace,
-                "tc", "qdisc", "replace", "dev", self.iface,
-                "root", "cake", "bandwidth", bw_str, diffserv
-            ]
-            code, out, err = self._run(cmd)
+            # 2. Delegate to TcManager with comprehensive verification
+            apply_res = self.tc_manager.apply_cake(bandwidth_mbit, diffserv=diffserv)
+            applied_ok = apply_res.get("success", False)
+            verified_state = apply_res.get("verified_state", {})
 
-            if code != 0:
-                print(f"[ROLLBACK_MGR] Execution error applying {bw_str}: {err.strip()}")
+            if not applied_ok:
+                err_msg = apply_res.get("error") or "TcManager apply_cake failed"
+                print(f"[ROLLBACK_MGR] Apply/verification error applying {bw_str} ({diffserv}): {err_msg}")
                 entry = {
                     "timestamp": time.time(),
                     "bandwidth_mbit": bandwidth_mbit,
                     "diffserv": diffserv,
-                    "status": "apply_failed",
+                    "status": "apply_failed" if "execution" in err_msg.lower() else "verification_failed",
                     "applied_successfully": False,
-                    "error": err.strip()
-                }
-                self.history_log.append(entry)
-                return False
-
-            # 3. Post-apply kernel verification
-            verified_state = self.tc_manager.get_qdisc_state()
-            is_cake = (verified_state.get("qdisc_type") == "cake") or self.dry_run
-
-            if not is_cake:
-                print(f"[ROLLBACK_MGR] Kernel verification mismatch: active qdisc is '{verified_state.get('qdisc_type')}', expected 'cake'")
-                entry = {
-                    "timestamp": time.time(),
-                    "bandwidth_mbit": bandwidth_mbit,
-                    "diffserv": diffserv,
-                    "status": "verification_failed",
-                    "applied_successfully": False,
-                    "error": "Kernel qdisc type mismatch"
+                    "kernel_verified": False,
+                    "error": err_msg,
+                    "verified_state": verified_state
                 }
                 self.history_log.append(entry)
                 return False
@@ -155,7 +161,9 @@ class RollbackManager:
                 "diffserv": diffserv,
                 "status": "tentative",
                 "applied_successfully": True,
-                "kernel_verified": True
+                "kernel_verified": (verified_state.get("status") == "verified"),
+                "is_dry_run": self.dry_run,
+                "verified_state": verified_state
             }
             self.history_log.append(entry)
             print(f"[ROLLBACK_MGR] Applied tentative policy: {bw_str} ({diffserv}) -> Success: True")
@@ -204,11 +212,14 @@ class RollbackManager:
                 self.history_log[-1]["status"] = "permanent"
             self.last_good_config = bandwidth_mbit
             self.last_known_good_snapshot = {
+                "interface": self.iface,
+                "namespace": self.namespace,
                 "bandwidth_mbit": bandwidth_mbit,
                 "diffserv": diffserv,
+                "diffserv_mode": diffserv,
                 "qdisc_type": "cake",
                 "timestamp": time.time(),
-                "verified": True
+                "verified": not self.dry_run
             }
             print(f"[ROLLBACK_MGR] Committed bandwidth={bandwidth_mbit}mbit as permanent known-good.")
 
@@ -216,35 +227,48 @@ class RollbackManager:
         """
         Roll back to last verified known-good configuration.
         Restores exact snapshot parameters, verifies kernel state, and updates history.
+        Fail-closed: Returns False if restoration or kernel verification fails.
         """
         with self._lock:
-            # 1. Determine target rollback parameters
+            # 1. Determine target rollback parameters from saved snapshot
+            has_snapshot = False
             if self.last_known_good_snapshot and self.last_known_good_snapshot.get("bandwidth_mbit"):
                 target_bw = self.last_known_good_snapshot["bandwidth_mbit"]
                 target_diffserv = self.last_known_good_snapshot.get("diffserv", "diffserv4")
+                has_snapshot = True
             elif self.last_good_config is not None:
                 target_bw = self.last_good_config
                 target_diffserv = "diffserv4"
+                has_snapshot = True
             else:
                 # Documented safe fallback state (50 Mbps safe default under broadband contention)
                 target_bw = 50
                 target_diffserv = "diffserv4"
+                has_snapshot = False
 
-            # 2. Execute restoration command
-            cmd = [
-                "ip", "netns", "exec", self.namespace,
-                "tc", "qdisc", "replace", "dev", self.iface,
-                "root", "cake", "bandwidth", f"{target_bw}mbit", target_diffserv
-            ]
-            code, _, err = self._run(cmd)
-            rollback_ok = (code == 0)
+            # 2. Execute restoration and verify actual kernel state
+            res = self.tc_manager.apply_cake(target_bw, diffserv=target_diffserv)
+            rollback_ok = res.get("success", False)
 
-            print(f"[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: {target_bw}mbit (Success: {rollback_ok})")
+            if rollback_ok:
+                print(f"[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: {target_bw}mbit (Success: True)")
+            else:
+                err = res.get("error") or "Restoration verification failed"
+                print(f"[ROLLBACK_MGR] ❌ Rollback failed: {err}")
 
+            rollback_entry = {
+                "timestamp": time.time(),
+                "status": "rolled_back" if rollback_ok else "rollback_failed",
+                "rollback_bandwidth": target_bw,
+                "rollback_diffserv": target_diffserv,
+                "rollback_success": rollback_ok,
+                "had_prior_snapshot": has_snapshot,
+                "error": res.get("error") if not rollback_ok else None
+            }
             if self.history_log:
-                self.history_log[-1]["status"] = "rolled_back"
-                self.history_log[-1]["rollback_bandwidth"] = target_bw
-                self.history_log[-1]["rollback_success"] = rollback_ok
+                self.history_log[-1].update(rollback_entry)
+            else:
+                self.history_log.append(rollback_entry)
 
             return rollback_ok
 

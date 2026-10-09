@@ -325,9 +325,10 @@ VALID_TRAFFIC_CLASSES = {"video_conference", "gaming", "bulk_download", "web_bro
 def check_auth(request: Request):
     """
     Validates API authentication for state-changing operations.
-    When AQE_API_TOKEN is set in the environment, verifies X-API-Token or Bearer token.
-    If not set, permits loopback requests (127.0.0.1) while rejecting unauthorized remote callers.
+    When AQE_API_TOKEN is set in the environment, verifies X-API-Token or Bearer token using constant-time comparison.
+    If not set, permits loopback requests (127.0.0.1, ::1, testclient) while rejecting unauthorized remote callers.
     """
+    import hmac
     token = os.environ.get("AQE_API_TOKEN")
     client_host = request.client.host if request.client else "unknown"
     is_loopback = client_host in ("127.0.0.1", "::1", "testclient", "localhost")
@@ -336,7 +337,7 @@ def check_auth(request: Request):
         auth_hdr = request.headers.get("X-API-Token") or request.headers.get("Authorization", "")
         if auth_hdr.startswith("Bearer "):
             auth_hdr = auth_hdr[7:].strip()
-        if auth_hdr != token:
+        if not auth_hdr or not hmac.compare_digest(auth_hdr, token):
             raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing API token.")
     elif not is_loopback and not os.environ.get("AQE_ALLOW_UNAUTHENTICATED_REMOTE"):
         raise HTTPException(status_code=403, detail="Forbidden: remote management requires AQE_API_TOKEN configuration.")
@@ -588,7 +589,8 @@ class ImpairmentRequest(BaseModel):
     jitter_ms: float = 0.0
 
 @app.post("/api/network/impairment")
-def apply_network_impairment(req: ImpairmentRequest):
+def apply_network_impairment(req: ImpairmentRequest, request: Request):
+    check_auth(request)
     from network.tc_manager import TcManager
     tc = TcManager(iface="veth-wan-gw", namespace="wanhost")
     res = tc.apply_netem(
@@ -633,7 +635,8 @@ def get_network_status():
     }
 
 @app.post("/api/simulate/inject-failure")
-def simulate_inject_failure():
+def simulate_inject_failure(request: Request):
+    check_auth(request)
     controller.rollback_mgr.apply_policy(50, "diffserv4")
     controller.rollback_mgr.make_permanent(50)
     controller.last_safe_state = time.strftime("%H:%M:%S")
@@ -651,7 +654,8 @@ def simulate_inject_failure():
     return {"result": "unexpected_pass"}
 
 @app.post("/api/simulate/bandwidth-drop")
-def simulate_bandwidth_drop():
+def simulate_bandwidth_drop(request: Request):
+    check_auth(request)
     from network.tc_manager import TcManager
     tc = TcManager(iface="veth-wan-gw", namespace="wanhost")
     res_tc = tc.apply_netem(rate_mbit=20, delay_ms=20.0)
@@ -667,7 +671,8 @@ def simulate_bandwidth_drop():
     }
 
 @app.post("/api/simulate/restore")
-def simulate_restore():
+def simulate_restore(request: Request):
+    check_auth(request)
     from network.tc_manager import TcManager
     tc = TcManager(iface="veth-wan-gw", namespace="wanhost")
     tc.apply_netem(rate_mbit=100, delay_ms=20.0)
@@ -681,7 +686,8 @@ def simulate_restore():
     return {"status": "restored", "new_capacity": 100, "new_shaping": 95}
 
 @app.post("/api/simulate/add-flows")
-def simulate_add_flows():
+def simulate_add_flows(request: Request):
+    check_auth(request)
     seed_test_traffic_flows()
     controller._log("Synchronized 6 test traffic flows into flow table.", "INFO")
     return {"flows_added": 6}
@@ -2752,6 +2758,14 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 if __name__ == "__main__":
     import uvicorn
     host = os.environ.get("AQE_DASHBOARD_HOST", "127.0.0.1")
+    is_loopback = host in ("127.0.0.1", "::1", "localhost")
+    token = os.environ.get("AQE_API_TOKEN")
+
+    if not is_loopback and not token and not os.environ.get("AQE_ALLOW_UNAUTHENTICATED_REMOTE"):
+        print("[FATAL SECURITY ERROR] Remote binding requested without AQE_API_TOKEN configured.")
+        print("Set AQE_API_TOKEN in environment to securely enable remote access.")
+        sys.exit(1)
+
     print("=" * 60)
     print("  Adaptive QoS Engine (AQE) — Commercial Edge Web Console")
     print(f"  URL: http://{host}:8080")

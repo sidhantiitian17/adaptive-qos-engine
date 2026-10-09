@@ -54,9 +54,9 @@ significantly more concurrent flows and devices.
 ## 8. Where real hardware/certification would be required
 A production deployment would require: certified home-router hardware with
 sufficient CPU for real-time packet classification; integration with actual
-ISP uplink monitoring (not synthetic NetEm); and security hardening of the
-REST API (currently unauthenticated, intended for local-network prototype use
-only).
+ISP uplink monitoring (not synthetic NetEm); and enterprise-grade identity management
+(such as mTLS or OAuth2/OIDC, building upon the prototype's constant-time token
+authentication and loopback-isolation controls).
 
 ## 9. Cooperative remote reflector requirement for active probing
 Active SLoPS-style probing requires an active receiver/reflector on the remote
@@ -85,3 +85,20 @@ estimates (including convergence status, iteration counts, aggregate PCT/PDT tre
 resource overhead, and sample ranges). Microsecond-level packet arrival timestamps are
 analyzed in-memory during SLoPS execution and are not persisted to disk in either SQLite or
 the summary files to minimize disk I/O and artifact footprint.
+
+## 12. Bulk Non-Starvation: Analytical Planning Floor vs. CAKE DRR Servicing
+AQE guarantees that bulk background traffic (e.g., OS updates, torrents, cloud backups)
+is never starved when latency-sensitive applications (VoIP, gaming, video conferencing)
+are active. To achieve this:
+1. **Analytical Planning Floor:** The policy engine computes an analytical minimum bandwidth
+   floor for bulk traffic as $\max(2, \text{round}(C_{\text{shaped}} \times 0.20))$ Mbps.
+   This ensures that link capacity planning and admission reasoning explicitly account for
+   bulk progress.
+2. **Datapath Non-Starvation Enforced via CAKE DRR:** Rather than carving out a rigid,
+   static sub-qdisc rate reservation (which would artificially cap bulk throughput or waste
+   link capacity when high-priority queues are idle), CAKE enforces fair queuing across
+   DiffServ tins using Deficit Round Robin (DRR) with per-tin byte quanta (e.g., 300 bytes for
+   Bulk vs 1514 bytes for Best Effort). This mathematical queuing structure guarantees that
+   the bulk tin (CS1 / Tin 0) is serviced in every round, strictly preventing starvation
+   while allowing bulk flows to burst up to 100% of available bandwidth whenever priority
+   flows fall silent.

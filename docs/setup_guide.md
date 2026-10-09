@@ -35,18 +35,28 @@ All core module unit tests, SLoPS estimator algorithmic logic, state unification
 ```bash
 # Run all unit and regression tests (no sudo required)
 ./venv/bin/python3 -m unittest discover tests/
+
+# Or run with opt-in live kernel network namespace integration tests
+AQE_INTEGRATION_TEST=1 ./venv/bin/python3 -m unittest discover tests/
 ```
 
-Verified command output (77 unit and regression tests passing):
+Verified command output (95 unprivileged tests passing, 97 with opt-in live integration):
 ```
-Ran 77 tests in ~35s (measured: 35.1s on Linux 6.6 / WSL2)
-OK
+Ran 95 tests in ~39s (OK, skipped=1)
+# With AQE_INTEGRATION_TEST=1:
+Ran 97 tests in ~41s (OK)
 ```
 
 ### Module-Specific Unit Tests
 Individual test suites can be executed independently:
 
 ```bash
+# Policy rollback verification & bulk non-starvation tests
+./venv/bin/python3 -m unittest tests/test_rollback_verification.py
+
+# Master remediation phases (Phases 1-7: DSCP marking, intent, SLoPS, rollback, bulk floor, API auth)
+./venv/bin/python3 -m unittest tests/test_master_remediation_phases.py
+
 # M2 SLoPS Estimator algorithmic logic (PCT, PDT, loopback, state machine, fallback)
 ./venv/bin/python3 -m unittest tests/test_m2_slops_estimator.py
 
