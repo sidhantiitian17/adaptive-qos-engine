@@ -1,27 +1,27 @@
 {
   "test_name": "TEST_2_STATIC_20",
   "ground_truth_mbps": 20.0,
-  "estimated_bandwidth_min_mbps": 22.8,
-  "estimated_bandwidth_max_mbps": 25.1,
-  "estimated_bandwidth_mid_mbps": 23.95,
-  "absolute_error_mbps": 3.95,
-  "relative_error_pct": 19.8,
-  "range_covers_ground_truth": false,
+  "estimated_bandwidth_min_mbps": 18.1,
+  "estimated_bandwidth_max_mbps": 20.5,
+  "estimated_bandwidth_mid_mbps": 19.3,
+  "absolute_error_mbps": 0.7,
+  "relative_error_pct": 3.5,
+  "range_covers_ground_truth": true,
   "confidence": 1.0,
   "iterations": 6,
   "samples": 480,
   "pct": 0.333,
-  "pdt": -0.825,
+  "pdt": -0.077,
   "converged": true,
   "stable": true,
-  "duration_sec": 0.512,
+  "duration_sec": 0.578,
   "status": "PASS",
   "overhead": {
     "total_probe_packets": 480,
     "total_probe_bytes": 576000,
     "total_probe_mb": 0.576,
-    "probe_duration_sec": 0.512,
-    "cpu_time_ms": 202.13,
-    "avg_probe_bandwidth_mbps": 9.01
+    "probe_duration_sec": 0.578,
+    "cpu_time_ms": 265.03,
+    "avg_probe_bandwidth_mbps": 7.97
   }
 }

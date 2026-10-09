@@ -59,10 +59,13 @@ sudo ip netns exec gw tc qdisc del dev $IFACE root 2>/dev/null || true
 sudo ip netns exec gw tc qdisc add dev $IFACE root cake bandwidth 18mbit diffserv4
 
 # Setup DSCP marking: lan1 video -> AF41, lan2 bulk -> CS1
-sudo ip netns exec gw iptables -t mangle -F QOS_MARKING 2>/dev/null || sudo ip netns exec gw iptables -t mangle -N QOS_MARKING 2>/dev/null || true
-sudo ip netns exec gw iptables -t mangle -C PREROUTING -j QOS_MARKING 2>/dev/null || sudo ip netns exec gw iptables -t mangle -I PREROUTING -j QOS_MARKING
-sudo ip netns exec gw iptables -t mangle -A QOS_MARKING -s 10.0.1.2 -j DSCP --set-dscp-class AF41
-sudo ip netns exec gw iptables -t mangle -A QOS_MARKING -s 10.0.2.2 -j DSCP --set-dscp-class CS1
+if sudo ip netns exec gw iptables -t mangle -A QOS_MARKING -s 10.0.1.2 -j DSCP --set-dscp-class AF41 2>/dev/null; then
+    sudo ip netns exec gw iptables -t mangle -A QOS_MARKING -s 10.0.2.2 -j DSCP --set-dscp-class CS1 2>/dev/null || true
+else
+    # Fallback to direct nftables marking when xt_DSCP iptables extension is absent
+    sudo ip netns exec gw nft 'add rule ip mangle QOS_MARKING ip saddr 10.0.1.2 ip dscp set af41' 2>/dev/null || true
+    sudo ip netns exec gw nft 'add rule ip mangle QOS_MARKING ip saddr 10.0.2.2 ip dscp set cs1' 2>/dev/null || true
+fi
 
 # Start competing bulk download
 sudo ip netns exec lan2 iperf3 -c 10.0.3.2 -p 5201 -t 15 > "$LOG_DIR/s1_optimized_bulk.log" 2>&1 &

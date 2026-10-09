@@ -5,6 +5,16 @@ temporary user intent to produce an optimal Linux CAKE traffic control configura
 with anti-starvation guarantees.
 """
 
+import os
+import sys
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from policy_engine.traffic_classes import normalize_class_name
+
+
 def decide_policy(available_bandwidth_mbps: float, active_flows: list, user_intent: dict = None) -> dict:
     """
     Inputs:
@@ -62,15 +72,18 @@ def decide_policy(available_bandwidth_mbps: float, active_flows: list, user_inte
         decision["reasoning"].append(
             "Gaming + Video active: Gaming mapped to Voice/Interactive tin (EF) for ultra-low latency"
         )
-
     # Process temporary user intent
     if user_intent and user_intent.get("action") == "prioritize":
         target_class = user_intent.get("traffic_class") or user_intent.get("class")
         duration = user_intent.get("duration_sec", 1200)
-        decision["priority_class"] = target_class
+        try:
+            norm_class = normalize_class_name(target_class)
+        except Exception:
+            norm_class = target_class
+        decision["priority_class"] = norm_class
         decision["priority_duration_sec"] = duration
         decision["reasoning"].append(
-            f"User requested temporary priority for {target_class} ({duration}s). Priority DSCP enforced."
+            f"User requested temporary priority for {norm_class} ({duration}s). Priority DSCP enforced."
         )
 
     return decision

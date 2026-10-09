@@ -5,7 +5,7 @@ A commercial edge-network control & telecom management web interface.
 import os, sys, time, json, threading, subprocess
 from collections import deque
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Request, Depends
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -16,6 +16,7 @@ if PROJECT_ROOT not in sys.path:
 from dashboard.report_generator import generate_report_markdown, generate_report_html, get_report_data
 from dashboard.metrics_collector import collect_snapshot
 from controller_daemon import AdaptiveQoSController
+from policy_engine.traffic_classes import normalize_class_name
 from enforcement.dscp_marker import CLASS_TO_DSCP
 
 start_time = time.time()
@@ -319,10 +320,30 @@ def get_flows(active_sec: int = 180):
     except Exception as e:
         return JSONResponse(status_code=500, content={"status": "error", "message": str(e), "flows": [], "total": 0})
 
-VALID_TRAFFIC_CLASSES = {"video_conference", "gaming", "bulk_download", "web_browsing"}
+VALID_TRAFFIC_CLASSES = {"video_conference", "gaming", "bulk_download", "web_browsing", "default"}
+
+def check_auth(request: Request):
+    """
+    Validates API authentication for state-changing operations.
+    When AQE_API_TOKEN is set in the environment, verifies X-API-Token or Bearer token.
+    If not set, permits loopback requests (127.0.0.1) while rejecting unauthorized remote callers.
+    """
+    token = os.environ.get("AQE_API_TOKEN")
+    client_host = request.client.host if request.client else "unknown"
+    is_loopback = client_host in ("127.0.0.1", "::1", "testclient", "localhost")
+
+    if token:
+        auth_hdr = request.headers.get("X-API-Token") or request.headers.get("Authorization", "")
+        if auth_hdr.startswith("Bearer "):
+            auth_hdr = auth_hdr[7:].strip()
+        if auth_hdr != token:
+            raise HTTPException(status_code=401, detail="Unauthorized: invalid or missing API token.")
+    elif not is_loopback and not os.environ.get("AQE_ALLOW_UNAUTHENTICATED_REMOTE"):
+        raise HTTPException(status_code=403, detail="Forbidden: remote management requires AQE_API_TOKEN configuration.")
 
 @app.post("/api/intent")
-def submit_intent(req: IntentRequest):
+def submit_intent(req: IntentRequest, request: Request):
+    check_auth(request)
     if req.text is not None and not req.text.strip():
         raise HTTPException(status_code=400, detail="Intent text cannot be empty.")
     if not (req.text and req.text.strip()) and not req.traffic_class:
@@ -348,13 +369,21 @@ def submit_intent(req: IntentRequest):
             parsed["parser"] = "fallback"
 
     duration = req.duration_sec or parsed.get("duration_sec", 1200)
-    traffic_class = parsed.get("traffic_class", "video_conference")
+    raw_class = parsed.get("traffic_class")
     action = parsed.get("action", "prioritize")
 
-    if traffic_class not in VALID_TRAFFIC_CLASSES and traffic_class not in ("other", "unknown"):
-        raise HTTPException(status_code=400, detail=f"Invalid traffic class '{traffic_class}'. Must be one of {VALID_TRAFFIC_CLASSES}.")
+    if not raw_class or raw_class in ("other", "unknown"):
+        raise HTTPException(status_code=400, detail="Intent must specify a valid traffic class.")
 
-    if action in ("none", None, "") and traffic_class not in ("other", "unknown"):
+    try:
+        traffic_class = normalize_class_name(raw_class)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid traffic class '{raw_class}'. Must be one of {sorted(list(VALID_TRAFFIC_CLASSES))}.")
+
+    if traffic_class not in VALID_TRAFFIC_CLASSES and traffic_class not in ("other", "unknown", "default"):
+        raise HTTPException(status_code=400, detail=f"Invalid traffic class '{traffic_class}'. Must be one of {sorted(list(VALID_TRAFFIC_CLASSES))}.")
+
+    if action in ("none", None, ""):
         action = "prioritize"
 
     parsed["action"] = action
@@ -375,18 +404,24 @@ def submit_intent(req: IntentRequest):
     return parsed
 
 @app.delete("/api/intent")
-def clear_intent():
+def clear_intent(request: Request):
+    check_auth(request)
     controller.clear_intent()
     return {"status": "cleared"}
 
 @app.post("/api/override")
-def submit_override(req: OverrideRequest):
+def submit_override(req: OverrideRequest, request: Request):
+    check_auth(request)
     if not req.flow_id or not req.flow_id.strip():
         raise HTTPException(status_code=400, detail="flow_id cannot be empty.")
-    if req.corrected_class not in VALID_TRAFFIC_CLASSES:
-        raise HTTPException(status_code=400, detail=f"Invalid corrected_class '{req.corrected_class}'. Must be one of {VALID_TRAFFIC_CLASSES}.")
-    controller.override_flow(req.flow_id, req.corrected_class, req.reason or "Manual administrative override")
-    return {"status": "applied", "flow_id": req.flow_id, "corrected_class": req.corrected_class}
+    try:
+        norm_class = normalize_class_name(req.corrected_class)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid corrected_class '{req.corrected_class}'. Must be one of {sorted(list(VALID_TRAFFIC_CLASSES))}.")
+    if norm_class not in VALID_TRAFFIC_CLASSES:
+        raise HTTPException(status_code=400, detail=f"Invalid corrected_class '{req.corrected_class}'. Must be one of {sorted(list(VALID_TRAFFIC_CLASSES))}.")
+    controller.override_flow(req.flow_id, norm_class, req.reason or "Manual administrative override")
+    return {"status": "applied", "flow_id": req.flow_id, "corrected_class": norm_class}
 
 @app.get("/api/estimator/status")
 def get_estimator_status():
@@ -408,17 +443,31 @@ def get_estimator_status():
         },
         "latest_estimate": last_est.to_dict() if last_est else None,
         "last_known_good_capacity_mbps": controller.active_estimator.last_known_good_capacity,
-        "last_error": controller.active_estimator.last_error
+        "last_error": controller.active_estimator.last_error,
+        "autonomous_probing": {
+            "enabled": controller.enable_active_probing,
+            "interval_sec": controller.probe_interval_sec,
+            "cooldown_sec": controller.probe_cooldown_sec,
+            "last_status": controller.last_probe_status,
+            "source_used": controller.estimator_source_used
+        }
     }
 
 @app.post("/api/estimator/probe")
-def trigger_estimator_probe():
+def trigger_estimator_probe(request: Request):
+    check_auth(request)
+    now = time.time()
+    if controller.last_probe_time and (now - controller.last_probe_time < controller.probe_cooldown_sec):
+        raise HTTPException(
+            status_code=429,
+            detail=f"Active probe cooldown active ({controller.probe_cooldown_sec}s). Please wait."
+        )
     try:
         est = controller.run_active_probing()
         controller.run_one_cycle()
         return {
             "status": "success",
-            "estimate": est.to_dict()
+            "estimate": est.to_dict() if est else None
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -2702,8 +2751,9 @@ if (document.readyState === 'complete' || document.readyState === 'interactive')
 
 if __name__ == "__main__":
     import uvicorn
+    host = os.environ.get("AQE_DASHBOARD_HOST", "127.0.0.1")
     print("=" * 60)
     print("  Adaptive QoS Engine (AQE) — Commercial Edge Web Console")
-    print("  URL: http://localhost:8080")
+    print(f"  URL: http://{host}:8080")
     print("=" * 60)
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host=host, port=8080)

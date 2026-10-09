@@ -9,22 +9,22 @@
   "step_08_flowtable": "PASS",
   "step_09_policy": "PASS",
   "step_10_tc_cake": "PASS",
-  "step_11_rtt_prober": "0.654 ms",
+  "step_11_rtt_prober": "0.43 ms",
   "step_12_dashboard": "PASS",
   "step_13_scenario_a": {
-    "baseline_latency_ms": 132.523,
-    "adaptive_latency_ms": 0.853,
-    "latency_reduction_pct": 99.36,
+    "baseline_latency_ms": 130.873,
+    "adaptive_latency_ms": 0.68,
+    "latency_reduction_pct": 99.48,
     "video_throughput_adaptive_mbps": 1.201
   },
   "step_17_scenario_b": {
-    "adaptation_latency_sec": 0.053,
-    "recovery_latency_sec": 0.0318
+    "adaptation_latency_sec": 0.0414,
+    "recovery_latency_sec": 0.0364
   },
   "step_19_scenario_c": {
     "jain_fairness": 0.9999997590408767,
-    "gaming_rtt_ms": 15.542,
-    "gaming_jitter_ms": 0.1262
+    "gaming_rtt_ms": 15.686,
+    "gaming_jitter_ms": 0.4075
   },
   "step_20_intent": "PASS",
   "step_21_rollback": "PASS",

@@ -227,7 +227,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 2. Run All Unit & Regression Tests (57 / 57 Passing)
+### 2. Run All Unit & Regression Tests (77 / 77 Passing)
 ```bash
 ./venv/bin/python3 -m unittest discover tests/
 ```

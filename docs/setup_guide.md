@@ -37,9 +37,9 @@ All core module unit tests, SLoPS estimator algorithmic logic, state unification
 ./venv/bin/python3 -m unittest discover tests/
 ```
 
-Verified command output (57 unit and regression tests passing):
+Verified command output (77 unit and regression tests passing):
 ```
-Ran 57 tests in ~31-32s (measured: 30.9-32.0s on Linux 6.6 / WSL2)
+Ran 77 tests in ~35s (measured: 35.1s on Linux 6.6 / WSL2)
 OK
 ```
 

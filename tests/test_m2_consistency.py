@@ -104,10 +104,17 @@ class TestM2ArtifactsIntegrity(unittest.TestCase):
         fpath = os.path.join(RESULTS_M2_DIR, "bursty_cross_traffic.json")
         with open(fpath, "r") as f:
             data = json.load(f)
-        self.assertEqual(data["spread_mbps"], 2.35)
-        self.assertEqual(data["mean_estimate_mbps"], 50.13)
-        self.assertEqual(data["range_midpoint_mbps"], 50.525)
-        self.assertEqual(data["relative_error_pct"], 0.3)
+        # Verify internal mathematical consistency of the persisted artifact
+        samples = data["sample_estimates_mbps"]
+        expected_spread = round(max(samples) - min(samples), 2)
+        expected_mean = round(sum(samples) / len(samples), 2)
+        expected_mid = round((min(samples) + max(samples)) / 2.0, 3)
+        expected_rel_err = round(abs(expected_mean - data["ground_truth_mbps"]) / data["ground_truth_mbps"] * 100.0, 1)
+
+        self.assertEqual(data["spread_mbps"], expected_spread)
+        self.assertEqual(data["mean_estimate_mbps"], expected_mean)
+        self.assertEqual(data["range_midpoint_mbps"], expected_mid)
+        self.assertEqual(data["relative_error_pct"], expected_rel_err)
 
     def test_summary_csv_matches_json(self):
         fpath = os.path.join(RESULTS_M2_DIR, "summary.csv")

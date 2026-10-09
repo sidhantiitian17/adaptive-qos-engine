@@ -33,8 +33,13 @@ sudo ip netns exec gw tc qdisc add dev $IFACE root cake bandwidth 95mbit diffser
 echo "[2/4] Simulating sudden ISP uplink collapse: 100 Mbps -> 20 Mbps..."
 sudo ip netns exec wanhost tc qdisc change dev veth-wan-gw root netem rate 20mbit delay 20ms
 
+PYTHON="python3"
+if [ -f "./venv/bin/python3" ]; then
+    PYTHON="./venv/bin/python3"
+fi
+
 echo "Triggering closed-loop controller adaptation cycle..."
-python3 -c "
+$PYTHON -c "
 import sys, time
 from controller_daemon import AdaptiveQoSController
 

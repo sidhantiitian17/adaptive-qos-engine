@@ -9,6 +9,8 @@ import os
 import sys
 import time
 import argparse
+import threading
+from typing import Optional, Dict, Any, List
 
 # Ensure local imports work cleanly
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -18,13 +20,14 @@ if PROJECT_ROOT not in sys.path:
 from estimator.passive_estimator import PassiveEstimator
 from estimator.slops_estimator import SlopsLinkEstimator, SlopsConfig, CapacityEstimate
 from classifier.flow_table import FlowTable
+from classifier.flow_tuple import FlowTuple
 from classifier.runtime_classifier import FlowClassifier, LiveFlowSniffer
 from policy_engine.intent_scheduler import IntentScheduler
 from policy_engine.policy_rules import decide_policy
 from policy_engine.rollback_manager import RollbackManager
+from policy_engine.traffic_classes import normalize_class_name
 from enforcement.dscp_marker import DscpMarker
 
-import threading
 
 class AdaptiveQoSController:
     def __init__(self, iface="veth-gw-wan", namespace="gw", nominal_capacity_mbps=100.0, dry_run=False, on_event=None):
@@ -43,6 +46,19 @@ class AdaptiveQoSController:
             receiver_namespace=r_ns
         )
         self.latest_capacity_estimate: Optional[CapacityEstimate] = None
+
+        # Autonomous Active Probing Scheduler Configuration (Phase 3)
+        self.enable_active_probing = True
+        self.probe_interval_sec = 30.0    # Periodic probing cadence
+        self.probe_cooldown_sec = 10.0    # Minimum gap between probe sessions
+        self.probe_timeout_sec = 5.0      # Execution timeout limit
+        self.max_estimate_age_sec = 60.0  # Freshness threshold before fallback
+        self.last_probe_time: Optional[float] = None
+        self.last_probe_status: str = "never_run"
+        self.last_probe_duration_sec: float = 0.0
+        self.last_probe_error: Optional[str] = None
+        self.estimator_source_used: str = "passive_init"
+        self._probing_lock = threading.Lock()
 
         self.flow_table = FlowTable()
         self.classifier = FlowClassifier()
@@ -78,27 +94,84 @@ class AdaptiveQoSController:
 
     def get_effective_capacity(self) -> float:
         """
-        Contract M2 -> M3: returns effective capacity based on SLoPS active probe
-        if available and stable, else passive estimator with safe fallback.
+        Contract M2 -> M3: returns effective capacity under explicit selection hierarchy:
+        1. Fresh active SLoPS estimate within max_estimate_age_sec.
+        2. Passive estimator as documented fallback when active is unavailable or stale.
+        3. Nominal capacity fallback with reduced confidence.
         """
-        if self.latest_capacity_estimate and self.latest_capacity_estimate.status == "measured":
+        now = time.time()
+        # 1. Active SLoPS estimate (fresh and verified)
+        if (self.latest_capacity_estimate and
+            self.latest_capacity_estimate.status == "measured" and
+            self.latest_capacity_estimate.effective_capacity_mbps > 0 and
+            (now - getattr(self.latest_capacity_estimate, "timestamp", now) <= self.max_estimate_age_sec)):
+            self.estimator_source_used = "active_slops"
             return self.latest_capacity_estimate.effective_capacity_mbps
-        return self.estimator.get_effective_capacity()
 
-    def run_active_probing(self) -> CapacityEstimate:
-        """Trigger SLoPS active probing stream and update capacity estimate."""
+        # 2. Passive estimator fallback
+        try:
+            passive_cap = self.estimator.get_effective_capacity()
+            if passive_cap and passive_cap > 0:
+                self.estimator_source_used = "passive_fallback"
+                return passive_cap
+        except Exception as e:
+            self._log(f"Passive estimator failed ({e}), using safe fallback.", "WARN")
+
+        # 3. Conservative safe default
+        self.estimator_source_used = "conservative_fallback"
+        return self.estimator.nominal_capacity_mbps
+
+    def run_active_probing(self) -> Optional[CapacityEstimate]:
+        """
+        Trigger SLoPS active probing stream and update capacity estimate.
+        Guarantees non-overlapping execution, cooldown bounding, and result validation.
+        """
+        acquired = self._probing_lock.acquire(blocking=False)
+        if not acquired:
+            self._log("Active probe already in progress. Rejecting concurrent probe session.", "WARN")
+            return self.latest_capacity_estimate
+
+        now = time.time()
+        if self.last_probe_time and (now - self.last_probe_time < self.probe_cooldown_sec):
+            self._log(f"Active probe cooldown active ({self.probe_cooldown_sec}s). Skipping probe.", "INFO")
+            self._probing_lock.release()
+            return self.latest_capacity_estimate
+
+        t0 = time.time()
         self._log("Running SLoPS active link capacity estimation probe...", "INFO")
-        est = self.active_estimator.estimate_capacity()
-        self.latest_capacity_estimate = est
-        self._log(
-            f"SLoPS probe completed: Range [{est.estimated_bandwidth_min_mbps}, {est.estimated_bandwidth_max_mbps}] Mbps "
-            f"(Midpoint: {est.estimated_bandwidth_mid_mbps} Mbps, Conf: {est.confidence}, PCT: {est.pct}, PDT: {est.pdt}).",
-            "SUCCESS" if est.status == "measured" else "WARN"
-        )
-        return est
+        try:
+            est = self.active_estimator.estimate_capacity()
+            duration = time.time() - t0
+            self.last_probe_time = time.time()
+            self.last_probe_duration_sec = round(duration, 3)
+
+            # Plausibility validation (1.0 to 10000.0 Mbps)
+            if est and est.status == "measured" and (1.0 <= est.effective_capacity_mbps <= 10000.0):
+                est.timestamp = self.last_probe_time
+                self.latest_capacity_estimate = est
+                self.last_probe_status = "success"
+                self.last_probe_error = None
+                self._log(
+                    f"SLoPS probe completed in {duration:.2f}s: Range [{est.estimated_bandwidth_min_mbps}, {est.estimated_bandwidth_max_mbps}] Mbps "
+                    f"(Midpoint: {est.estimated_bandwidth_mid_mbps} Mbps, Conf: {est.confidence}, PCT: {est.pct}, PDT: {est.pdt}).",
+                    "SUCCESS"
+                )
+            else:
+                err_msg = "Implausible or unmeasured active probe result"
+                self.last_probe_status = "invalid_measurement"
+                self.last_probe_error = err_msg
+                self._log(f"Active probe rejected: {err_msg}.", "WARN")
+            return self.latest_capacity_estimate
+        except Exception as e:
+            self.last_probe_status = "failed"
+            self.last_probe_error = str(e)
+            self._log(f"Active capacity probe failed with exception: {e}", "WARN")
+            return self.latest_capacity_estimate
+        finally:
+            self._probing_lock.release()
 
     def get_system_state(self) -> dict:
-        """Return authoritative system state snapshot."""
+        """Return authoritative system state snapshot with full provenance."""
         with self._cycle_lock:
             active_intent = self.scheduler.get_active_intent()
             active_flows = self.flow_table.get_active_flows(active_within_sec=60)
@@ -141,22 +214,34 @@ class AdaptiveQoSController:
                 "dscp_rules_count": len(self.dscp_marker.get_rules()),
                 "rollback_history_count": len(hist),
                 "rollback_armed": True,
+                "estimator_source_used": self.estimator_source_used,
+                "last_probe_status": self.last_probe_status,
+                "last_probe_time": self.last_probe_time,
+                "last_probe_duration_sec": self.last_probe_duration_sec,
+                "last_probe_error": self.last_probe_error,
             }
 
     def schedule_intent(self, traffic_class: str, action: str = "prioritize", duration_sec: int = 1200) -> dict:
         """Authoritatively schedule priority intent and trigger immediate control cycle."""
+        canonical_class = normalize_class_name(traffic_class)
+
         def on_expire_cb(rec):
-            self._log(f"Intent expired for {rec.get('traffic_class')}. Restored to baseline policy.", "WARN")
+            self._log(f"Intent expired for {rec.get('traffic_class')}. Restoring baseline policy.", "WARN")
             self._status = "NORMAL"
+            # Immediately execute control cycle to re-evaluate policy and restore baseline DSCP
+            try:
+                self.run_one_cycle()
+            except Exception as e:
+                self._log(f"Error reverting policy on intent expiration: {e}", "WARN")
 
         scheduled = self.scheduler.schedule_intent(
-            traffic_class=traffic_class,
+            traffic_class=canonical_class,
             action=action,
             duration_sec=duration_sec,
             on_expire=on_expire_cb
         )
         self._status = "PRIORITY_ACTIVE"
-        self._log(f"Temporary intent active: prioritize {traffic_class} for {duration_sec//60} min.", "ACTION")
+        self._log(f"Temporary intent active: prioritize {canonical_class} for {duration_sec//60} min.", "ACTION")
         self.run_one_cycle()
         return scheduled
 
@@ -168,18 +253,32 @@ class AdaptiveQoSController:
         self.run_one_cycle()
 
     def override_flow(self, flow_id: str, corrected_class: str, reason: str = "Manual administrative override"):
-        """Authoritatively record manual classification override and re-tag DSCP."""
-        self.flow_table.override(flow_id, corrected_class)
-        if "->" in flow_id and ":" in flow_id:
+        """Authoritatively record manual classification override and re-tag per-flow DSCP."""
+        canonical_class = normalize_class_name(corrected_class)
+        self.flow_table.override(flow_id, canonical_class)
+
+        flow_tuple = FlowTuple.parse_or_none(flow_id)
+        if flow_tuple:
+            self.dscp_marker.mark_flow(flow_tuple, canonical_class)
+        elif ":" in flow_id:
             src_ip = flow_id.split(":")[0]
-            self.dscp_marker.mark_host(src_ip, corrected_class)
-        self._log(f"Manual override applied: {flow_id} → {corrected_class} ({reason}).", "ACTION")
+            self.dscp_marker.mark_host(src_ip, canonical_class)
+
+        self._log(f"Manual override applied: {flow_id} → {canonical_class} ({reason}).", "ACTION")
 
     def run_one_cycle(self, simulated_capacity_mbps=None) -> dict:
         """
         Execute a single closed-loop control iteration under thread-safe lock.
+        Observe -> Detect -> Decide -> Act -> Verify
         """
         with self._cycle_lock:
+            # Autonomous periodic probing trigger
+            if simulated_capacity_mbps is None and self.enable_active_probing:
+                now = time.time()
+                if self.last_probe_time is None or (now - self.last_probe_time >= self.probe_interval_sec):
+                    # Launch bounded active probe in background daemon
+                    threading.Thread(target=self.run_active_probing, daemon=True).start()
+
             # 1. OBSERVE
             observed_rate = self.estimator.sample_rate()
             effective_capacity = simulated_capacity_mbps if simulated_capacity_mbps is not None else self.get_effective_capacity()
@@ -187,7 +286,7 @@ class AdaptiveQoSController:
             active_intent = self.scheduler.get_active_intent()
 
             print(f"\n--- [CONTROL CYCLE] Time: {time.strftime('%H:%M:%S')} ---")
-            print(f"[OBSERVE] Throughput: {observed_rate} Mbps | Effective Capacity: {effective_capacity} Mbps")
+            print(f"[OBSERVE] Throughput: {observed_rate} Mbps | Effective Capacity: {effective_capacity} Mbps (Source: {self.estimator_source_used})")
             print(f"[OBSERVE] Active Flows: {len(active_flows)} | Active Intent: {active_intent.get('traffic_class') if active_intent else 'None'}")
 
             # 2. DECIDE
@@ -207,39 +306,54 @@ class AdaptiveQoSController:
                 print(f"[ACT] Updating CAKE shaping: {self.current_applied_bw} -> {target_bw} Mbps")
                 applied = self.rollback_mgr.apply_policy(target_bw, decision["diffserv_mode"])
 
-                # 4. MARK FLOWS (Ensure classified flows are tagged with proper DSCP)
-                for f in active_flows:
-                    flow_id = f.get("flow_id", "")
-                    fclass = f.get("class", "unclassified")
-                    # If priority intent matches, boost DSCP
-                    if active_intent and active_intent.get("traffic_class") == fclass:
-                        fclass = "video_conference"  # ensure priority tin
-                    if ":" in flow_id:
-                        src_ip = flow_id.split(":")[0]
-                        self.dscp_marker.mark_host(src_ip, fclass)
-
-                # 5. VERIFY (Closed-Loop QoE Health Check)
-                time.sleep(0.5)
-                healthy = self.rollback_mgr.health_check()
-                if healthy:
-                    self.rollback_mgr.make_permanent(target_bw)
-                    self.current_applied_bw = target_bw
-                    self.last_safe_state = time.strftime("%H:%M:%S")
-                    action_taken = "applied_and_committed"
-                    if active_intent:
-                        self._status = "PRIORITY_ACTIVE"
-                    elif effective_capacity < 50.0:
-                        self._status = "DEGRADED"
-                    else:
-                        self._status = "NORMAL"
-                    print(f"[VERIFY] ✅ Health check passed. New policy committed.")
-                    self._log(f"Closed-loop policy applied: CAKE shaping set to {target_bw} Mbps ({decision['diffserv_mode']}).", "SUCCESS")
-                else:
+                if not applied:
+                    print(f"[ACT] ❌ Policy application failed at kernel level. Aborting commit.")
+                    self._log(f"Policy application for {target_bw} Mbps failed at kernel level.", "CRITICAL")
                     self.rollback_mgr.rollback()
                     self._status = "ROLLED_BACK"
-                    action_taken = "rolled_back"
-                    print(f"[VERIFY] ⚠️ Health check failed! Policy rolled back to safe state.")
-                    self._log(f"Health check failed! Automatically rolled back to safe state.", "CRITICAL")
+                    action_taken = "apply_failed"
+                else:
+                    # 4. MARK FLOWS (Genuine per-flow 5-tuple DSCP marking)
+                    for f in active_flows:
+                        flow_id = f.get("flow_id", "")
+                        fclass = f.get("class", "unclassified")
+                        effective_class = fclass
+
+                        # If priority intent matches, retain canonical priority class
+                        if active_intent and active_intent.get("action") == "prioritize":
+                            intent_target = active_intent.get("traffic_class")
+                            if intent_target and normalize_class_name(intent_target) == normalize_class_name(fclass):
+                                effective_class = normalize_class_name(intent_target)
+
+                        flow_tuple = FlowTuple.parse_or_none(flow_id)
+                        if flow_tuple:
+                            self.dscp_marker.mark_flow(flow_tuple, effective_class)
+                        elif ":" in flow_id:
+                            src_ip = flow_id.split(":")[0]
+                            self.dscp_marker.mark_host(src_ip, effective_class)
+
+                    # 5. VERIFY (Closed-Loop QoE Health Check)
+                    time.sleep(0.5)
+                    healthy = self.rollback_mgr.health_check()
+                    if healthy:
+                        self.rollback_mgr.make_permanent(target_bw, decision["diffserv_mode"])
+                        self.current_applied_bw = target_bw
+                        self.last_safe_state = time.strftime("%H:%M:%S")
+                        action_taken = "applied_and_committed"
+                        if active_intent:
+                            self._status = "PRIORITY_ACTIVE"
+                        elif effective_capacity < 50.0:
+                            self._status = "DEGRADED"
+                        else:
+                            self._status = "NORMAL"
+                        print(f"[VERIFY] ✅ Health check passed. New policy committed.")
+                        self._log(f"Closed-loop policy applied: CAKE shaping set to {target_bw} Mbps ({decision['diffserv_mode']}).", "SUCCESS")
+                    else:
+                        self.rollback_mgr.rollback()
+                        self._status = "ROLLED_BACK"
+                        action_taken = "rolled_back"
+                        print(f"[VERIFY] ⚠️ Health check failed! Policy rolled back to safe state.")
+                        self._log(f"Health check failed! Automatically rolled back to safe state.", "CRITICAL")
 
             return {
                 "effective_capacity_mbps": effective_capacity,

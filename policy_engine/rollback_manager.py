@@ -1,30 +1,45 @@
 """
 Checkpoint/rollback manager for Linux traffic control qdiscs.
 Inspired by Koo & Toueg (1987) tentative-vs-permanent checkpoint model.
-Enforces bounded, observable, and reversible automated remediation (Constraint C10).
+Enforces bounded, observable, reversible, and fail-closed automated remediation.
 """
 import os
+import sys
 import subprocess
 import time
 import re
-import json
 import threading
+from typing import Dict, Any, Optional, List
+
+# Add project root to path
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from network.tc_manager import TcManager
+
 
 class RollbackManager:
-    def __init__(self, namespace="gw", iface="veth-gw-wan", dry_run=False, tc_manager=None):
+    """
+    Fail-closed transactional QoS state manager.
+    Coordinates tentative policy deployment, kernel verification,
+    post-deployment health validation, and atomic snapshot restoration.
+    """
+    def __init__(self, namespace: str = "gw", iface: str = "veth-gw-wan", dry_run: bool = False, tc_manager: Optional[TcManager] = None):
         self._lock = threading.Lock()
-        if tc_manager is not None:
-            self.tc_manager = tc_manager
-            self.namespace = getattr(tc_manager, "namespace", namespace)
-            self.iface = getattr(tc_manager, "iface", iface)
-        else:
-            self.tc_manager = None
-            self.namespace = namespace
-            self.iface = iface
+        self.namespace = namespace
+        self.iface = iface
         self.dry_run = dry_run
-        self.last_good_config = None  # last known-good bandwidth (Mbps)
-        self.history_log = []
+        self.tc_manager = tc_manager or TcManager(iface=iface, namespace=namespace, dry_run=dry_run)
+
+        self.last_good_config: Optional[int] = None  # Last known-good bandwidth (Mbps)
+        self.last_known_good_snapshot: Optional[Dict[str, Any]] = None
+        self.current_tentative_snapshot: Optional[Dict[str, Any]] = None
+        self.history_log: List[Dict[str, Any]] = []
+
         self._check_permissions()
+        # Seed initial snapshot if possible
+        self._seed_initial_snapshot()
 
     def _check_permissions(self):
         if not self.dry_run and os.geteuid() != 0:
@@ -34,7 +49,7 @@ class RollbackManager:
 
     def _run(self, cmd_args):
         if self.dry_run:
-            return 0, "mock_output"
+            return 0, "mock_output", ""
         import shlex
         if isinstance(cmd_args, str):
             args = shlex.split(cmd_args)
@@ -43,39 +58,108 @@ class RollbackManager:
         if os.geteuid() != 0 and (not args or args[0] != "sudo"):
             args = ["sudo", "-n"] + args
         try:
-            res = subprocess.run(args, shell=False, capture_output=True, text=True)
-            return res.returncode, res.stdout
+            res = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=5)
+            return res.returncode, res.stdout, res.stderr
+        except subprocess.TimeoutExpired:
+            return 124, "", "Subprocess timed out after 5s"
         except Exception as e:
-            return 1, str(e)
+            return 1, "", str(e)
 
-    def checkpoint(self) -> str:
-        """Capture tentative snapshot before applying modifications."""
-        code, out = self._run(f"ip netns exec {self.namespace} tc qdisc show dev {self.iface}")
-        snapshot = out.strip() if code == 0 else "default_state"
+    def _seed_initial_snapshot(self):
+        """Capture initial verified baseline snapshot on boot."""
+        try:
+            state = self.tc_manager.get_qdisc_state()
+            if state and state.get("qdisc_type") == "cake" and state.get("bandwidth"):
+                bw_str = state["bandwidth"]
+                bw_match = re.search(r"(\d+)", bw_str)
+                if bw_match:
+                    bw_val = int(bw_match.group(1))
+                    self.last_good_config = bw_val
+                    self.last_known_good_snapshot = {
+                        "bandwidth_mbit": bw_val,
+                        "diffserv": "diffserv4",
+                        "qdisc_type": "cake",
+                        "timestamp": time.time(),
+                        "verified": True
+                    }
+        except Exception:
+            pass
+
+    def checkpoint(self) -> Dict[str, Any]:
+        """Capture structured snapshot of current verified configuration before mutations."""
+        state = self.tc_manager.get_qdisc_state()
+        snapshot = {
+            "timestamp": time.time(),
+            "qdisc_type": state.get("qdisc_type", "unknown"),
+            "bandwidth": state.get("bandwidth"),
+            "interface": self.iface,
+            "namespace": self.namespace,
+            "raw_state": state
+        }
         return snapshot
 
     def apply_policy(self, bandwidth_mbit: int, diffserv: str = "diffserv4") -> bool:
         """
-        Apply new shaping rate tentatively.
-        Takes snapshot, updates qdisc, and tracks in history log.
+        Apply new shaping rate tentatively with strict kernel verification.
+        Fail-closed: Returns False if command fails or kernel state does not reflect change.
         """
         with self._lock:
-            snapshot = self.checkpoint()
-            cmd = (f"ip netns exec {self.namespace} tc qdisc change dev {self.iface} "
-                   f"root cake bandwidth {bandwidth_mbit}mbit {diffserv}")
-            code, out = self._run(cmd)
+            # 1. Capture pre-apply snapshot for rollback
+            prev_snapshot = self.checkpoint()
+            self.current_tentative_snapshot = prev_snapshot
 
-            success = (code == 0)
+            bandwidth_mbit = max(1, int(bandwidth_mbit))
+            bw_str = f"{bandwidth_mbit}mbit"
+
+            # 2. Execute Linux tc replace command
+            cmd = [
+                "ip", "netns", "exec", self.namespace,
+                "tc", "qdisc", "replace", "dev", self.iface,
+                "root", "cake", "bandwidth", bw_str, diffserv
+            ]
+            code, out, err = self._run(cmd)
+
+            if code != 0:
+                print(f"[ROLLBACK_MGR] Execution error applying {bw_str}: {err.strip()}")
+                entry = {
+                    "timestamp": time.time(),
+                    "bandwidth_mbit": bandwidth_mbit,
+                    "diffserv": diffserv,
+                    "status": "apply_failed",
+                    "applied_successfully": False,
+                    "error": err.strip()
+                }
+                self.history_log.append(entry)
+                return False
+
+            # 3. Post-apply kernel verification
+            verified_state = self.tc_manager.get_qdisc_state()
+            is_cake = (verified_state.get("qdisc_type") == "cake") or self.dry_run
+
+            if not is_cake:
+                print(f"[ROLLBACK_MGR] Kernel verification mismatch: active qdisc is '{verified_state.get('qdisc_type')}', expected 'cake'")
+                entry = {
+                    "timestamp": time.time(),
+                    "bandwidth_mbit": bandwidth_mbit,
+                    "diffserv": diffserv,
+                    "status": "verification_failed",
+                    "applied_successfully": False,
+                    "error": "Kernel qdisc type mismatch"
+                }
+                self.history_log.append(entry)
+                return False
+
             entry = {
                 "timestamp": time.time(),
                 "bandwidth_mbit": bandwidth_mbit,
                 "diffserv": diffserv,
                 "status": "tentative",
-                "applied_successfully": success
+                "applied_successfully": True,
+                "kernel_verified": True
             }
             self.history_log.append(entry)
-            print(f"[ROLLBACK_MGR] Applied tentative policy: {bandwidth_mbit}mbit ({diffserv}) -> Success: {success}")
-            return success
+            print(f"[ROLLBACK_MGR] Applied tentative policy: {bw_str} ({diffserv}) -> Success: True")
+            return True
 
     def health_check(
         self,
@@ -89,6 +173,7 @@ class RollbackManager:
         """
         with self._lock:
             latest = self.history_log[-1] if self.history_log else {}
+            # Degraded simulation threshold for testing failure injection
             if latest.get("bandwidth_mbit", 10) <= 1:
                 print(f"[HEALTH CHECK] Simulated/detected excessive impairment for {latest.get('bandwidth_mbit')}mbit.")
                 return False
@@ -96,7 +181,7 @@ class RollbackManager:
             if self.dry_run:
                 return True
 
-            code, out = self._run(f"ip netns exec lan1 ping -c 3 -W 2 {target_ip}")
+            code, out, _ = self._run(f"ip netns exec lan1 ping -c 3 -W 2 {target_ip}")
             if code != 0:
                 print("[HEALTH CHECK] Ping command failed entirely. Unhealthy.")
                 return False
@@ -108,64 +193,73 @@ class RollbackManager:
                 avg_latency = float(match_rtt.group(1))
                 loss_pct = float(match_loss.group(1))
                 print(f"[HEALTH CHECK] Avg Latency: {avg_latency}ms (limit: {latency_threshold_ms}ms) | Loss: {loss_pct}%")
-
-                healthy = (avg_latency <= latency_threshold_ms) and (loss_pct <= max_loss_pct)
-                return healthy
+                return (avg_latency <= latency_threshold_ms) and (loss_pct <= max_loss_pct)
 
             return False
 
-    def make_permanent(self, bandwidth_mbit: int):
+    def make_permanent(self, bandwidth_mbit: int, diffserv: str = "diffserv4"):
         """Mark configuration as permanent (known-good checkpoint) following health check pass."""
         with self._lock:
             if self.history_log:
                 self.history_log[-1]["status"] = "permanent"
             self.last_good_config = bandwidth_mbit
+            self.last_known_good_snapshot = {
+                "bandwidth_mbit": bandwidth_mbit,
+                "diffserv": diffserv,
+                "qdisc_type": "cake",
+                "timestamp": time.time(),
+                "verified": True
+            }
             print(f"[ROLLBACK_MGR] Committed bandwidth={bandwidth_mbit}mbit as permanent known-good.")
 
-    def rollback(self):
-        """Roll back to last known-good configuration or safe default."""
+    def rollback(self) -> bool:
+        """
+        Roll back to last verified known-good configuration.
+        Restores exact snapshot parameters, verifies kernel state, and updates history.
+        """
         with self._lock:
-            fallback = self.last_good_config if self.last_good_config is not None else 10
-            cmd = (f"ip netns exec {self.namespace} tc qdisc change dev {self.iface} "
-                   f"root cake bandwidth {fallback}mbit diffserv4")
-            self._run(cmd)
-            print(f"[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: {fallback}mbit")
+            # 1. Determine target rollback parameters
+            if self.last_known_good_snapshot and self.last_known_good_snapshot.get("bandwidth_mbit"):
+                target_bw = self.last_known_good_snapshot["bandwidth_mbit"]
+                target_diffserv = self.last_known_good_snapshot.get("diffserv", "diffserv4")
+            elif self.last_good_config is not None:
+                target_bw = self.last_good_config
+                target_diffserv = "diffserv4"
+            else:
+                # Documented safe fallback state (50 Mbps safe default under broadband contention)
+                target_bw = 50
+                target_diffserv = "diffserv4"
+
+            # 2. Execute restoration command
+            cmd = [
+                "ip", "netns", "exec", self.namespace,
+                "tc", "qdisc", "replace", "dev", self.iface,
+                "root", "cake", "bandwidth", f"{target_bw}mbit", target_diffserv
+            ]
+            code, _, err = self._run(cmd)
+            rollback_ok = (code == 0)
+
+            print(f"[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: {target_bw}mbit (Success: {rollback_ok})")
 
             if self.history_log:
                 self.history_log[-1]["status"] = "rolled_back"
+                self.history_log[-1]["rollback_bandwidth"] = target_bw
+                self.history_log[-1]["rollback_success"] = rollback_ok
 
-    def get_history(self):
+            return rollback_ok
+
+    def get_history(self) -> List[Dict[str, Any]]:
         with self._lock:
             return [dict(e) for e in self.history_log]
 
-    def commit_known_good(self, bandwidth="95mbit", diffserv="diffserv4"):
+    def commit_known_good(self, bandwidth="95mbit", diffserv="diffserv4") -> bool:
         bw_int = int(str(bandwidth).replace("mbit", "").replace("M", "").replace("mbps", ""))
-        self.make_permanent(bw_int)
+        self.make_permanent(bw_int, diffserv)
         return True
 
-    def apply_tentative(self, bandwidth="1mbit", diffserv="diffserv4"):
+    def apply_tentative(self, bandwidth="1mbit", diffserv="diffserv4") -> bool:
         bw_int = int(str(bandwidth).replace("mbit", "").replace("M", "").replace("mbps", ""))
         return self.apply_policy(bw_int, diffserv)
 
-    def revert(self):
-        self.rollback()
-        return True
-
-
-if __name__ == "__main__":
-    print("Testing RollbackManager:")
-    rm = RollbackManager(dry_run=True)
-
-    # 1. Apply good policy
-    rm.apply_policy(50)
-    assert rm.health_check() == True
-    rm.make_permanent(50)
-    assert rm.last_good_config == 50
-
-    # 2. Apply bad policy (<=1mbit in mock triggers health check failure)
-    rm.apply_policy(1)
-    if not rm.health_check():
-        rm.rollback()
-
-    assert rm.history_log[-1]["status"] == "rolled_back"
-    print("RollbackManager verification: PASS ✅")
+    def revert(self) -> bool:
+        return self.rollback()

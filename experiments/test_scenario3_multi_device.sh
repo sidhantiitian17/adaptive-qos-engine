@@ -33,11 +33,13 @@ sudo ip netns exec gw tc qdisc add dev $IFACE root cake bandwidth 20mbit diffser
 
 # Mark traffic:
 # TV streams (lan2) -> AF41 (Video tin)
-# Gaming device (lan1) -> EF (Voice/Interactive tin for lowest latency)
-sudo ip netns exec gw iptables -t mangle -F QOS_MARKING 2>/dev/null || sudo ip netns exec gw iptables -t mangle -N QOS_MARKING 2>/dev/null || true
-sudo ip netns exec gw iptables -t mangle -C PREROUTING -j QOS_MARKING 2>/dev/null || sudo ip netns exec gw iptables -t mangle -I PREROUTING -j QOS_MARKING
-sudo ip netns exec gw iptables -t mangle -A QOS_MARKING -s 10.0.1.2 -j DSCP --set-dscp-class EF
-sudo ip netns exec gw iptables -t mangle -A QOS_MARKING -s 10.0.2.2 -j DSCP --set-dscp-class AF41
+# Setup DSCP marking:
+if sudo ip netns exec gw iptables -t mangle -A QOS_MARKING -s 10.0.1.2 -j DSCP --set-dscp-class EF 2>/dev/null; then
+    sudo ip netns exec gw iptables -t mangle -A QOS_MARKING -s 10.0.2.2 -j DSCP --set-dscp-class AF41 2>/dev/null || true
+else
+    sudo ip netns exec gw nft 'add rule ip mangle QOS_MARKING ip saddr 10.0.1.2 ip dscp set ef' 2>/dev/null || true
+    sudo ip netns exec gw nft 'add rule ip mangle QOS_MARKING ip saddr 10.0.2.2 ip dscp set af41' 2>/dev/null || true
+fi
 
 # Start iperf3 servers on wanhost for 3 video streams + 1 game stream
 sudo ip netns exec wanhost iperf3 -s -D -p 5202 2>/dev/null || true
