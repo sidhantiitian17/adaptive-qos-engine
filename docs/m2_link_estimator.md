@@ -213,12 +213,12 @@ All tests executed automatically using Linux `tc netem` bottleneck emulation in 
 | **TEST 6: Multiple Competing Flows** | 60.0 Mbps | [55.2, 57.5] | 56.35 | Range Midpoint | 6.1% | **PASS** |
 
 > **Distinction on Test 5 (Bursty Cross-Traffic):**
-> Under dynamic UDP cross-traffic bursts, SLoPS recorded 3 consecutive sample estimates: `[49.35, 51.7, 49.35]` Mbps. The reported representative point estimate of **50.13 Mbps is the arithmetic mean** of these samples ($|50.13 - 50.0|/50.0 = 0.3\%$ relative error). The midpoint of the sample spread range $[49.35, 51.7]$ Mbps is **50.525 Mbps** ($|50.525 - 50.0|/50.0 = 1.05\%$ relative error).
+> Under dynamic UDP cross-traffic bursts, SLoPS recorded 3 consecutive sample estimates: `[49.35, 51.7, 49.35]` Mbps, exhibiting a sample spread of **2.35 Mbps** ($\max - \min$). The reported representative point estimate of **50.13 Mbps is the arithmetic mean** of these samples ($|50.13 - 50.0|/50.0 = 0.3\%$ relative error). The midpoint of the sample spread range $[49.35, 51.7]$ Mbps is **50.525 Mbps** ($|50.525 - 50.0|/50.0 = 1.05\%$ relative error).
 >
 > **Technical Delineation of 20 Mbps Evaluations (Test 2 vs Baseline Comparison):**
 > - In **Test 2 (Standalone Static 20M)**, evaluated at the beginning of the suite on an uncontended cold link, SLoPS converged to $[18.1, 20.5]$ Mbps (midpoint **19.30 Mbps, 3.5% relative error**).
 > - In **Test 3 (Dynamic Adaptation 100 $\to$ 20M)**, SLoPS detected the sudden throttle and stabilized at $[18.1, 20.5]$ Mbps (midpoint **19.30 Mbps, 3.5% relative error**).
-> - In the **Comparative Baseline Benchmark** (Section 7), evaluated in a separate run after Test 6 on an idle link, SLoPS terminated at the adjacent bounding bracket $[20.5, 22.8]$ Mbps (midpoint **21.65 Mbps, 8.2% relative error**) due to SLoPS bisection step granularity (`convergence_tolerance_mbps = 3.0`). In contrast, the passive estimator exhibited **400.0% error** (defaulting to 100 Mbps because the idle link provided no byte transitions), demonstrating a **+391.8 percentage point accuracy advantage** for SLoPS.
+> - In the **Comparative Baseline Benchmark** (Section 7), evaluated in a separate run after Test 6 on an idle link, SLoPS terminated at the adjacent bracket $[20.5, 22.8]$ Mbps (midpoint **21.65 Mbps, 8.2% relative error**) due to SLoPS bisection step granularity (`convergence_tolerance_mbps = 3.0`). While Test 2's interval $[18.1, 20.5]$ Mbps directly bounds 20.0 Mbps ($18.1 \le 20.0 \le 20.5$), the baseline bracket $[20.5, 22.8]$ Mbps sits just above ground truth ($20.0 < 20.5$ Mbps) and does not contain 20.0 Mbps; its midpoint 21.65 Mbps nevertheless satisfies the $\le 20\%$ point-estimate error threshold. In contrast, the passive estimator exhibited **400.0% error** (defaulting to 100 Mbps because the idle link provided no byte transitions), demonstrating a **+391.8 percentage point accuracy advantage** for SLoPS.
 
 ### Dynamic Adaptation Timeline ($T_0 \dots T_5$)
 
@@ -242,6 +242,9 @@ During Test 3 (abrupt bottleneck throttling from 100 Mbps to 20 Mbps):
 
 3. **Asymmetric Links:**
    SLoPS one-way delay measurement specifically isolates the path under test (forward path). Probe return traffic requires minimal ACK bandwidth ($< 1$ KB).
+
+4. **SQLite Evidence Database Scope Limitation:**
+   The SQLite relational database (`experiments/evidence.db`) persists experiment runs and key summary scalar evaluation metrics (`static_100_error_pct`, `static_20_error_pct`, `adaptation_time_sec`). Detailed per-stream probe packet traces, arrival timestamps, and intermediate binary search interval iterations are stored in dedicated JSON artifacts (`results/m2/*.json`) and CSV summaries (`results/m2/summary.csv`) rather than fully normalized database tables.
 
 ---
 

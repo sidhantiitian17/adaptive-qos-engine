@@ -326,10 +326,10 @@ def run_test_5_bursty_cross_traffic() -> Dict[str, Any]:
         bg_thread.join(timeout=1.0)
 
         mean_est = round(sum(estimates) / len(estimates), 2)
-        variance = round(max(estimates) - min(estimates), 2)
+        spread = round(max(estimates) - min(estimates), 2)
         # SLoPS should estimate available capacity (which is somewhat below 50M due to bursts)
         # without oscillating to extreme zero or infinite bounds
-        passed = (20.0 <= mean_est <= 60.0 and variance <= 20.0)
+        passed = (20.0 <= mean_est <= 60.0 and spread <= 20.0)
 
         output = {
             "test_name": "TEST_5_BURSTY_CROSS_TRAFFIC",
@@ -339,13 +339,13 @@ def run_test_5_bursty_cross_traffic() -> Dict[str, Any]:
             "range_midpoint_mbps": round((min(estimates) + max(estimates)) / 2.0, 3),
             "mean_estimate_mbps": mean_est,
             "relative_error_pct": round(abs(mean_est - ground_truth) / ground_truth * 100.0, 1),
-            "variance_mbps": variance,
+            "spread_mbps": spread,
             "confidence": 1.0,
             "converged": True,
             "resilience_maintained": passed,
             "status": "PASS" if passed else "FAIL"
         }
-        print(f"Result: {output['status']} | Mean: {mean_est} Mbps | Spread: {variance} Mbps")
+        print(f"Result: {output['status']} | Mean: {mean_est} Mbps | Spread: {spread} Mbps")
         return output
     finally:
         stop_event.set()
@@ -500,7 +500,7 @@ All 6 ground-truth experiments and the baseline comparison passed acceptance cri
 >
 > **Technical Delineation of 20 Mbps Evaluations (Test 2 vs Baseline Comparison):**
 > 1. **Separate Test Executions:** Standalone Static 20M (Test 2) is evaluated at the start of the suite on an uncontended cold link, converging to $[{results['test_2']['estimated_bandwidth_min_mbps']}, {results['test_2']['estimated_bandwidth_max_mbps']}]$ Mbps (midpoint {results['test_2']['estimated_bandwidth_mid_mbps']} Mbps, **{results['test_2']['relative_error_pct']}% relative error**). The Comparative Baseline Benchmark (Section 4) is evaluated in a separate run after Test 6 to explicitly benchmark passive `/proc/net/dev` estimation versus active SLoPS probing on an idle link.
-> 2. **SLoPS Bisection Step Granularity:** SLoPS terminates binary search when bracket width $(R_{{max}} - R_{{min}}) \\le 3.0$ Mbps (`convergence_tolerance_mbps = 3.0`). In the baseline run, packet timing variations placed the probe in the adjacent bounding bracket $[{comparison['slops_active_estimator']['estimated_range_mbps'][0]}, {comparison['slops_active_estimator']['estimated_range_mbps'][1]}]$ Mbps (bracket width {round(comparison['slops_active_estimator']['estimated_range_mbps'][1] - comparison['slops_active_estimator']['estimated_range_mbps'][0], 1)} Mbps, midpoint {comparison['slops_active_estimator']['estimated_capacity_mbps']} Mbps, **{comparison['slops_active_estimator']['relative_error_pct']}% relative error**). Both brackets are valid bisection intervals immediately bounding the 20.0 Mbps ground truth within the $\\le 20\\%$ tolerance.
+> 2. **SLoPS Bisection Step Granularity & Range Coverage:** SLoPS terminates binary search when bracket width $(R_{{max}} - R_{{min}}) \\le 3.0$ Mbps (`convergence_tolerance_mbps = 3.0`). In the baseline run, packet timing variations placed the probe in the adjacent bracket $[{comparison['slops_active_estimator']['estimated_range_mbps'][0]}, {comparison['slops_active_estimator']['estimated_range_mbps'][1]}]$ Mbps (bracket width {round(comparison['slops_active_estimator']['estimated_range_mbps'][1] - comparison['slops_active_estimator']['estimated_range_mbps'][0], 1)} Mbps, midpoint {comparison['slops_active_estimator']['estimated_capacity_mbps']} Mbps, **{comparison['slops_active_estimator']['relative_error_pct']}% relative error**). Note that while standalone Test 2's interval $[{results['test_2']['estimated_bandwidth_min_mbps']}, {results['test_2']['estimated_bandwidth_max_mbps']}]$ Mbps directly contains ground truth ($18.1 \\le 20.0 \\le 20.5$), the baseline comparison interval $[{comparison['slops_active_estimator']['estimated_range_mbps'][0]}, {comparison['slops_active_estimator']['estimated_range_mbps'][1]}]$ Mbps sits just above ground truth ($20.0 < 20.5$ Mbps) and does not contain 20.0 Mbps. However, its midpoint ({comparison['slops_active_estimator']['estimated_capacity_mbps']} Mbps) achieves {comparison['slops_active_estimator']['relative_error_pct']}% relative error, easily meeting the project's $\\le 20\\%$ point-estimate error threshold.
 > 3. **Comparative Advantage:** On an idle 20 Mbps link, the passive estimator is blind and defaults to nominal capacity ({comparison['passive_estimator']['estimated_capacity_mbps']} Mbps, **{comparison['passive_estimator']['relative_error_pct']}% error**), while SLoPS active probing discovers the link capacity with **{comparison['slops_active_estimator']['relative_error_pct']}% error**, achieving a **+{comparison['accuracy_advantage_pp']} percentage point accuracy advantage**.
 
 ---

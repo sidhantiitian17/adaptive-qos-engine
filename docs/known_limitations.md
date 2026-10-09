@@ -72,3 +72,13 @@ preallocated byte buffers. While this achieves $< 15\%$ error up to 100+ Mbps
 in our Linux namespace testbed, a commercial production deployment on router
 CPEs would implement pacing natively in the kernel using eBPF/XDP, `io_uring`,
 or a dedicated C daemon to eliminate user-space scheduler jitter.
+
+## 11. SQLite Evidence Database Scope Limitation
+The SQLite WAL database (`experiments/evidence.db`) persists experiment metadata,
+active flows, policy state transitions, and canonical evaluation summary scalar metrics
+(e.g., `static_100_error_pct`, `static_20_error_pct`, and `adaptation_time_sec` for M2).
+It is intentionally designed not to store high-frequency, packet-level raw probe trains,
+arrival timestamp series, or intermediate binary search iterations to avoid write
+amplification and lock contention. Full high-resolution raw probe traces are preserved in
+machine-readable JSON artifacts (`results/m2/*.json`) and CSV summaries
+(`results/m2/summary.csv`).

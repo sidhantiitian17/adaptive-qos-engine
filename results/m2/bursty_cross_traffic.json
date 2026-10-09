@@ -13,7 +13,7 @@
   "range_midpoint_mbps": 50.525,
   "mean_estimate_mbps": 50.13,
   "relative_error_pct": 0.3,
-  "variance_mbps": 2.35,
+  "spread_mbps": 2.35,
   "confidence": 1.0,
   "converged": true,
   "resilience_maintained": true,

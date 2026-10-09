@@ -21,7 +21,9 @@ source venv/bin/activate
 
 # 3. Install core dependencies
 pip install --upgrade pip
-pip install fastapi uvicorn pydantic scikit-learn xgboost torch httpx sqlite3
+pip install -r requirements.txt
+# Or minimal core packages (Note: sqlite3 is included in Python's standard library):
+# pip install fastapi uvicorn pydantic scikit-learn xgboost torch httpx
 ```
 
 ---
