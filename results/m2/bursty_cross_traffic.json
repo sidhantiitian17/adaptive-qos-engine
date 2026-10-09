@@ -2,13 +2,18 @@
   "test_name": "TEST_5_BURSTY_CROSS_TRAFFIC",
   "ground_truth_mbps": 50.0,
   "sample_estimates_mbps": [
-    47.05,
+    49.35,
     51.7,
+    49.35
+  ],
+  "sample_range_mbps": [
+    49.35,
     51.7
   ],
-  "mean_estimate_mbps": 50.15,
+  "range_midpoint_mbps": 50.525,
+  "mean_estimate_mbps": 50.13,
   "relative_error_pct": 0.3,
-  "variance_mbps": 4.65,
+  "variance_mbps": 2.35,
   "confidence": 1.0,
   "converged": true,
   "resilience_maintained": true,

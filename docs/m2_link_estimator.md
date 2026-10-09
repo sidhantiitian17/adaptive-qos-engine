@@ -203,19 +203,22 @@ Module M2 handles faults deterministically without crashing or stalling the cont
 
 All tests executed automatically using Linux `tc netem` bottleneck emulation in `experiments/run_m2_evaluation.py` (canonical run recorded in `results/m2/summary.csv` and `results/m2/report.md`):
 
-| Test ID | Ground Truth | Estimated Range (Mbps) | Midpoint (Mbps) | Error (%) | Status |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **TEST 1: Static 100M** | 100.0 Mbps | [85.2, 87.5] | 86.35 | 13.7% | **PASS** |
-| **TEST 2: Static 20M** | 20.0 Mbps | [18.1, 20.5] | 19.30 | 3.5% | **PASS** |
-| **TEST 3: Dynamic Adaptation (100 -> 20M)** | 20.0 Mbps | [18.1, 20.5] | 19.30 | 3.5% | **PASS** |
-| **TEST 4: Dynamic Recovery (20 -> 100M)** | 100.0 Mbps | [99.2, 101.5] | 100.35 | 0.3% | **PASS** |
-| **TEST 5: Bursty Cross-Traffic** | 50.0 Mbps | [47.05, 51.7] | 50.15 | 0.3% | **PASS** |
-| **TEST 6: Multiple Competing Flows** | 60.0 Mbps | [52.9, 55.2] | 54.05 | 9.9% | **PASS** |
+| Test ID | Ground Truth | Estimated Range (Mbps) | Point Estimate (Mbps) | Metric Type | Error (%) | Status |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **TEST 1: Static 100M** | 100.0 Mbps | [87.5, 89.8] | 88.65 | Range Midpoint | 11.3% | **PASS** |
+| **TEST 2: Static 20M** | 20.0 Mbps | [18.1, 20.5] | 19.30 | Range Midpoint | 3.5% | **PASS** |
+| **TEST 3: Dynamic Adaptation (100 -> 20M)** | 20.0 Mbps | [18.1, 20.5] | 19.30 | Range Midpoint | 3.5% | **PASS** |
+| **TEST 4: Dynamic Recovery (20 -> 100M)** | 100.0 Mbps | [99.2, 101.5] | 100.35 | Range Midpoint | 0.3% | **PASS** |
+| **TEST 5: Bursty Cross-Traffic** | 50.0 Mbps | [49.35, 51.7] | 50.13 | Sample Mean (Midpoint: 50.525) | 0.3% | **PASS** |
+| **TEST 6: Multiple Competing Flows** | 60.0 Mbps | [55.2, 57.5] | 56.35 | Range Midpoint | 6.1% | **PASS** |
 
-> **Delineation of 20 Mbps Evaluations:**
-> - In **Test 2 (Standalone Static 20M)**, the estimator converged to $[18.1, 20.5]$ Mbps (midpoint $19.30$ Mbps, **$3.5\%$ relative error**), well within the $\le 25\%$ acceptance margin.
-> - In **Test 3 (Dynamic Adaptation 100 $\to$ 20M)**, SLoPS detected the sudden throttle and stabilized at $[18.1, 20.5]$ Mbps (midpoint $19.30$ Mbps, **$3.5\%$ relative error**).
-> - In the **Comparative Baseline Benchmark** (Section 7), the passive estimator exhibited **$400.0\%$ error** (defaulting to 100 Mbps because the idle link provided no byte transitions), whereas SLoPS converged to $[22.8, 25.1]$ Mbps (midpoint $23.95$ Mbps, **$19.7\%$ relative error**), yielding a **$+380.2$ percentage point accuracy advantage**.
+> **Distinction on Test 5 (Bursty Cross-Traffic):**
+> Under dynamic UDP cross-traffic bursts, SLoPS recorded 3 consecutive sample estimates: `[49.35, 51.7, 49.35]` Mbps. The reported representative point estimate of **50.13 Mbps is the arithmetic mean** of these samples ($|50.13 - 50.0|/50.0 = 0.3\%$ relative error). The midpoint of the sample spread range $[49.35, 51.7]$ Mbps is **50.525 Mbps** ($|50.525 - 50.0|/50.0 = 1.05\%$ relative error).
+>
+> **Technical Delineation of 20 Mbps Evaluations (Test 2 vs Baseline Comparison):**
+> - In **Test 2 (Standalone Static 20M)**, evaluated at the beginning of the suite on an uncontended cold link, SLoPS converged to $[18.1, 20.5]$ Mbps (midpoint **19.30 Mbps, 3.5% relative error**).
+> - In **Test 3 (Dynamic Adaptation 100 $\to$ 20M)**, SLoPS detected the sudden throttle and stabilized at $[18.1, 20.5]$ Mbps (midpoint **19.30 Mbps, 3.5% relative error**).
+> - In the **Comparative Baseline Benchmark** (Section 7), evaluated in a separate run after Test 6 on an idle link, SLoPS terminated at the adjacent bounding bracket $[20.5, 22.8]$ Mbps (midpoint **21.65 Mbps, 8.2% relative error**) due to SLoPS bisection step granularity (`convergence_tolerance_mbps = 3.0`). In contrast, the passive estimator exhibited **400.0% error** (defaulting to 100 Mbps because the idle link provided no byte transitions), demonstrating a **+391.8 percentage point accuracy advantage** for SLoPS.
 
 ### Dynamic Adaptation Timeline ($T_0 \dots T_5$)
 

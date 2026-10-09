@@ -1,7 +1,7 @@
-Test ID,Ground Truth (Mbps),Estimated Midpoint (Mbps),Relative Error (%),Status
-TEST 1,100.0,86.35,13.7,PASS
-TEST 2,20.0,19.3,3.5,PASS
-TEST 3,20.0,19.3,3.5,PASS
-TEST 4,100.0,100.35,0.3,PASS
-TEST 5,50.0,50.15,0.3,PASS
-TEST 6,60.0,54.05,9.9,PASS
+Test ID,Scenario,Ground Truth (Mbps),Estimated Range (Mbps),Point Estimate (Mbps),Metric Type,Relative Error (%),Status
+TEST 1,Static 100 Mbps,100.0,"[87.5, 89.8]",88.65,Range Midpoint,11.3,PASS
+TEST 2,Static 20 Mbps,20.0,"[18.1, 20.5]",19.3,Range Midpoint,3.5,PASS
+TEST 3,Drop 100 -> 20 Mbps,20.0,"[18.1, 20.5]",19.3,Range Midpoint,3.5,PASS
+TEST 4,Recovery 20 -> 100 Mbps,100.0,"[99.2, 101.5]",100.35,Range Midpoint,0.3,PASS
+TEST 5,Bursty Cross-Traffic,50.0,"[49.35, 51.7]",50.13,Sample Mean (Midpoint: 50.525),0.3,PASS
+TEST 6,Multiple Concurrent Flows,60.0,"[55.2, 57.5]",56.35,Range Midpoint,6.1,PASS

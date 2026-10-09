@@ -29,13 +29,13 @@ pip install fastapi uvicorn pydantic scikit-learn xgboost torch httpx sqlite3
 ## 3. Running Pre-Flight & Regression Tests
 
 ```bash
-# Run unit and operational hardening tests
+# Run all unit, SLoPS estimator, and operational hardening tests
 ./venv/bin/python3 -m unittest discover tests/
 ```
 
-Expected output:
+Verified command output (48 unit and integration tests passing):
 ```
-Ran 39 tests in ~18s
+Ran 48 tests in ~35-40s
 OK
 ```
 

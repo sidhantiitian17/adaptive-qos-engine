@@ -10,18 +10,18 @@
   "confidence": 1.0,
   "iterations": 6,
   "samples": 480,
-  "pct": 0.333,
-  "pdt": -0.052,
+  "pct": 0.222,
+  "pdt": -0.519,
   "converged": true,
   "stable": true,
-  "duration_sec": 0.58,
+  "duration_sec": 0.579,
   "status": "PASS",
   "overhead": {
     "total_probe_packets": 480,
     "total_probe_bytes": 576000,
     "total_probe_mb": 0.576,
-    "probe_duration_sec": 0.58,
-    "cpu_time_ms": 279.29,
-    "avg_probe_bandwidth_mbps": 7.95
+    "probe_duration_sec": 0.579,
+    "cpu_time_ms": 265.52,
+    "avg_probe_bandwidth_mbps": 7.96
   }
 }
