@@ -1,0 +1,26 @@
+=== COMMAND: ./scripts/run_scenario_a.sh ===
+=== EXIT CODE: 0 (elapsed: 21.16s) ===
+=== STDOUT ===
+=================================================================
+   RUNNING SCENARIO A: BULK DOWNLOAD VS VIDEO CONFERENCE         
+=================================================================
+
+[1/2] Running BASELINE (Unmanaged FIFO with Bufferbloat)...
+  Baseline Metrics: {'experiment_id': 'exp_scenario_a_1791904630_1fcbcd', 'scenario': 'SCENARIO_A', 'mode': 'BASELINE', 'video_throughput_mbps': 1.168, 'bulk_throughput_mbps': 24.139, 'latency_ms': 5.987, 'jitter_ms': 5.6141, 'loss_pct': 0.0, 'queue_depth_pkts': None, 'active_flows_classified': 4}
+
+[2/2] Running ADAPTIVE (CAKE DiffServ4 Multi-Tin Shaping)...
+  Adaptive Metrics: {'experiment_id': 'exp_scenario_a_1791904642_d49964', 'scenario': 'SCENARIO_A', 'mode': 'ADAPTIVE', 'video_throughput_mbps': 1.202, 'bulk_throughput_mbps': 44.384, 'latency_ms': 5.314, 'jitter_ms': 2.4004, 'loss_pct': 0.0, 'queue_depth_pkts': None, 'active_flows_classified': 3}
+
+=================================================================
+SCENARIO A COMPARISON RESULT
+=================================================================
+Video Throughput:  Baseline 1.168 Mbps | Adaptive 1.202 Mbps
+Bulk Throughput:   Baseline 24.139 Mbps | Adaptive 44.384 Mbps
+Interactive Lat:   Baseline 5.987 ms | Adaptive 5.314 ms
+Interactive Jitter:Baseline 5.6141 ms | Adaptive 2.4004 ms
+Queue Backlog:     Baseline None pkts | Adaptive None pkts
+Evidence recorded to experiments/evidence.db.
+=================================================================
+
+=== STDERR ===
+

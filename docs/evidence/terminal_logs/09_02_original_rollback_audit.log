@@ -1,0 +1,16 @@
+=== COMMAND: ./venv/bin/python3 -c "from policy_engine.rollback_manager import RollbackManager; rm=RollbackManager(namespace='gw', dry_run=False); rm.commit_known_good(bandwidth='95mbit'); print('Committed snapshot:', rm.last_known_good_snapshot); res=rm.apply_tentative(bandwidth='1mbit'); print('Applied bad:', res, 'Tentative snapshot:', rm.current_tentative_snapshot); rev=rm.revert(); print('Revert success:', rev); history=rm.get_history(); print('Last history entry:', history[-1] if history else None)" ===
+=== EXIT CODE: 0 (elapsed: 0.37s) ===
+=== STDOUT ===
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+Committed snapshot: {'interface': 'veth-gw-wan', 'namespace': 'gw', 'bandwidth_mbit': 95, 'diffserv': 'diffserv4', 'diffserv_mode': 'diffserv4', 'qdisc_type': 'cake', 'timestamp': 1791905062.5491502, 'verified': True}
+[ROLLBACK_MGR] Apply/verification error applying 1mbit (diffserv4): Cannot open network namespace "gw": No such file or directory
+
+[ROLLBACK_MGR] Immediate restoration to 95mbit (diffserv4): success=False
+Applied bad: False Tentative snapshot: {'timestamp': 1791905062.570661, 'interface': 'veth-gw-wan', 'namespace': 'gw', 'qdisc_type': 'unknown', 'bandwidth': None, 'bandwidth_mbit': None, 'diffserv': 'diffserv4', 'diffserv_mode': 'diffserv4', 'handle': None, 'parent': 'root', 'verified': False, 'kernel_verified': False, 'raw_state': {'status': 'unavailable', 'qdisc_type': 'unknown', 'interface': 'veth-gw-wan', 'namespace': 'gw', 'bandwidth': None, 'bandwidth_mbit': None, 'diffserv_mode': None, 'handle': None, 'parent': 'root', 'sent_bytes': None, 'sent_packets': None, 'dropped': None, 'backlog_bytes': None, 'backlog_pkts': None, 'raw_output': '', 'error': 'Cannot open network namespace "gw": No such file or directory\n'}}
+[ROLLBACK_MGR] ❌ Rollback failed: Cannot open network namespace "gw": No such file or directory
+
+Revert success: False
+Last history entry: {'timestamp': 1791905062.7865646, 'bandwidth_mbit': 1, 'diffserv': 'diffserv4', 'status': 'rollback_failed', 'applied_successfully': False, 'kernel_verified': False, 'auto_restored': False, 'error': 'Cannot open network namespace "gw": No such file or directory\n', 'verified_state': {'status': 'unavailable', 'qdisc_type': 'unknown', 'interface': 'veth-gw-wan', 'namespace': 'gw', 'bandwidth': None, 'bandwidth_mbit': None, 'diffserv_mode': None, 'handle': None, 'parent': 'root', 'sent_bytes': None, 'sent_packets': None, 'dropped': None, 'backlog_bytes': None, 'backlog_pkts': None, 'raw_output': '', 'error': 'Cannot open network namespace "gw": No such file or directory\n'}, 'rollback_bandwidth': 95, 'rollback_diffserv': 'diffserv4', 'rollback_success': False, 'had_prior_snapshot': True}
+
+=== STDERR ===
+

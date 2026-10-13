@@ -1,0 +1,25 @@
+=== COMMAND: ./scripts/run_scenario_b.sh ===
+=== EXIT CODE: 0 (elapsed: 2.62s) ===
+=== STDOUT ===
+=================================================================
+   RUNNING SCENARIO B: WAN COLLAPSE (100 Mbps -> 20 Mbps)        
+=================================================================
+
+[1/2] Executing Baseline WAN Collapse (Static Unmanaged FIFO)...
+  Baseline Exp ID:          exp_scenario_b_1791904694_08c37c
+  Target Shaping:          100.0 Mbps (Unadapted)
+  Adaptation Time:         30.0 s (Timed out / no adaptation)
+
+[2/2] Executing Adaptive WAN Collapse (AQE CAKE Adaptation)...
+  Adaptive Exp ID:          exp_scenario_b_1791904694_8dcbe4
+  Initial WAN Capacity:    100.0 Mbps
+  Collapsed WAN Capacity:  20.0 Mbps
+  Adapted CAKE Shaping:    19 Mbps (0.95x link rate)
+  Detection & Adapt Time:  0.0241 s
+  Recovery Time to 100M:   0.0212 s
+
+Evidence recorded to experiments/evidence.db.
+=================================================================
+
+=== STDERR ===
+

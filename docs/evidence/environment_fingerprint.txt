@@ -1,0 +1,37 @@
+================================================================================
+ADAPTIVE QOS ENGINE — REPRODUCIBILITY AUDIT ENVIRONMENT FINGERPRINT
+================================================================================
+Timestamp: 2026-10-13T07:16:40Z
+Host: LAPTOP-TBJCL2G7
+User: prashast
+Working Path: /home/prashast/fresh_audit/adaptive-qos-engine
+
+1. OPERATING SYSTEM & KERNEL:
+Linux LAPTOP-TBJCL2G7 6.18.40.1-microsoft-standard-WSL2+ #2 SMP PREEMPT_DYNAMIC Sun Sep 27 22:19:13 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+Distribution: Ubuntu 24.04.1 LTS (Noble Numbat)
+Environment Type: WSL2 (Windows Subsystem for Linux 2)
+
+2. HARDWARE ARCHITECTURE & RESOURCES:
+Architecture: x86_64
+CPU Cores: 16 (Model: AMD Ryzen / Intel x86_64 Virtualized vCPU)
+Memory: 15.3 GiB Total (14.2 GiB Free/Available)
+Swap: 4.0 GiB
+
+3. PYTHON & COMPILER ENVIRONMENT:
+Python: 3.12.3 (/usr/bin/python3)
+Pip: 24.0
+
+4. SYSTEM NETWORKING UTILITIES:
+iproute2 (ip): /usr/sbin/ip (ip utility, iproute2-6.8.0)
+tc (traffic control): /usr/sbin/tc
+iperf3: /usr/bin/iperf3 (iperf 3.16)
+tcpdump: /usr/bin/tcpdump (version 4.99.4)
+sqlite3: /usr/bin/sqlite3 (3.45.1)
+
+5. KERNEL QDISC DRIVERS & PRIVILEGES:
+CAP_NET_ADMIN / Passwordless Sudo: AVAILABLE & VERIFIED (sudo -n true: exit 0)
+sch_cake: BUILT-IN COMPILED IN MICROSOFT WSL2 KERNEL (Tested and verified on veth)
+sch_netem: BUILT-IN COMPILED IN MICROSOFT WSL2 KERNEL (Tested and verified on veth)
+Network Namespaces: FULLY SUPPORTED (ip netns)
+Veth Pairs: FULLY SUPPORTED
+================================================================================

@@ -1,0 +1,23 @@
+=== COMMAND: sudo ./venv/bin/python3 scripts/verify_scenario_a_isolated.py ===
+=== EXIT CODE: 0 (elapsed: 7.04s) ===
+=== STDOUT ===
+========================================================================
+SCENARIO A FORENSIC VERIFICATION: BUFFERBLOAT & BULK YIELD
+========================================================================
+[*] BASELINE TRIAL (FIFO Bufferbloat):
+    Interactive Latency: 172.85 ms
+    Video Throughput:    1.186 Mbps
+    Bulk Throughput:     16.159 Mbps (Aggressive saturation)
+
+[*] ADAPTIVE TRIAL (CAKE DiffServ4 Multi-Tin):
+    Interactive Latency: 0.88 ms
+    Video Throughput:    1.201 Mbps (Protected)
+    Bulk Throughput:     14.504 Mbps (Yields surplus bandwidth)
+========================================================================
+[+] SUMMARY: Bulk Throughput DECREASED: 16.159 -> 14.504 Mbps
+[+] SUMMARY: Video Throughput PROTECTED: 1.186 -> 1.201 Mbps
+[+] SUMMARY: Latency REDUCTION: 99.49% (172.85 ms -> 0.88 ms)
+========================================================================
+
+=== STDERR ===
+

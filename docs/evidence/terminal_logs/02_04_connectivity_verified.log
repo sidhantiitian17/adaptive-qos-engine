@@ -1,0 +1,42 @@
+=== COMMAND: ./testbed/verify_connectivity.sh ===
+=== EXIT CODE: 0 (elapsed: 8.27s) ===
+=== STDOUT ===
+=== Test 1: lan1 -> wanhost (IPv4) ===
+PING 10.0.3.2 (10.0.3.2) 56(84) bytes of data.
+64 bytes from 10.0.3.2: icmp_seq=1 ttl=63 time=0.617 ms
+64 bytes from 10.0.3.2: icmp_seq=2 ttl=63 time=0.128 ms
+64 bytes from 10.0.3.2: icmp_seq=3 ttl=63 time=0.298 ms
+
+--- 10.0.3.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2034ms
+rtt min/avg/max/mdev = 0.128/0.347/0.617/0.202 ms
+=== Test 2: lan1 -> wanhost (IPv6) ===
+PING fd00:3::2 (fd00:3::2) 56 data bytes
+64 bytes from fd00:3::2: icmp_seq=1 ttl=63 time=9.12 ms
+64 bytes from fd00:3::2: icmp_seq=2 ttl=63 time=0.172 ms
+64 bytes from fd00:3::2: icmp_seq=3 ttl=63 time=0.300 ms
+
+--- fd00:3::2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2018ms
+rtt min/avg/max/mdev = 0.172/3.196/9.117/4.186 ms
+=== Test 3: lan2 -> wanhost (IPv4) ===
+PING 10.0.3.2 (10.0.3.2) 56(84) bytes of data.
+64 bytes from 10.0.3.2: icmp_seq=1 ttl=63 time=0.664 ms
+64 bytes from 10.0.3.2: icmp_seq=2 ttl=63 time=0.151 ms
+64 bytes from 10.0.3.2: icmp_seq=3 ttl=63 time=0.055 ms
+
+--- 10.0.3.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2066ms
+rtt min/avg/max/mdev = 0.055/0.290/0.664/0.267 ms
+=== Test 4: lan1 -> lan2 ===
+PING 10.0.2.2 (10.0.2.2) 56(84) bytes of data.
+64 bytes from 10.0.2.2: icmp_seq=1 ttl=63 time=0.213 ms
+64 bytes from 10.0.2.2: icmp_seq=2 ttl=63 time=0.064 ms
+64 bytes from 10.0.2.2: icmp_seq=3 ttl=63 time=0.061 ms
+
+--- 10.0.2.2 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2062ms
+rtt min/avg/max/mdev = 0.061/0.112/0.213/0.070 ms
+
+=== STDERR ===
+

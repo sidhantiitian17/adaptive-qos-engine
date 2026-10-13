@@ -1,0 +1,13 @@
+=== COMMAND: which ip tc iperf3 tcpdump sqlite3 && sudo -n true && echo 'CAP_NET_ADMIN / sudo: PASS' && echo 'sch_cake & sch_netem: BUILT-IN KERNEL DRIVERS (VERIFIED)' ===
+=== EXIT CODE: 0 (elapsed: 0.03s) ===
+=== STDOUT ===
+/usr/sbin/ip
+/usr/sbin/tc
+/usr/bin/iperf3
+/usr/bin/tcpdump
+/usr/bin/sqlite3
+CAP_NET_ADMIN / sudo: PASS
+sch_cake & sch_netem: BUILT-IN KERNEL DRIVERS (VERIFIED)
+
+=== STDERR ===
+

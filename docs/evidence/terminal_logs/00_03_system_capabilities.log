@@ -1,0 +1,15 @@
+=== COMMAND: uname -a && cat /etc/os-release | grep PRETTY_NAME && lscpu | grep 'Model name\|CPU(s):' && free -h && python3 --version ===
+=== EXIT CODE: 0 (elapsed: 0.05s) ===
+=== STDOUT ===
+Linux LAPTOP-TBJCL2G7 6.18.40.1-microsoft-standard-WSL2+ #2 SMP PREEMPT_DYNAMIC Sun Sep 27 22:19:13 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+CPU(s):                                  12
+Model name:                              AMD Ryzen 5 5600H with Radeon Graphics
+NUMA node0 CPU(s):                       0-11
+               total        used        free      shared  buff/cache   available
+Mem:           7.4Gi       2.6Gi       4.2Gi       4.2Mi       899Mi       4.9Gi
+Swap:          2.0Gi          0B       2.0Gi
+Python 3.12.3
+
+=== STDERR ===
+

@@ -174,12 +174,14 @@ class RealTrafficGenerator:
         profile_name: str,
         duration_sec: float = 5.0,
         target_port: Optional[int] = None,
-        source_bind_ip: Optional[str] = None
+        source_bind_ip: Optional[str] = None,
+        target_rate_mbps: Optional[float] = None,
+        proto: Optional[str] = None
     ) -> Dict[str, Any]:
         profile = TRAFFIC_PROFILES.get(profile_name.upper(), TRAFFIC_PROFILES["VIDEO_CONFERENCE"])
-        proto = profile["proto"]
+        proto = (proto or profile["proto"]).lower()
         pkt_size = profile["packet_size"]
-        target_rate = profile["target_rate_mbps"]
+        target_rate = target_rate_mbps if target_rate_mbps is not None else profile["target_rate_mbps"]
         port = target_port or profile["port"]
         tos_val = profile["tos"]
 

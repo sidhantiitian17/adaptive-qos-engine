@@ -1,0 +1,9 @@
+=== COMMAND: ./enforcement/apply_cake.sh 100mbit ===
+=== EXIT CODE: 0 (elapsed: 0.09s) ===
+=== STDOUT ===
+Applying CAKE on veth-gw-wan with bandwidth=100mbit...
+Done. Current qdisc:
+qdisc cake 8001: root refcnt 13 bandwidth 100Mbit diffserv4 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms raw overhead 0 
+
+=== STDERR ===
+

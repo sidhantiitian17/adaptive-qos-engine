@@ -250,7 +250,8 @@ class RollbackManager:
         with self._lock:
             # 1. Determine target rollback parameters from saved snapshot
             has_snapshot = False
-            target_snapshot = self.current_tentative_snapshot or self.last_known_good_snapshot
+            # Prioritize last verified permanent checkpoint so committed safe state is restored
+            target_snapshot = self.last_known_good_snapshot or self.current_tentative_snapshot
             target_bw = None
             target_diffserv = "diffserv4"
 
@@ -258,9 +259,9 @@ class RollbackManager:
                 target_bw = target_snapshot["bandwidth_mbit"]
                 target_diffserv = target_snapshot.get("diffserv_mode") or target_snapshot.get("diffserv", "diffserv4")
                 has_snapshot = True
-            elif self.last_known_good_snapshot and self.last_known_good_snapshot.get("bandwidth_mbit"):
-                target_bw = self.last_known_good_snapshot["bandwidth_mbit"]
-                target_diffserv = self.last_known_good_snapshot.get("diffserv_mode") or self.last_known_good_snapshot.get("diffserv", "diffserv4")
+            elif self.current_tentative_snapshot and self.current_tentative_snapshot.get("bandwidth_mbit"):
+                target_bw = self.current_tentative_snapshot["bandwidth_mbit"]
+                target_diffserv = self.current_tentative_snapshot.get("diffserv_mode") or self.current_tentative_snapshot.get("diffserv", "diffserv4")
                 has_snapshot = True
             elif self.last_good_config is not None:
                 target_bw = self.last_good_config
@@ -318,6 +319,9 @@ class RollbackManager:
     def commit_known_good(self, bandwidth="95mbit", diffserv="diffserv4") -> bool:
         bw_int = int(str(bandwidth).replace("mbit", "").replace("M", "").replace("mbps", ""))
         self.make_permanent(bw_int, diffserv)
+        self.tc_manager.apply_cake(bw_int, diffserv=diffserv)
+        if self.last_known_good_snapshot:
+            self.current_tentative_snapshot = self.last_known_good_snapshot.copy()
         return True
 
     def apply_tentative(self, bandwidth="1mbit", diffserv="diffserv4") -> bool:

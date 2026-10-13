@@ -1,0 +1,232 @@
+=== COMMAND: ./scripts/run_full_demo.sh ===
+=== EXIT CODE: 0 (elapsed: 24.84s) ===
+=== STDOUT ===
+=========================================================================
+   ADAPTIVE QOS ENGINE: AUTHORITATIVE PHASE 6 FULL DEMONSTRATION         
+=========================================================================
+
+===========================================================================
+STEP 01: ENVIRONMENT PREFLIGHT & HARDWARE DISCOVERY
+===========================================================================
+[*] OS Environment: Linux 6.18.40.1-microsoft-standard-WSL2+ (x86_64)
+[*] Default WAN Candidate: eth0 (Classification: Virtual Linux Datapath (veth/namespaces))
+[*] Python Runtime: 3.12.3
+[+] STEP 01 PASS: Preflight completed with zero loopback cheating.
+
+===========================================================================
+STEP 02: TOPOLOGY SETUP & LAYER-3 ROUTING VERIFICATION
+===========================================================================
+[*] Cross-Gateway Ping from lan1 (10.0.1.2) to wanhost (10.0.3.2):
+    64 bytes from 10.0.3.2: icmp_seq=1 ttl=63 time=0.263 ms
+    64 bytes from 10.0.3.2: icmp_seq=2 ttl=63 time=0.076 ms
+    --- 10.0.3.2 ping statistics ---
+    rtt min/avg/max/mdev = 0.076/0.169/0.263/0.093 ms
+[+] STEP 02 PASS: 4-node routed topology verified with IPv4 TTL decrement (64 -> 63).
+
+===========================================================================
+STEP 03: AUTHORITATIVE QOS CONTROLLER STARTUP
+===========================================================================
+[*] Controller instance initialized on interface veth-gw-wan (namespace: gw)
+[CONTROLLER] [INFO] Running SLoPS active link capacity estimation probe...
+
+--- [CONTROL CYCLE] Time: 15:35:22 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: None
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.']
+[ACT] Updating CAKE shaping: None -> 95 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 95mbit (diffserv4) -> Success: True
+[CONTROLLER] [SUCCESS] SLoPS probe completed in 0.42s: Range [103.8, 106.1] Mbps (Midpoint: 104.95 Mbps, Conf: 1.0, PCT: 0.778, PDT: 0.776).
+[HEALTH CHECK] Avg Latency: 0.11ms (limit: 60.0ms) | Loss: 0.0%
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 95 Mbps (diffserv4).
+[*] Initial autonomous cycle executed: Action=applied_and_committed, Target Shaping=95 Mbps
+[+] STEP 03 PASS: Controller started and executed initial closed-loop cycle.
+
+===========================================================================
+STEP 04: FASTAPI CONTROL PLANE & HEALTH PROBES
+===========================================================================
+[*] /health response: 200 -> {'status': 'healthy', 'uptime_sec': 0, 'database_healthy': True, 'controller_status': 'NORMAL', 'active_flows': 0, 'effective_capacity_mbps': 100.0, 'dry_run': False, 'timestamp': 1791905726.0777922}
+[*] /readiness response: 200 -> {'status': 'ready'}
+[*] /api/network/status: WAN=veth-gw-wan, Class=Virtual Linux Datapath (veth/namespaces)
+[+] STEP 04 PASS: All core observability and readiness endpoints validated.
+
+===========================================================================
+STEP 05: LINK CAPACITY ESTIMATION (PASSIVE & ACTIVE)
+===========================================================================
+[*] Estimated Link Capacity: 100.0 Mbps (Method: PassiveEstimator)
+[+] STEP 05 PASS: Real link capacity estimation operational.
+
+===========================================================================
+STEP 06: GENERATING TRAFFIC ACROSS ALL 7 BROADBAND PROFILES
+===========================================================================
+[*] Generating test frames for all 7 classes:
+    -> Profile: VIDEO_CONFERENCE   (proto=udp, target=1.2M, DSCP=AF41)
+    -> Profile: GAMING             (proto=udp, target=0.2M, DSCP=EF)
+    -> Profile: VOICE              (proto=udp, target=0.08M, DSCP=EF)
+    -> Profile: ADAPTIVE_VIDEO     (proto=tcp, target=5.0M, DSCP=AF41)
+    -> Profile: BULK_DOWNLOAD      (proto=tcp, target=50.0M, DSCP=CS1)
+    -> Profile: SOFTWARE_UPDATE    (proto=tcp, target=15.0M, DSCP=CS1)
+    -> Profile: CLOUD_BACKUP       (proto=tcp, target=10.0M, DSCP=CS1)
+[+] STEP 06 PASS: All 7 traffic profiles transmitted across router.
+
+===========================================================================
+STEP 07: ZERO-PAYLOAD METADATA-ONLY CLASSIFIER INFERENCE
+===========================================================================
+[*] Video Call Feature Inference: -> video_conference (Confidence: 0.92)
+[*] Bulk Download Inference:       -> bulk_download (Confidence: 1.00)
+[+] STEP 07 PASS: Zero-payload classification verified with high confidence.
+
+===========================================================================
+STEP 08: AUTHORITATIVE FLOW TABLE UPDATES
+===========================================================================
+[*] Authoritative FlowTable populated: 2 active registered flows
+    Flow: 10.0.1.2:5000->10.0.3.2:5000/udp | Class: video_conference | Conf: 0.9152
+    Flow: 10.0.2.2:5201->10.0.3.2:5201/tcp | Class: bulk_download | Conf: 0.9993
+[+] STEP 08 PASS: Thread-safe FlowTable reflects live classified flows.
+
+===========================================================================
+STEP 09: DETERMINISTIC POLICY CALCULATION & ANTI-STARVATION
+===========================================================================
+[*] Policy Decision for 20.0 Mbps Link:
+    Target CAKE Shaping: 19 Mbps
+    Bulk Progress Floor: 4 Mbps (Guaranteed share: 20%)
+    DiffServ Mode:       diffserv4
+    DSCP Map:            {'video_conference': 'AF41', 'gaming': 'EF', 'bulk_download': 'CS1', 'default': 'CS0'}
+[+] STEP 09 PASS: Policy rules correctly enforce shaping and anti-starvation floor.
+
+===========================================================================
+STEP 10: LINUX KERNEL TC CAKE ENFORCEMENT
+===========================================================================
+[*] Applied CAKE on veth-gw-wan: success=True
+[*] Verified Kernel Qdisc: Type=cake, Status=verified
+[+] STEP 10 PASS: Linux kernel verifies active root CAKE qdisc.
+
+===========================================================================
+STEP 11: TWO-WAY UDP LATENCY & JITTER PROBING
+===========================================================================
+[*] Probe Train Result:
+    Avg RTT: 0.506 ms | Min: 0.363 ms | Jitter: 0.104 ms (Method: consecutive_rtt_mad)
+    Packets Sent: 5, Received: 5, Loss: 0.0%
+[+] STEP 11 PASS: Real nanosecond-precision UDP echo RTT and jitter verified.
+
+===========================================================================
+STEP 12: REST TELEMETRY QUERY VALIDATION
+===========================================================================
+[*] /api/measurements: 200
+[*] /api/policies:     200
+[*] /api/experiments:  200
+[+] STEP 12 PASS: Dashboard endpoints actively expose backend telemetry.
+
+===========================================================================
+STEP 13: SCENARIO A: BASELINE VS ADAPTIVE EXPERIMENT
+===========================================================================
+  Executing Baseline Trial...
+  [+] Baseline Latency: 110.36 ms | Video: 1.201 Mbps | Bulk: 16.122 Mbps
+  Executing Adaptive Trial...
+  [+] Adaptive Latency: 0.81 ms | Video: 1.201 Mbps | Bulk: 14.503 Mbps
+[*] Comparison: Bufferbloat Latency reduced by 99.26% (110.36 ms -> 0.81 ms)
+[+] STEP 13, 14, 15 PASS: Scenario A baseline vs adaptive verified with 0 fallback constants.
+
+===========================================================================
+STEP 16: EVIDENCE DB RELATIONAL INTEGRITY
+===========================================================================
+[*] Evidence Database: 136 experiments, 819 measurements recorded.
+[*] Foreign Key Violations: 0
+[+] STEP 16 PASS: Evidence database verified with 0 orphan records.
+
+===========================================================================
+STEP 17: SCENARIO B: DYNAMIC WAN COLLAPSE & CLOSED-LOOP TIMELINE
+===========================================================================
+[*] Dynamic Collapse: 100M -> 20M -> 100M
+[*] Total Adaptation Latency: 0.0449s (Target <= 1.0s)
+[*] Total Recovery Latency:   0.036s (Target <= 1.0s)
+[+] STEP 17 & 18 PASS: Closed-loop adaptation and recovery timelines verified.
+
+===========================================================================
+STEP 19: SCENARIO C: 3 TV STREAMS + GAMING CONTENTION (VERIFIED NETEM 15MS)
+===========================================================================
+[*] Jain's Fairness Index: 0.9999998 (Recomputed from raw counters)
+[*] Gaming RTT under TV load: 15.694 ms (Min: 15.543 ms, Jitter: 0.3137 ms)
+[+] STEP 19 PASS: Scenario C contention and fairness verified under declared NetEm impairment.
+
+===========================================================================
+STEP 20: TEMPORARY USER INTENT WORKFLOW (CREATE, APPLY, READ, CLEAR)
+===========================================================================
+[CONTROLLER] [ACTION] Temporary intent active: prioritize video_conference for 10 min.
+[CONTROLLER] [INFO] Running SLoPS active link capacity estimation probe...
+
+--- [CONTROL CYCLE] Time: 15:35:36 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: video_conference
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.', 'User requested temporary priority for video_conference (600s). Priority DSCP enforced.']
+[ACT] Updating CAKE shaping: None -> 95 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 95mbit (diffserv4) -> Success: True
+[CONTROLLER] [SUCCESS] SLoPS probe completed in 0.41s: Range [113.0, 115.3] Mbps (Midpoint: 114.15 Mbps, Conf: 1.0, PCT: 0.778, PDT: 0.908).
+[HEALTH CHECK] Avg Latency: 0.136ms (limit: 60.0ms) | Loss: 0.0%
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 95 Mbps (diffserv4).
+[*] POST /api/intent: 200 -> scheduled_and_applied
+[*] Controller Active Intent: {'traffic_class': 'video_conference', 'action': 'prioritize', 'duration_sec': 600, 'start_time': 1791905736.5623722, 'expires_at': 1791906336.5623722, 'status': 'active', 'remaining_sec': 597}
+[CONTROLLER] [ACTION] Intent cancelled by operator. Baseline policy restored.
+
+--- [CONTROL CYCLE] Time: 15:35:39 ---
+[OBSERVE] Throughput: 1.82 Mbps | Effective Capacity: 114.15 Mbps (Source: active_slops)
+[OBSERVE] Active Flows: 0 | Active Intent: None
+[DECIDE] Target Shaping: 108 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 22 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.']
+[ACT] Updating CAKE shaping: 95 -> 108 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 108mbit (diffserv4) -> Success: True
+[HEALTH CHECK] Avg Latency: 0.138ms (limit: 60.0ms) | Loss: 0.0%
+[ROLLBACK_MGR] Committed bandwidth=108mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 108 Mbps (diffserv4).
+[*] DELETE /api/intent: 200 -> cleared
+[*] Controller Cleared Intent: None
+[+] STEP 20 PASS: Intent lifecycle mutates real controller state.
+
+===========================================================================
+STEP 21: FAILURE RECOVERY & ATOMIC POLICY ROLLBACK
+===========================================================================
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[ROLLBACK_MGR] Applied tentative policy: 1mbit (diffserv4) -> Success: True
+[*] Applied Tentative Degraded Policy (1mbit): True
+[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: 95mbit (diffserv4) (Success: True)
+[*] Atomic Rollback Executed: True
+[*] Rollback Parity Verification: Commit=95mbit | Revert=95mbit | Kernel=95.0mbit
+[+] STEP 21 PASS: Atomic policy rollback safely restores known-good state (Commit=95M == Revert=95M == Kernel=95M).
+
+===========================================================================
+STEP 22: GENERATING PHASE 6 ACCEPTANCE ARTIFACTS & MANIFESTS
+===========================================================================
+[*] Wrote scenario results to /home/prashast/fresh_audit/adaptive-qos-engine/artifacts/04_final_release_acceptance/phase6_scenario_results.json
+[+] STEP 22 & 23 PASS: Reports and raw telemetry JSON created.
+
+===========================================================================
+STEP 24: DETERMINISTIC POST-DEMONSTRATION CLEANUP
+===========================================================================
+======================================================================
+ADAPTIVE QOS ENGINE: DETERMINISTIC ENVIRONMENT RESET
+======================================================================
+[1/6] Terminating active engine and dashboard processes...
+[2/6] Cleaning application network namespaces and veth pairs...
+[3/6] Cleaning stale qdiscs on host interfaces...
+[4/6] Cleaning transient run files...
+[5/6] Verifying SQLite Evidence Database integrity...
+      Database Integrity: OK (0 FK violations, PRAGMA integrity_check=ok)
+[6/6] Verifying clean post-reset state...
+      [PASS] Zero stale QoS controller or dashboard processes.
+      [PASS] Network namespaces completely cleared.
+======================================================================
+RESET COMPLETE: STATUS = PASS
+======================================================================
+[+] STEP 24 PASS: Environment clean and verified.
+
+===========================================================================
+ALL 24 STEPS COMPLETED SUCCESSFULLY: DEMO PASS
+===========================================================================
+
+=== STDERR ===
+/home/prashast/fresh_audit/adaptive-qos-engine/venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+

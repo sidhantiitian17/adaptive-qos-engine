@@ -1,0 +1,27 @@
+=== COMMAND: sudo ./venv/bin/python3 scripts/verify_rollback_parity.py ===
+=== EXIT CODE: 0 (elapsed: 0.87s) ===
+=== STDOUT ===
+========================================================================
+ROLLBACK MANAGER ATOMIC RECOVERY & KERNEL PARITY VERIFICATION
+========================================================================
+[*] Step 0: Initial Ambient Datapath Rate:    67.0 Mbps
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[*] Step 1: Known-Good Permanent Commit:     95 Mbps (diffserv4)
+[ROLLBACK_MGR] Applied tentative policy: 1mbit (diffserv4) -> Success: True
+[*] Step 2: Tentative Bad Policy Applied:    1.0 Mbps (Result: True)
+    -> Kernel Verified Tentative State:      1.0 Mbps
+[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: 95mbit (diffserv4) (Success: True)
+
+[*] Step 3: Atomic Rollback Triggered:       Success=True
+========================================================================
+FINAL REPRODUCIBILITY & CONSISTENCY AUDIT:
+========================================================================
+[+] Committed Bandwidth:                    95 Mbps
+[+] Reverted Rollback Bandwidth:             95 Mbps
+[+] Kernel Verified Active Bandwidth:        95.0 Mbps
+========================================================================
+RESULT: 100% PARITY PROVEN — COMMIT (95M) == REVERT (95M) == KERNEL (95M)
+========================================================================
+
+=== STDERR ===
+
