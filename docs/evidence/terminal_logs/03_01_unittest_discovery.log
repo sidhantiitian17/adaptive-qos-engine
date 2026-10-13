@@ -1,0 +1,179 @@
+=== COMMAND: ./venv/bin/python3 -m unittest discover tests/ ===
+=== EXIT CODE: 0 (elapsed: 58.90s) ===
+=== STDOUT ===
+[CONTROLLER] [ACTION] Temporary intent active: prioritize gaming for 10 min.
+[CONTROLLER] [INFO] Running SLoPS active link capacity estimation probe...
+
+--- [CONTROL CYCLE] Time: 14:40:27 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 1 | Active Intent: gaming
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.', 'User requested temporary priority for gaming (600s). Priority DSCP enforced.']
+[ACT] Updating CAKE shaping: None -> 95 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 95mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 95 Mbps (diffserv4).
+[CONTROLLER] [ACTION] Temporary intent active: prioritize video_conference for 10 min.
+[CONTROLLER] [INFO] Running SLoPS active link capacity estimation probe...
+
+--- [CONTROL CYCLE] Time: 14:40:27 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: video_conference
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.', 'User requested temporary priority for video_conference (600s). Priority DSCP enforced.']
+[ACT] Updating CAKE shaping: None -> 95 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 95mbit (diffserv4) -> Success: True
+[CONTROLLER] [WARN] Active probe rejected: Implausible or unmeasured active probe result.
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 95 Mbps (diffserv4).
+[CONTROLLER] [ACTION] Intent cancelled by operator. Baseline policy restored.
+[CONTROLLER] [WARN] Active probe already in progress. Rejecting concurrent probe session.
+
+--- [CONTROL CYCLE] Time: 14:40:28 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: None
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.']
+[CONTROLLER] [WARN] Active probe already in progress. Rejecting concurrent probe session.
+[ROLLBACK_MGR] Applied tentative policy: 75mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Apply/verification error applying 50mbit (diffserv4): Kernel state verification failed: bandwidth mismatch (expected 50 Mbit, got 20.0)
+[ROLLBACK_MGR] Immediate restoration to 1mbit (<MagicMock name='mock.get_qdisc_state().get()' id='136325632636160'>): success=False
+[ROLLBACK_MGR] Apply/verification error applying 50mbit (diffserv4): Kernel state verification failed: diffserv mismatch (expected 'diffserv4', got 'diffserv3')
+[ROLLBACK_MGR] Immediate restoration to 1mbit (<MagicMock name='mock.get_qdisc_state().get()' id='136325634434032'>): success=False
+[ROLLBACK_MGR] Apply/verification error applying 50mbit (diffserv4): Kernel state verification failed: qdisc_type mismatch
+[ROLLBACK_MGR] Immediate restoration to 1mbit (<MagicMock name='mock.get_qdisc_state().get()' id='136325621442000'>): success=False
+[ROLLBACK_MGR] Committed bandwidth=80mbit as permanent known-good.
+[ROLLBACK_MGR] Apply/verification error applying 1mbit (diffserv4): Execution error
+[ROLLBACK_MGR] Immediate restoration to 80mbit (diffserv4): success=True
+[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: 80mbit (diffserv4) (Success: True)
+[CONTROLLER] [WARN] Active probe rejected: Implausible or unmeasured active probe result.
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: 95mbit (diffserv4) (Success: True)
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[ROLLBACK_MGR] ❌ Rollback failed: Kernel state verification failed: bandwidth mismatch
+[ROLLBACK_MGR] ❌ Rollback failed: No verified checkpoint/snapshot available for rollback (fail-closed)
+[ROLLBACK_MGR] Applied tentative policy: 60mbit (diffserv4) -> Success: True
+[CONTROLLER] [ACTION] Temporary intent active: prioritize gaming for 20 min.
+[CONTROLLER] [INFO] Running SLoPS active link capacity estimation probe...
+
+--- [CONTROL CYCLE] Time: 14:41:00 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: gaming
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.', 'User requested temporary priority for gaming (1200s). Priority DSCP enforced.']
+[ACT] Updating CAKE shaping: None -> 95 Mbps
+[ROLLBACK_MGR] Apply/verification error applying 95mbit (diffserv4): Cannot open network namespace "gw": No such file or directory
+
+[ACT] ❌ Policy application failed at kernel level. Aborting commit.
+[CONTROLLER] [CRITICAL] Policy application for 95 Mbps failed at kernel level.
+[ROLLBACK_MGR] ❌ Rollback failed: No verified checkpoint/snapshot available for rollback (fail-closed)
+
+--- [CONTROL CYCLE] Time: 14:41:00 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 50.0 Mbps (Source: passive_init)
+[OBSERVE] Active Flows: 1 | Active Intent: None
+[DECIDE] Target Shaping: 48 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 10 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.']
+[ACT] Updating CAKE shaping: None -> 48 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 48mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Committed bandwidth=48mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 48 Mbps (diffserv4).
+[CONTROLLER] [ACTION] Manual override applied: 10.0.1.55:8080->10.0.3.2:80/tcp → gaming (Manual administrative override).
+
+--- [CONTROL CYCLE] Time: 14:41:01 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 20.0 Mbps (Source: passive_init)
+[OBSERVE] Active Flows: 1 | Active Intent: None
+[DECIDE] Target Shaping: 19 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 4 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.']
+[ACT] Updating CAKE shaping: 48 -> 19 Mbps
+[ACT] ❌ Policy application failed at kernel level. Aborting commit.
+[CONTROLLER] [CRITICAL] Policy application for 19 Mbps failed at kernel level.
+[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: 48mbit (diffserv4) (Success: True)
+[CONTROLLER] [WARN] Active probe rejected: Implausible or unmeasured active probe result.
+[ROLLBACK_MGR] Applied tentative policy: 95mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[ROLLBACK_MGR] Applied tentative policy: 1mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: 95mbit (diffserv4) (Success: True)
+[ROLLBACK_MGR] Committed bandwidth=90mbit as permanent known-good.
+[ROLLBACK_MGR] ❌ Rollback failed: Kernel state verification failed: bandwidth mismatch
+[ROLLBACK_MGR] Committed bandwidth=85mbit as permanent known-good.
+[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: 85mbit (diffserv3) (Success: True)
+[CONTROLLER] [ACTION] Temporary intent active: prioritize video_conference for 20 min.
+
+--- [CONTROL CYCLE] Time: 14:41:07 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: video_conference
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.', 'User requested temporary priority for video_conference (1200s). Priority DSCP enforced.']
+[ACT] Updating CAKE shaping: None -> 95 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 95mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 95 Mbps (diffserv4).
+
+--- [CONTROL CYCLE] Time: 14:41:08 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 80.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: video_conference
+[DECIDE] Target Shaping: 76 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 15 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.', 'User requested temporary priority for video_conference (1200s). Priority DSCP enforced.']
+[ACT] Updating CAKE shaping: 95 -> 76 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 76mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Committed bandwidth=76mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 76 Mbps (diffserv4).
+[CONTROLLER] [ACTION] Intent cancelled by operator. Baseline policy restored.
+
+--- [CONTROL CYCLE] Time: 14:41:08 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: None
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.']
+[ACT] Updating CAKE shaping: 76 -> 95 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 95mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 95 Mbps (diffserv4).
+
+--- [CONTROL CYCLE] Time: 14:41:09 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 1 | Active Intent: None
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.']
+[ACT] Updating CAKE shaping: None -> 95 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 95mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 95 Mbps (diffserv4).
+[CONTROLLER] [ACTION] Manual override applied: 10.0.2.77:8080->10.0.3.2:80/tcp → gaming (Administrative correction for low latency).
+[ROLLBACK_MGR] Applied tentative policy: 50mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Committed bandwidth=50mbit as permanent known-good.
+[CONTROLLER] [ACTION] Checkpointed tentative policy: 50 Mbps (known-good).
+[ROLLBACK_MGR] Applied tentative policy: 1mbit (diffserv4) -> Success: True
+[CONTROLLER] [WARN] Simulating bad policy injection: 1 Mbps shaping applied.
+[HEALTH CHECK] Simulated/detected excessive impairment for 1mbit.
+[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: 50mbit (diffserv4) (Success: True)
+[CONTROLLER] [CRITICAL] Health check failed (latency > 60ms). Auto-rollback restored 50 Mbps safe state.
+
+--- [CONTROL CYCLE] Time: 14:41:10 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: None
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.']
+[ACT] Updating CAKE shaping: None -> 95 Mbps
+[ROLLBACK_MGR] Applied tentative policy: 95mbit (diffserv4) -> Success: True
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+[VERIFY] ✅ Health check passed. New policy committed.
+[CONTROLLER] [SUCCESS] Closed-loop policy applied: CAKE shaping set to 95 Mbps (diffserv4).
+
+--- [CONTROL CYCLE] Time: 14:41:11 ---
+[OBSERVE] Throughput: 0.0 Mbps | Effective Capacity: 100.0 Mbps (Source: passive_fallback)
+[OBSERVE] Active Flows: 0 | Active Intent: None
+[DECIDE] Target Shaping: 95 Mbps (diffserv4) | Reasons: ['Bulk non-starvation objective (Option B): AQE targets analytical 19 Mbps non-starvation planning floor for bulk traffic (20% nominal target); datapath anti-starvation progress is enforced via CAKE DRR quantum allocation (300 bytes Bulk vs 1514 bytes Best Effort) without a rigid kernel rate reservation.']
+
+=== STDERR ===
+/home/prashast/fresh_audit/adaptive-qos-engine/dashboard/report_generator.py:234: SyntaxWarning: invalid escape sequence '\g'
+  body = """
+/home/prashast/fresh_audit/adaptive-qos-engine/venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+..............................................
+Fetching 5 files:   0%|          | 0/5 [00:00<?, ?it/s]
+Fetching 5 files: 100%|██████████| 5/5 [00:00<00:00, 424.48it/s]
+/home/prashast/fresh_audit/adaptive-qos-engine/venv/lib/python3.12/site-packages/laya/router.py:456: RuntimeWarning: laya: this checkpoint ships invalid temperatures or values outside [0.5, 5]; using choice:11+=0.10058280825614929 -> 0.5. Treat confidence from the affected entries as uncalibrated.
+  agent = Agent(repo, **kwargs)
+....................................s.............
+----------------------------------------------------------------------
+Ran 95 tests in 44.783s
+
+OK (skipped=1)
+

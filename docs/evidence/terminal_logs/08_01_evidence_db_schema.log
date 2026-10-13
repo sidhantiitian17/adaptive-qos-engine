@@ -1,0 +1,106 @@
+=== COMMAND: sqlite3 experiments/evidence.db '.schema' ===
+=== EXIT CODE: 0 (elapsed: 0.01s) ===
+=== STDOUT ===
+CREATE TABLE experiments (
+                experiment_id TEXT PRIMARY KEY,
+                scenario_id TEXT NOT NULL,
+                mode TEXT NOT NULL,
+                configuration_json TEXT,
+                configuration_hash TEXT,
+                start_time REAL NOT NULL,
+                end_time REAL,
+                status TEXT NOT NULL,
+                git_revision TEXT
+            );
+CREATE TABLE experiment_runs (
+                run_id TEXT PRIMARY KEY,
+                experiment_id TEXT NOT NULL,
+                run_index INTEGER NOT NULL,
+                start_time REAL NOT NULL,
+                end_time REAL,
+                status TEXT NOT NULL,
+                FOREIGN KEY (experiment_id) REFERENCES experiments (experiment_id)
+            );
+CREATE TABLE flows (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                flow_id TEXT NOT NULL,
+                experiment_id TEXT NOT NULL,
+                traffic_class TEXT,
+                protocol TEXT,
+                source_ip TEXT,
+                source_port INTEGER,
+                dest_ip TEXT,
+                dest_port INTEGER,
+                confidence REAL,
+                classifier_source TEXT,
+                first_seen REAL,
+                last_seen REAL,
+                packet_count INTEGER,
+                byte_count INTEGER,
+                FOREIGN KEY (experiment_id) REFERENCES experiments (experiment_id)
+            );
+CREATE TABLE sqlite_sequence(name,seq);
+CREATE TABLE measurements (
+                measurement_id TEXT PRIMARY KEY,
+                experiment_id TEXT NOT NULL,
+                run_id TEXT,
+                flow_id TEXT,
+                timestamp REAL NOT NULL,
+                metric_name TEXT NOT NULL,
+                value REAL,
+                unit TEXT,
+                source TEXT,
+                namespace TEXT,
+                interface TEXT,
+                measurement_method TEXT,
+                status TEXT NOT NULL,
+                FOREIGN KEY (experiment_id) REFERENCES experiments (experiment_id)
+            );
+CREATE TABLE network_conditions (
+                condition_id TEXT PRIMARY KEY,
+                experiment_id TEXT NOT NULL,
+                timestamp REAL NOT NULL,
+                configured_capacity_mbps REAL,
+                configured_delay_ms REAL,
+                configured_jitter_ms REAL,
+                configured_loss_pct REAL,
+                applied_qdisc TEXT,
+                target_interface TEXT,
+                verified_kernel_state TEXT,
+                FOREIGN KEY (experiment_id) REFERENCES experiments (experiment_id)
+            );
+CREATE TABLE controller_actions (
+                action_id TEXT PRIMARY KEY,
+                experiment_id TEXT NOT NULL,
+                timestamp REAL NOT NULL,
+                action_type TEXT,
+                decision_json TEXT,
+                target_bw_mbit REAL,
+                diffserv_mode TEXT,
+                result TEXT,
+                FOREIGN KEY (experiment_id) REFERENCES experiments (experiment_id)
+            );
+CREATE TABLE policy_changes (
+                change_id TEXT PRIMARY KEY,
+                experiment_id TEXT NOT NULL,
+                timestamp REAL NOT NULL,
+                previous_policy TEXT,
+                new_policy TEXT,
+                reason TEXT,
+                FOREIGN KEY (experiment_id) REFERENCES experiments (experiment_id)
+            );
+CREATE TABLE errors (
+                error_id TEXT PRIMARY KEY,
+                experiment_id TEXT NOT NULL,
+                timestamp REAL NOT NULL,
+                stage TEXT,
+                error_type TEXT,
+                error_message TEXT,
+                FOREIGN KEY (experiment_id) REFERENCES experiments (experiment_id)
+            );
+CREATE INDEX idx_meas_exp ON measurements (experiment_id, metric_name);
+CREATE INDEX idx_flows_exp ON flows (experiment_id, flow_id);
+CREATE INDEX idx_actions_exp ON controller_actions (experiment_id);
+
+=== STDERR ===
+

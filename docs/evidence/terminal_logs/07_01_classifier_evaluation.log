@@ -1,0 +1,31 @@
+=== COMMAND: ./venv/bin/python3 experiments/downstream_qos_comparison.py ===
+=== EXIT CODE: 0 (elapsed: 5.28s) ===
+=== STDOUT ===
+======================================================================
+DOWNSTREAM QoS EFFECT: Classifier Accuracy → Latency Impact
+======================================================================
+
+Workload: 450 packets from test split (150 bulk_download + 150 gaming + 150 video_conference)
+
+Metric                                           Heuristic      XGBoost    Improvement
+-------------------------------------------------------------------------------------
+Classification Accuracy                             93.1%       99.1%         +6.0pp
+Interactive Packets Misclassified                        6            3           +3
+Interactive Packets in WRONG Tin                         0            3           -3
+Bulk Packets OVER-Prioritized (→Voice Tin)              25            1          +24
+Severely Deprioritized (→Bulk Tin)                       0            3           -3
+Avg Latency Penalty (all pkts, ms)                    12.5          2.3        +10.2
+Avg Latency Penalty (interactive, ms)                  0.0          3.0         -3.0
+
+=====================================================================================
+CONCLUSION: XGBoost reduces overall QoS damage by 82% vs heuristic baseline.
+  • Heuristic over-prioritizes 25 bulk packets into Voice/Gaming
+    tin → steals capacity from real interactive flows.
+  • XGBoost: only 1 bulk packet(s) over-prioritized.
+  • Net effect: 12.5ms avg penalty (heuristic) vs 2.3ms (XGBoost).
+=====================================================================================
+
+Detailed results saved to: /home/prashast/fresh_audit/adaptive-qos-engine/experiments/downstream_qos_results.json
+
+=== STDERR ===
+

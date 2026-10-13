@@ -1,0 +1,9 @@
+=== COMMAND: ./venv/bin/python3 testbed/wan_simulator.py 100 ===
+=== EXIT CODE: 0 (elapsed: 0.16s) ===
+=== STDOUT ===
+[CMD] sudo ip netns exec wanhost tc qdisc add dev veth-wan-gw root netem rate 100mbit delay 20ms loss 0%
+qdisc netem 8002: root refcnt 13 limit 1000 delay 20ms rate 100Mbit
+
+
+=== STDERR ===
+

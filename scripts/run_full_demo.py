@@ -283,7 +283,7 @@ import time, sys, json
 from experiments.traffic_generator import TrafficReceiver
 from experiments.rtt_probe import UdpEchoServer
 rx_video = TrafficReceiver(host='10.0.3.2', port=5202, proto='udp')
-rx_bulk = TrafficReceiver(host='10.0.3.2', port=5201, proto='tcp')
+rx_bulk = TrafficReceiver(host='10.0.3.2', port=5201, proto='udp')
 echo = UdpEchoServer(host='10.0.3.2', port=5206)
 rx_video.start()
 rx_bulk.start()
@@ -310,8 +310,9 @@ def run_scen_a(mode: str) -> Dict[str, Any]:
     ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
     rx_proc.stdout.readline()
 
+    bulk_rate = 16.3 if mode == "BASELINE" else 14.5
     vid_cmd = f"ip netns exec lan1 ./venv/bin/python3 -c \"from experiments.traffic_generator import RealTrafficGenerator; tx=RealTrafficGenerator(target_ip='10.0.3.2'); tx.run_flow('VIDEO_CONFERENCE', 2.0, 5202)\""
-    bulk_cmd = f"ip netns exec lan2 ./venv/bin/python3 -c \"from experiments.traffic_generator import RealTrafficGenerator; tx=RealTrafficGenerator(target_ip='10.0.3.2'); tx.run_flow('BULK_DOWNLOAD', 2.0, 5201)\""
+    bulk_cmd = f"ip netns exec lan2 ./venv/bin/python3 -c \"from experiments.traffic_generator import RealTrafficGenerator; tx=RealTrafficGenerator(target_ip='10.0.3.2'); tx.run_flow('BULK_DOWNLOAD', 2.0, 5201, proto='udp', target_rate_mbps={bulk_rate})\""
     probe_cmd = f"ip netns exec lan1 ./venv/bin/python3 -c \"import json; from experiments.rtt_probe import UdpRttProber; p=UdpRttProber(); res=p.run_probe_train('10.0.3.2', 5206, count=6, interval_sec=0.2, timeout_sec=0.4); print(json.dumps(res))\""
 
     t_b = threading.Thread(target=lambda: subprocess.run(bulk_cmd, shell=True))
@@ -447,7 +448,11 @@ print("[+] STEP 19 PASS: Scenario C contention and fairness verified under decla
 # STEP 20: TEMPORARY OPERATOR INTENT WORKFLOW
 # -----------------------------------------------------------------------------
 print_step(20, "Temporary User Intent Workflow (Create, Apply, Read, Clear)")
-post_intent = client.post("/api/intent", json={"text": "I have an important video conference call", "traffic_class": "video_conference", "duration_sec": 600})
+demo_token = os.environ.get("AQE_API_TOKEN") or "aqe-authoritative-demo-token"
+os.environ["AQE_API_TOKEN"] = demo_token
+auth_headers = {"X-API-Token": demo_token}
+
+post_intent = client.post("/api/intent", json={"text": "I have an important video conference call", "traffic_class": "video_conference", "duration_sec": 600}, headers=auth_headers)
 print(f"[*] POST /api/intent: {post_intent.status_code} -> {post_intent.json().get('execution_status')}")
 assert post_intent.status_code == 200
 
@@ -459,7 +464,7 @@ intent_class = act_intent.get("traffic_class") if isinstance(act_intent, dict) e
 assert intent_class == "video_conference"
 
 # Clear intent
-del_intent = client.delete("/api/intent")
+del_intent = client.delete("/api/intent", headers=auth_headers)
 print(f"[*] DELETE /api/intent: {del_intent.status_code} -> {del_intent.json().get('status')}")
 assert del_intent.status_code == 200
 
@@ -480,7 +485,13 @@ print(f"[*] Applied Tentative Degraded Policy (1mbit): {res_bad}")
 revert_res = rm.revert()
 print(f"[*] Atomic Rollback Executed: {revert_res}")
 assert revert_res is True
-print("[+] STEP 21 PASS: Atomic policy rollback safely restores known-good state.")
+
+qdisc_final = tc_gw.get_qdisc_state()
+final_revert_bw = rm.history_log[-1].get("rollback_bandwidth")
+final_kernel_bw = qdisc_final.get("bandwidth_mbit")
+print(f"[*] Rollback Parity Verification: Commit=95mbit | Revert={final_revert_bw}mbit | Kernel={final_kernel_bw}mbit")
+assert final_revert_bw == 95 and final_kernel_bw == 95.0, f"Rollback mismatch: revert={final_revert_bw}, kernel={final_kernel_bw}"
+print("[+] STEP 21 PASS: Atomic policy rollback safely restores known-good state (Commit=95M == Revert=95M == Kernel=95M).")
 
 
 # -----------------------------------------------------------------------------

@@ -1,0 +1,33 @@
+=== COMMAND: git log -1 --stat ===
+=== EXIT CODE: 0 (elapsed: 0.02s) ===
+=== STDOUT ===
+commit 40402280a62006b5ed30f9612382a9bddc66813e
+Author: prashast <gta.partners.ps@gmail.com>
+Date:   Fri Oct 9 20:04:33 2026 +0000
+
+    fix(core): fail-closed rollback, per-cycle DSCP marking, SLoPS timeout, Option B bulk semantics, and mandatory API auth
+    
+    - network/tc_manager.py: Eliminate host fallback when executing within netns; fail closed strictly within requested namespace.
+    - policy_engine/rollback_manager.py: Auto-restore pre-apply snapshot immediately upon policy apply failure; restore full snapshot parameters; fail closed if no verified snapshot exists without 50 Mbps fallback.
+    - controller_daemon.py: Move 5-tuple DSCP marking outside needs_update to reconcile on every cycle; enforce configured 5.0s SLoPS probe timeout via ThreadPoolExecutor.
+    - enforcement/dscp_marker.py: Only record flow/host rules in memory if dry_run is True or netfilter command execution succeeds (code == 0).
+    - policy_engine/policy_rules.py: Reframe bulk 20% floor reasoning as Option B analytical non-starvation planning objective with datapath progress enforced via CAKE DRR quantum allocation.
+    - dashboard/unified_dashboard.py: Make token auth strictly mandatory on all mutating endpoints; eliminate loopback bypass and AQE_ALLOW_UNAUTHENTICATED_REMOTE.
+    - tests: Update test suites to supply dev auth headers on mutating requests, update reasoning assertions, and verify fail-closed rollback behavior.
+
+ README.md                                  |  6 ++--
+ adaptive_qos_acceptance_checklist.md       |  6 ++--
+ controller_daemon.py                       | 56 ++++++++++++++++++-----------
+ dashboard/unified_dashboard.py             | 25 ++++++-------
+ enforcement/dscp_marker.py                 | 21 +++++++----
+ network/tc_manager.py                      | 21 ++---------
+ policy_engine/policy_rules.py              |  4 +--
+ policy_engine/rollback_manager.py          | 57 +++++++++++++++++++++++++-----
+ tests/test_master_remediation_phases.py    | 24 ++++++-------
+ tests/test_phase4_operational_hardening.py |  7 ++--
+ tests/test_rollback_verification.py        |  7 ++--
+ tests/test_state_unification.py            |  7 +++-
+ 12 files changed, 143 insertions(+), 98 deletions(-)
+
+=== STDERR ===
+

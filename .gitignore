@@ -12,6 +12,7 @@ __pycache__/
 
 # Runtime logs, PIDs, and transient artifacts
 *.log
+!docs/evidence/terminal_logs/*.log
 *.pid
 logs/*.log
 !logs/.gitkeep

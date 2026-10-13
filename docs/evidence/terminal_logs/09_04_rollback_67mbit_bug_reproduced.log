@@ -1,0 +1,13 @@
+=== COMMAND: ./venv/bin/python3 -c "from network.tc_manager import TcManager; from policy_engine.rollback_manager import RollbackManager; tc = TcManager(iface='veth-gw-wan', namespace='gw'); tc.apply_cake(67); print('Kernel initial state: 67 Mbps.'); rm = RollbackManager(tc_manager=tc); rm.commit_known_good(bandwidth='95mbit'); print('Committed 95mbit to RollbackManager.'); rm.apply_tentative(bandwidth='1mbit'); print('Tentative 1mbit applied. Snapshot bw:', rm.current_tentative_snapshot.get('bandwidth_mbit')); rm.revert(); print('Reverted! History entry rollback_bandwidth:', rm.history_log[-1].get('rollback_bandwidth'))" ===
+=== EXIT CODE: 0 (elapsed: 0.38s) ===
+=== STDOUT ===
+Kernel initial state: 67 Mbps.
+[ROLLBACK_MGR] Committed bandwidth=95mbit as permanent known-good.
+Committed 95mbit to RollbackManager.
+[ROLLBACK_MGR] Applied tentative policy: 1mbit (diffserv4) -> Success: True
+Tentative 1mbit applied. Snapshot bw: 67
+[ROLLBACK_MGR] ⚠️ Reverted to safe configuration: 67mbit (diffserv4) (Success: True)
+Reverted! History entry rollback_bandwidth: 67
+
+=== STDERR ===
+

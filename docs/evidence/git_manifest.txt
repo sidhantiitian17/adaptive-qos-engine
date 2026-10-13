@@ -1,0 +1,8 @@
+Repository URL: https://github.com/sidhantiitian17/adaptive-qos-engine
+Commit SHA: 40402280a62006b5ed30f9612382a9bddc66813e
+Commit Author: prashast <gta.partners.ps@gmail.com>
+Commit Date: Fri Oct 9 20:04:33 2026 +0000
+Commit Message: fix(core): fail-closed rollback, per-cycle DSCP marking, SLoPS timeout, Option B bulk semantics, and mandatory API auth
+Branch: main (tracking origin/main)
+Working Tree Status: Clean (0 uncommitted changes, 0 untracked files)
+Clone Path: /home/prashast/fresh_audit/adaptive-qos-engine

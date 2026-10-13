@@ -1,0 +1,24 @@
+=== COMMAND: ./scripts/run_scenario_c.sh ===
+=== EXIT CODE: 0 (elapsed: 11.48s) ===
+=== STDOUT ===
+=================================================================
+   RUNNING SCENARIO C: 3 STREAMING TVS + 1 GAMING DEVICE         
+=================================================================
+
+[1/2] Running BASELINE (Unmanaged Multi-Flow Contention)...
+  Baseline Metrics: {'experiment_id': 'exp_scenario_c_1791904746_609baf', 'scenario': 'SCENARIO_C', 'mode': 'BASELINE', 'tv_throughputs': [0.62, 0.628, 0.626], 'fairness_index': 1.0, 'gaming_latency_ms': 7.987, 'gaming_jitter_ms': 6.3817, 'active_flows_classified': 4}
+
+[2/2] Running ADAPTIVE (CAKE DiffServ4 Fair Queuing + Gaming EF)...
+  Adaptive Metrics: {'experiment_id': 'exp_scenario_c_1791904753_b3d5e0', 'scenario': 'SCENARIO_C', 'mode': 'ADAPTIVE', 'tv_throughputs': [0.552, 0.538, 0.542], 'fairness_index': 1.0, 'gaming_latency_ms': 11.26, 'gaming_jitter_ms': 2.2645, 'active_flows_classified': 6}
+
+=================================================================
+SCENARIO C COMPARISON RESULT
+=================================================================
+TV Streams Fairness Index:  Baseline 1.0 | Adaptive 1.0
+Gaming Interactive Latency: Baseline 7.987 ms | Adaptive 11.26 ms
+Gaming Jitter:              Baseline 6.3817 ms | Adaptive 2.2645 ms
+Evidence recorded to experiments/evidence.db.
+=================================================================
+
+=== STDERR ===
+
