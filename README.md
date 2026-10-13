@@ -273,7 +273,7 @@ Scenario C evaluates fairness and low-latency isolation under heavy multi-device
 | **Jain's Fairness Index ($J$)** | **0.9999998** | $\ge 0.95$ | **Near-Perfect Fair DRR Allocation** across all 3 streaming devices |
 | **Gaming Stream RTT** | **15.69 ms** | $\le 20.0$ ms under load | **0.69 ms queueing/processing delay** added over 15.0 ms base WAN delay |
 | **Gaming Stream Jitter** | **0.31 ms** | $\le 2.0$ ms | Protected inside CAKE Voice/Gaming tin |
-| **TV Stream Throughput Parity** | Stream 1: 5.82 Mbps<br/>Stream 2: 5.82 Mbps<br/>Stream 3: 5.82 Mbps | Equal throughput | DRR quantum balance prevents single-stream hogging |
+| **TV Stream Throughput Parity** | Stream 1: 1.03 Mbps<br/>Stream 2: 1.03 Mbps<br/>Stream 3: 1.03 Mbps | Equal throughput | DRR quantum balance prevents single-stream hogging |
 
 ![Scenario C Execution Terminal](docs/evidence/screenshots/06_scenario_c/06_01_scenario_c_execution.png)
 *Evidence Screenshot 06_01: Multi-device execution verifying Jain's fairness index of 0.9999998 and gaming RTT of 11.26–15.69 ms under severe cross-traffic. Full raw log: [`docs/evidence/terminal_logs/06_01_scenario_c_execution.log`](docs/evidence/terminal_logs/06_01_scenario_c_execution.log).*
